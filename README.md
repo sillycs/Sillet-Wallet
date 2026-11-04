@@ -98,9 +98,10 @@ src/Sillet.Mobile    shared Avalonia UI
 src/Sillet.Android   Android app
 src/Sillet.Desktop   Avalonia desktop window
 ```
-
 Adding an EVM network is one small class, check `LineaChain` for an example and register it in `WalletManager`
 
 ## Credits
 
 Prices and icons from [CoinGecko](https://www.coingecko.com), fear and greed index from [alternative.me](https://alternative.me/crypto/fear-and-greed-index/), font is [Inter](https://rsms.me/inter/)
+![Promo](/silletpromo.png)
+
