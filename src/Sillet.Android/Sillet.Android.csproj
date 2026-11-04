@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Sillet.Droid</RootNamespace>
+    <AssemblyName>Sillet.Android</AssemblyName>
+    <ApplicationId>fun.raton.sillet</ApplicationId>
+    <ApplicationTitle>Sillet</ApplicationTitle>
+    <ApplicationVersion>5</ApplicationVersion>
+    <ApplicationDisplayVersion>1.1.3</ApplicationDisplayVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <RunAOTCompilation>true</RunAOTCompilation>
+    <AndroidEnableProfiledAot>false</AndroidEnableProfiledAot>
+    <RuntimeIdentifiers>android-arm64;android-arm</RuntimeIdentifiers>
+    <AndroidLinkMode>SdkOnly</AndroidLinkMode>
+    <AndroidEnableSGenConcurrent>true</AndroidEnableSGenConcurrent>
+    <NoWarn>$(NoWarn);CS0618;CA1422;CA1416;XAOBS001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Android" Version="11.2.3" />
+    <PackageReference Include="ZXing.Net" Version="0.16.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sillet.Mobile\Sillet.Mobile.csproj" />
+  </ItemGroup>
+
+</Project>

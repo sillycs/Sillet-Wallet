@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net472;net8.0</TargetFrameworks>
+    <LangVersion>7.3</LangVersion>
+    <RootNamespace>Sillet</RootNamespace>
+    <AssemblyName>Sillet.Core</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Crypto/bip39-english.txt" LogicalName="Sillet.bip39-english.txt" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net472'">
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Numerics" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BouncyCastleDll)' == ''">
+    <PackageReference Include="BouncyCastle.Cryptography" Version="2.4.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(BouncyCastleDll)' != ''">
+    <Reference Include="BouncyCastle.Cryptography">
+      <HintPath>$(BouncyCastleDll)</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

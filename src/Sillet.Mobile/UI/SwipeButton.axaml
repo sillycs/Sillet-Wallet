@@ -1,0 +1,18 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Sillet.Mobile.UI.SwipeButton"
+             Height="62">
+    <Border x:Name="Track" CornerRadius="31" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+            BorderThickness="1" ClipToBounds="True">
+        <Grid>
+            <Border x:Name="Fill" CornerRadius="31" Background="#7EE8A8" HorizontalAlignment="Left" Width="60" />
+            <TextBlock x:Name="Hint" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="15"
+                       Foreground="{DynamicResource TextSecondaryBrush}" />
+            <Border x:Name="Thumb" Width="52" Height="52" CornerRadius="26" Margin="4,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
+                    Background="{DynamicResource AccentBrush}" Cursor="Hand">
+                <TextBlock Text="→" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                           Foreground="{DynamicResource OnAccentBrush}" />
+            </Border>
+        </Grid>
+    </Border>
+</UserControl>

@@ -1,0 +1,214 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.TradeView">
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,24" Spacing="12">
+            <StackPanel Spacing="2" Margin="4,4,0,0">
+                <TextBlock Text="{ui:Tr 'Trade'}" Classes="title" />
+                <TextBlock Text="{ui:Tr 'Swap, buy and sell crypto'}" Classes="caption" />
+            </StackPanel>
+
+            <Border Classes="seghost">
+                <UniformGrid Columns="3">
+                    <RadioButton Classes="seg" GroupName="TradeTab" Content="{ui:Tr 'Swap'}" IsChecked="{Binding IsSwapTab, Mode=TwoWay}" />
+                    <RadioButton Classes="seg" GroupName="TradeTab" Content="{ui:Tr 'Buy'}" IsChecked="{Binding IsBuyTab, Mode=TwoWay}" />
+                    <RadioButton Classes="seg" GroupName="TradeTab" Content="{ui:Tr 'Sell'}" IsChecked="{Binding IsSellTab, Mode=TwoWay}" />
+                </UniformGrid>
+            </Border>
+
+            <StackPanel Spacing="10" IsVisible="{Binding IsSwapTab}">
+                <Border Classes="card" Padding="14">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'You send'}" Classes="label" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding FromBalanceText}" Classes="caption" VerticalAlignment="Center" />
+                        </Grid>
+                        <ComboBox ItemsSource="{Binding Assets}" SelectedItem="{Binding From, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Grid Width="20" Height="20">
+                                            <Border CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding IconPath, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Network}" Classes="caption" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Text="{Binding AmountText, Mode=TwoWay}" Watermark="0" FontSize="24" FontWeight="SemiBold" BorderThickness="0" Background="Transparent" Padding="0,4" />
+                            <Button Grid.Column="1" Classes="secondary" Content="{ui:Tr 'Max'}" Command="{Binding MaxCommand}" Padding="14,7" FontSize="12" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="{Binding FromFiatText}" Classes="caption" />
+                    </StackPanel>
+                </Border>
+
+                <Button Classes="secondary" Command="{Binding SwitchCommand}" HorizontalAlignment="Center" Width="44" Height="44" Padding="0" CornerRadius="22" Margin="0,-18">
+                    <Path Classes="icon" Data="{StaticResource IconSwap}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Button>
+
+                <Border Classes="card" Padding="14">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'You receive'}" Classes="label" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding ToBalanceText}" Classes="caption" VerticalAlignment="Center" />
+                        </Grid>
+                        <ComboBox ItemsSource="{Binding Assets}" SelectedItem="{Binding To, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Grid Width="20" Height="20">
+                                            <Border CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding IconPath, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding Network}" Classes="caption" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Grid>
+                            <TextBlock Text="{Binding ReceiveText}" FontSize="24" FontWeight="SemiBold" Margin="0,4" TextTrimming="CharacterEllipsis" IsVisible="{Binding !IsQuoting}" />
+                            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsQuoting}" VerticalAlignment="Center" Margin="0,10" />
+                        </Grid>
+                        <TextBlock Text="{Binding ReceiveFiatText}" Classes="caption" />
+                    </StackPanel>
+                </Border>
+
+                <Grid ColumnDefinitions="*,Auto" Margin="4,0">
+                    <TextBlock Text="{Binding RateText}" Classes="caption" TextWrapping="Wrap" />
+                    <TextBlock Grid.Column="1" Text="{Binding MinText}" Classes="caption" />
+                </Grid>
+                <TextBlock Text="{Binding QuoteError}" Classes="error" TextWrapping="Wrap" IsVisible="{Binding HasQuoteError}" />
+                <Button Classes="primary" Command="{Binding SwapCommand}" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Center">
+                        <ProgressBar IsIndeterminate="True" Width="40" IsVisible="{Binding IsSwapping}" VerticalAlignment="Center" />
+                        <TextBlock Text="{ui:Tr 'Swap'}" />
+                    </StackPanel>
+                </Button>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="2">
+                    <TextBlock x:Name="SwapNote" Classes="caption" FontSize="11" VerticalAlignment="Center" />
+                    <Button Classes="link" Content="{ui:Tr 'Terms'}" FontSize="11" Command="{Binding OpenTermsCommand}" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Spacing="12" IsVisible="{Binding IsRampTab}">
+                <Grid ColumnDefinitions="*,10,*">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Coin'}" Classes="caption" Margin="4,0,0,0" />
+                        <ComboBox ItemsSource="{Binding Coins}" SelectedItem="{Binding RampCoin, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Grid Width="20" Height="20">
+                                            <Border CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding Primary.IconPath, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Network'}" Classes="caption" Margin="4,0,0,0" />
+                        <ComboBox ItemsSource="{Binding RampNetworks}" SelectedItem="{Binding RampNetwork, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Network}" TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+                <Border Classes="card" Padding="14">
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'Your address'}" Classes="label" VerticalAlignment="Center" />
+                            <Button Grid.Column="1" Classes="link" Command="{Binding CopyRampAddressCommand}">
+                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                    <Path Classes="icon small" Data="{StaticResource IconCopy}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBlock Text="{ui:Tr 'Copy'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <TextBlock Text="{Binding RampAddress}" FontFamily="monospace" FontSize="12.5" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+                <TextBlock Text="{Binding RampHint}" Classes="caption" TextWrapping="Wrap" Margin="4,0" />
+                <TextBlock Text="{Binding RampTitle}" Classes="section" Margin="4,6,0,0" />
+                <ItemsControl ItemsSource="{Binding Providers}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.OpenProviderCommand}" CommandParameter="{Binding}">
+                                <Border Classes="card" Padding="12,10">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <Border Width="34" Height="34" CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}">
+                                            <TextBlock Text="{Binding Initial}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Description}" Classes="caption" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <Path Grid.Column="2" Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextTertiaryBrush}" />
+                                    </Grid>
+                                </Border>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock x:Name="RampNote" Classes="caption" TextWrapping="Wrap" Margin="4,0" />
+            </StackPanel>
+
+            <StackPanel Spacing="8" Margin="0,10,0,0">
+                <Grid ColumnDefinitions="*,Auto">
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                        <Path Classes="icon small" Data="{StaticResource IconSwap}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{ui:Tr 'Your swaps'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                    </StackPanel>
+                    <Button Grid.Column="1" Classes="ghost" Command="{Binding RefreshSwapsCommand}" Padding="6">
+                        <Path Classes="icon small" Data="{StaticResource IconRefresh}" />
+                    </Button>
+                </Grid>
+                <Border Classes="soft" IsVisible="{Binding !HasSwaps}">
+                    <StackPanel Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="{ui:Tr 'No swaps yet'}" Classes="label" HorizontalAlignment="Center" />
+                        <TextBlock Text="{ui:Tr 'Swaps you start here are tracked until they finish'}" Classes="caption" TextWrapping="Wrap" TextAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <ItemsControl ItemsSource="{Binding Swaps}" IsVisible="{Binding HasSwaps}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="card" Padding="12,10" Margin="0,0,0,6">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <Grid Width="40" Height="32" VerticalAlignment="Top">
+                                        <Grid Width="24" Height="24" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                            <Border CornerRadius="12" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding FromIcon, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                        <Grid Width="24" Height="24" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                            <Border CornerRadius="12" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding ToIcon, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="10,0,0,0" Spacing="2">
+                                        <Grid ColumnDefinitions="*,Auto">
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                                            <TextBlock Grid.Column="1" Text="{Binding StatusText}" FontSize="12" Classes.up="{Binding IsDone}" Classes.down="{Binding IsFailed}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding AmountText}" Classes="label" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding DateText}" Classes="caption" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{ui:Tr 'Status updates every few minutes while Sillet is open'}" Classes="caption" TextWrapping="Wrap" TextAlignment="Center" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

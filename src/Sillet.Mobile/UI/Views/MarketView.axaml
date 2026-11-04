@@ -1,0 +1,162 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.MarketView">
+    <Panel>
+        <Grid x:Name="ListPanel" RowDefinitions="Auto,Auto,*,Auto" Margin="16,4,16,0">
+            <TextBlock Text="{ui:Tr 'Market'}" Classes="title" Margin="4,4,0,10" />
+            <StackPanel Grid.Row="1">
+                <TextBox Text="{Binding SearchText, Mode=TwoWay}" Watermark="{ui:Tr 'Search coins'}" Margin="0,0,0,12" />
+                <TextBlock Text="{ui:Tr 'No coins match your search'}" Classes="label" IsVisible="{Binding HasNoMatches}" Margin="4,0,0,10" />
+            </StackPanel>
+            <ItemsControl Grid.Row="2" ItemsSource="{Binding VisibleCoins}">
+                <ItemsControl.Template>
+                    <ControlTemplate>
+                        <ScrollViewer>
+                            <ItemsPresenter ItemsPanel="{TemplateBinding ItemsPanel}" Margin="0,0,0,12" />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ItemsControl.Template>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><VirtualizingStackPanel /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,8">
+                                <Button Classes="row" Click="Coin_Click">
+                                    <Border Classes="card" Padding="14,12">
+                                        <Grid ColumnDefinitions="Auto,*,64,Auto">
+                                            <Grid Width="36" Height="36">
+                                                <Border CornerRadius="18" Background="{DynamicResource SurfacePressedBrush}">
+                                                    <TextBlock Text="{Binding Initial}" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                                <Image Source="{Binding IconPath, Converter={StaticResource FileImage}}" />
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                                <StackPanel Orientation="Horizontal" Spacing="4">
+                                                    <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                                    <Path Classes="icon" Data="{StaticResource IconStar}" Fill="{DynamicResource WarningBrush}" Stroke="{DynamicResource WarningBrush}"
+                                                          StrokeThickness="1" Width="13" Height="13" Stretch="Uniform" IsVisible="{Binding IsFavorite}" />
+                                                </StackPanel>
+                                                <TextBlock Text="{Binding Name}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <ui:Sparkline Grid.Column="2" Height="28" Values="{Binding Sparkline}" IsUp="{Binding SparklineUp}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="3" VerticalAlignment="Center" Margin="10,0,0,0" MinWidth="86">
+                                                <TextBlock Text="{Binding PriceText}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                                <TextBlock Text="{Binding ChangeText}" FontSize="12" HorizontalAlignment="Right" Classes.up="{Binding IsUp}" Classes.down="{Binding !IsUp}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+                                <Button Grid.Column="1" Classes="ghost" VerticalAlignment="Center" Padding="8"
+                                        Command="{Binding $parent[ItemsControl].DataContext.ToggleFavoriteCommand}" CommandParameter="{Binding}">
+                                    <Panel>
+                                        <Path Classes="icon" Data="{StaticResource IconStar}" Stroke="{DynamicResource TextTertiaryBrush}" IsVisible="{Binding !IsFavorite}" />
+                                        <Path Classes="icon" Data="{StaticResource IconStar}" Stroke="{DynamicResource WarningBrush}" Fill="{DynamicResource WarningBrush}" IsVisible="{Binding IsFavorite}" />
+                                    </Panel>
+                                </Button>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Grid.Row="3" Text="{Binding Attribution}" Classes="caption" HorizontalAlignment="Center" Margin="0,2,0,8" />
+        </Grid>
+
+        <ScrollViewer x:Name="DetailPanel" IsVisible="False">
+            <StackPanel Margin="16,4,16,24" Spacing="14">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Button Classes="ghost" Click="Back_Click">
+                        <Path Classes="icon" Data="{StaticResource IconBack}" />
+                    </Button>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center" Margin="6,0,0,0">
+                        <Grid Width="30" Height="30">
+                            <Border CornerRadius="15" Background="{DynamicResource SurfacePressedBrush}" />
+                            <Image Source="{Binding SelectedCoin.IconPath, Converter={StaticResource FileImage}}" />
+                        </Grid>
+                        <TextBlock Text="{Binding SelectedCoin.Name}" FontWeight="SemiBold" FontSize="17" VerticalAlignment="Center" />
+                        <Border Classes="chip" VerticalAlignment="Center"><TextBlock Text="{Binding RankText}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" /></Border>
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="ghost" Command="{Binding ToggleFavoriteCommand}">
+                        <Panel>
+                            <Path Classes="icon" Data="{StaticResource IconStar}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsSelectedFavorite}" />
+                            <Path Classes="icon" Data="{StaticResource IconStar}" Stroke="{DynamicResource WarningBrush}" Fill="{DynamicResource WarningBrush}" IsVisible="{Binding IsSelectedFavorite}" />
+                        </Panel>
+                    </Button>
+                </Grid>
+
+                <StackPanel Spacing="2" Margin="4,0,0,0">
+                    <TextBlock Text="{Binding PriceText}" FontSize="36" FontWeight="Bold" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{Binding Change24hText}" FontWeight="SemiBold" Classes.up="{Binding IsUp24h}" Classes.down="{Binding !IsUp24h}" />
+                        <TextBlock Text="{ui:Tr '24h'}" Classes="label" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button Classes="secondary" HorizontalAlignment="Stretch" Command="{Binding HistoryCommand}">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Path Classes="icon small" Data="{StaticResource IconActivity}" Stroke="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" />
+                        <TextBlock Text="{ui:Tr 'Transaction history'}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+
+                <Border Classes="card" Padding="12,14">
+                    <StackPanel Spacing="12">
+                        <Grid ColumnDefinitions="*,Auto" Margin="4,0">
+                            <TextBlock Text="{Binding ChartChangeText}" FontSize="13" FontWeight="SemiBold" Classes.up="{Binding ChartIsUp}" Classes.down="{Binding !ChartIsUp}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding RangeLabel}" Classes="caption" VerticalAlignment="Center" />
+                        </Grid>
+                        <Panel Height="190">
+                            <ui:LineChart Points="{Binding ChartPoints}" IsUp="{Binding ChartIsUp}" />
+                            <ProgressBar IsIndeterminate="True" VerticalAlignment="Center" Margin="40,0" IsVisible="{Binding IsChartLoading}" />
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" IsVisible="{Binding HasChartError}">
+                                <TextBlock Text="{Binding ChartError}" Classes="label" TextWrapping="Wrap" TextAlignment="Center" />
+                                <Button Classes="secondary" Content="{ui:Tr 'Retry'}" Command="{Binding RetryChartCommand}" HorizontalAlignment="Center" Padding="14,8" />
+                            </StackPanel>
+                        </Panel>
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="4">
+                                <RadioButton Classes="seg" GroupName="Range" Content="{ui:Tr '24H'}" IsChecked="{Binding Range1, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Range" Content="{ui:Tr '7D'}" IsChecked="{Binding Range7, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Range" Content="{ui:Tr '1M'}" IsChecked="{Binding Range30, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Range" Content="{ui:Tr '1A'}" IsChecked="{Binding Range365, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <Border Classes="card">
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,14,Auto,14,Auto,14,Auto">
+                        <StackPanel><TextBlock Text="{ui:Tr '24h high'}" Classes="caption" /><TextBlock Text="{Binding High24hText}" FontWeight="SemiBold" /></StackPanel>
+                        <StackPanel Grid.Column="1"><TextBlock Text="{ui:Tr '24h low'}" Classes="caption" /><TextBlock Text="{Binding Low24hText}" FontWeight="SemiBold" /></StackPanel>
+                        <StackPanel Grid.Row="2"><TextBlock Text="{ui:Tr 'Market cap'}" Classes="caption" /><TextBlock Text="{Binding MarketCapText}" FontWeight="SemiBold" /></StackPanel>
+                        <StackPanel Grid.Row="2" Grid.Column="1"><TextBlock Text="{ui:Tr '24h volume'}" Classes="caption" /><TextBlock Text="{Binding VolumeText}" FontWeight="SemiBold" /></StackPanel>
+                        <StackPanel Grid.Row="4"><TextBlock Text="{ui:Tr '7 days'}" Classes="caption" /><TextBlock Text="{Binding Change7dText}" FontWeight="SemiBold" Classes.up="{Binding IsUp7d}" Classes.down="{Binding !IsUp7d}" /></StackPanel>
+                        <StackPanel Grid.Row="4" Grid.Column="1"><TextBlock Text="{ui:Tr 'All-time high'}" Classes="caption" /><TextBlock Text="{Binding AthText}" FontWeight="SemiBold" /></StackPanel>
+                        <StackPanel Grid.Row="6" Grid.ColumnSpan="2"><TextBlock Text="{ui:Tr 'From high'}" Classes="caption" /><TextBlock Text="{Binding FromAthText}" FontWeight="SemiBold" /></StackPanel>
+                    </Grid>
+                </Border>
+
+                <Border Classes="card">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{ui:Tr 'Convert'}" FontWeight="SemiBold" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBox Text="{Binding ConvertInput, Mode=TwoWay}" Watermark="0" FontSize="18" />
+                            <TextBlock Grid.Column="1" Text="{Binding ConvertFromLabel}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,4,0" />
+                        </Grid>
+                        <Button Classes="ghost" HorizontalAlignment="Center" Command="{Binding SwapConvertCommand}">
+                            <Path Classes="icon" Data="{StaticResource IconSwap}" RenderTransform="rotate(90deg)" />
+                        </Button>
+                        <Border Classes="soft">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding ConvertOutput}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Grid.Column="1" Text="{Binding ConvertToLabel}" Classes="label" VerticalAlignment="Center" Margin="12,0,0,0" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <TextBlock Text="{Binding Attribution}" Classes="caption" HorizontalAlignment="Center" />
+            </StackPanel>
+        </ScrollViewer>
+    </Panel>
+</UserControl>

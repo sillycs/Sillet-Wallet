@@ -1,0 +1,218 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.HomeView">
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,24" Spacing="14">
+            <StackPanel Spacing="2" Margin="4,6,4,0">
+                <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto">
+                    <TextBlock Text="{ui:Tr 'Balance'}" Classes="label" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Classes="ghost" Padding="6" Margin="4,0,0,0" Command="{Binding ToggleHideCommand}">
+                        <Panel>
+                            <Path Classes="icon small" Data="{StaticResource IconEye}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !HideBalances}" />
+                            <Path Classes="icon small" Data="{StaticResource IconEyeOff}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding HideBalances}" />
+                        </Panel>
+                    </Button>
+                    <Button Grid.Column="3" Classes="ghost" Padding="6" Command="{Binding RefreshCommand}">
+                        <Panel>
+                            <Path Classes="icon small" Data="{StaticResource IconRefresh}" Stroke="{DynamicResource TextSecondaryBrush}" IsVisible="{Binding !IsRefreshing}" />
+                            <ProgressBar IsIndeterminate="True" Width="18" MinWidth="18" Height="3" MinHeight="3" IsVisible="{Binding IsRefreshing}" />
+                        </Panel>
+                    </Button>
+                    <Button Grid.Column="4" Classes="secondary" Padding="12,6" FontSize="12" Command="{Binding ToggleCurrencyCommand}">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="{Binding CurrencyLabel}" VerticalAlignment="Center" />
+                            <Path Classes="icon small" Data="{StaticResource IconChevron}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <TextBlock Text="{Binding TotalText}" FontSize="40" FontWeight="Bold" TextTrimming="CharacterEllipsis" />
+                <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasChange}">
+                    <TextBlock Text="{Binding ChangeText}" FontWeight="SemiBold" Classes.up="{Binding IsUp}" Classes.down="{Binding !IsUp}" />
+                    <TextBlock Text="{ui:Tr 'today'}" Classes="label" />
+                </StackPanel>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*,10,*">
+                <Button Classes="primary" Command="{Binding SendCommand}" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Path Classes="icon small" Data="{StaticResource IconSend}" />
+                        <TextBlock Text="{ui:Tr 'Send'}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+                <Button Grid.Column="2" Classes="secondary" Command="{Binding ReceiveCommand}" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Path Classes="icon small" Data="{StaticResource IconReceive}" />
+                        <TextBlock Text="{ui:Tr 'Receive'}" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+
+            <Border Classes="card" IsVisible="{Binding HasPortfolioHistory}">
+                <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'Portfolio'}" FontWeight="SemiBold" />
+                        <TextBlock Grid.Column="1" Text="{Binding PortfolioChangeText}" FontSize="13" Classes.up="{Binding PortfolioIsUp}" Classes.down="{Binding !PortfolioIsUp}" />
+                    </Grid>
+                    <ui:LineChart Height="110" Points="{Binding PortfolioPoints}" IsUp="{Binding PortfolioIsUp}" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding PortfolioDaysText}" Classes="caption" />
+                </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+                <StackPanel Spacing="6">
+                    <ComboBox ItemsSource="{Binding HomeCoins}" SelectedItem="{Binding HomeCoin, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <Grid Width="22" Height="22">
+                                        <Border CornerRadius="11" Background="{DynamicResource SurfacePressedBrush}" />
+                                        <Image Source="{Binding Primary.IconPath, Converter={StaticResource FileImage}}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Name}" Classes="label" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <TextBlock Text="{Binding HomeCoinAmount}" FontSize="26" FontWeight="Bold" Margin="2,8,0,0" TextTrimming="CharacterEllipsis" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="2,0,0,0">
+                        <TextBlock Text="{Binding HomeCoinFiat}" Classes="label" />
+                        <TextBlock Text="{Binding HomeCoinChangeText}" FontSize="13" Classes.up="{Binding HomeCoinUp}" Classes.down="{Binding !HomeCoinUp}"
+                                   IsVisible="{Binding HasHomeCoinChange}" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding HomeCoinMeta}" Classes="caption" TextWrapping="Wrap" Margin="2,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Grid ColumnDefinitions="*,10,*" IsVisible="{Binding HasFunds}">
+                <Border Classes="card" Padding="14">
+                    <StackPanel Spacing="10">
+                        <TextBlock Text="{ui:Tr 'Allocation'}" FontWeight="SemiBold" />
+                        <ui:AllocationBar Height="8" Items="{Binding Slices}" />
+                        <ItemsControl ItemsSource="{Binding Slices}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,2">
+                                        <Ellipse Width="7" Height="7" Fill="{Binding Color, Converter={StaticResource HexBrush}}" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Label}" FontSize="12" Margin="7,0,4,0" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Grid.Column="2" Text="{Binding PercentText}" Classes="caption" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+                <Border Grid.Column="2" Classes="card" Padding="14" IsVisible="{Binding HasFearGreed}">
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="{ui:Tr 'Fear and greed'}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <ui:Gauge Height="64" Value="{Binding FearGreedValue}" Margin="0,8,0,0" />
+                        <TextBlock Text="{Binding FearGreedNumber}" FontSize="22" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding FearGreedLabel}" Classes="label" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <Border x:Name="NewsCard" Classes="card" Padding="16,14,16,12" IsVisible="{Binding HasNews}">
+                <StackPanel Spacing="12">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <Border Width="26" Height="26" CornerRadius="9">
+                            <Path Classes="icon small" Data="{StaticResource IconGlobe}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                        </Border>
+                        <TextBlock Grid.Column="1" Text="{ui:Tr 'News'}" FontWeight="Bold" FontSize="16" VerticalAlignment="Center" Margin="10,0,0,0" />
+                        <ItemsControl Grid.Column="2" ItemsSource="{Binding NewsDots}" IsVisible="{Binding HasManyNews}" VerticalAlignment="Center" Margin="0,0,6,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="2" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Classes="row" Padding="3,8" Command="{Binding $parent[ItemsControl].DataContext.GoToNewsCommand}" CommandParameter="{Binding}">
+                                        <Border Classes="newsdot" Classes.active="{Binding IsActive}" />
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" IsVisible="{Binding HasManyNews}">
+                            <Button Classes="ghost" Padding="6" Command="{Binding PreviousNewsCommand}">
+                                <Path Classes="icon small" Data="{StaticResource IconBack}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                            <Button Classes="ghost" Padding="6" Command="{Binding NextNewsCommand}">
+                                <Path Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" />
+                    <ItemsControl ItemsSource="{Binding VisibleNews}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Spacing="10">
+                                    <Grid ColumnDefinitions="Auto,*">
+                                        <Border Width="34" Height="34" CornerRadius="17" ClipToBounds="True">
+                                            <Image Source="{Binding AvatarName, Converter={StaticResource AssetImage}}" Stretch="UniformToFill" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center" Spacing="0">
+                                            <TextBlock Text="{Binding Author}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Date}" Classes="caption" IsVisible="{Binding HasDate}" />
+                                        </StackPanel>
+                                    </Grid>
+                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="17" TextWrapping="Wrap" IsVisible="{Binding HasTitle}" />
+                                    <ScrollViewer MaxHeight="130" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" IsScrollChainingEnabled="False">
+                                        <TextBlock Text="{Binding Description}" Classes="label" LineHeight="21" TextWrapping="Wrap" Margin="0,0,10,0" />
+                                    </ScrollViewer>
+                                    <Button Classes="secondary" Padding="14,8" HorizontalAlignment="Left" CornerRadius="12"
+                                            Command="{Binding $parent[ItemsControl].DataContext.OpenNewsCommand}" CommandParameter="{Binding}" IsVisible="{Binding HasUrl}">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{ui:Tr 'Attached link'}" FontSize="13" VerticalAlignment="Center" />
+                                            <Path Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <Grid ColumnDefinitions="*,Auto" Margin="4,4,4,0">
+                <TextBlock Text="{ui:Tr 'Coins'}" FontWeight="Bold" FontSize="17" VerticalAlignment="Center" />
+                <Button Grid.Column="1" Classes="link" Content="{Binding ToggleEmptyText}" Command="{Binding ToggleEmptyCommand}" />
+            </Grid>
+            <Border Classes="card" IsVisible="{Binding IsEmpty}">
+                <StackPanel Spacing="6" HorizontalAlignment="Center">
+                    <TextBlock Text="{ui:Tr 'No funds yet'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Tap Receive to get your addresses'}" Classes="label" TextWrapping="Wrap" TextAlignment="Center" />
+                </StackPanel>
+            </Border>
+            <ItemsControl ItemsSource="{Binding Assets}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Classes="row" Margin="0,0,0,8" Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                Command="{Binding $parent[ItemsControl].DataContext.HistoryCommand}" CommandParameter="{Binding}">
+                        <Border Classes="card" Padding="14,12">
+                            <Grid ColumnDefinitions="Auto,*,Auto">
+                                <Grid Width="38" Height="38">
+                                    <Border CornerRadius="19" Background="{DynamicResource SurfacePressedBrush}">
+                                        <TextBlock Text="{Binding Initial}" FontWeight="SemiBold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Image Source="{Binding IconPath, Converter={StaticResource FileImage}}" />
+                                </Grid>
+                                <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center" Spacing="2">
+                                    <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <Border Classes="chip"><TextBlock Text="{Binding Network}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" /></Border>
+                                        <TextBlock Text="{Binding ChangeText}" FontSize="12" VerticalAlignment="Center" Classes.up="{Binding IsUp}" Classes.down="{Binding !IsUp}" />
+                                    </StackPanel>
+                                </StackPanel>
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
+                                    <TextBlock Text="{Binding FiatText}" FontWeight="SemiBold" HorizontalAlignment="Right" />
+                                    <TextBlock Text="{Binding BalanceText}" Classes="label" HorizontalAlignment="Right" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,110 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.ReceiveView">
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,24" Spacing="12">
+            <TextBlock Text="{ui:Tr 'Receive'}" Classes="title" Margin="4,4,0,0" />
+            <Border Background="#DCEEFF" BorderBrush="#A9D3F5" BorderThickness="1" CornerRadius="14" Padding="12,10" IsVisible="{Binding ShowRotateBanner}">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Border Width="22" Height="22" CornerRadius="11" Background="#2F7FC1" VerticalAlignment="Center">
+                        <TextBlock Text="i" Foreground="White" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="10,0,6,0" Spacing="2" VerticalAlignment="Center">
+                        <TextBlock Text="{ui:Tr 'Go to Settings to enable rotating addresses'}" Foreground="#12466E" FontSize="13" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <Button Grid.Column="2" Classes="ghost" Padding="6" VerticalAlignment="Center" Command="{Binding DismissRotateBannerCommand}">
+                        <TextBlock Text="✕" Foreground="#12466E" FontSize="13" />
+                    </Button>
+                </Grid>
+            </Border>
+            <Grid ColumnDefinitions="*,10,*">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{ui:Tr 'Coin'}" Classes="caption" Margin="4,0,0,0" />
+                    <ComboBox ItemsSource="{Binding Coins}" SelectedItem="{Binding SelectedCoin, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Grid Width="20" Height="20">
+                                        <Border CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}" />
+                                        <Image Source="{Binding Primary.IconPath, Converter={StaticResource FileImage}}" />
+                                    </Grid>
+                                    <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Text="{ui:Tr 'Network'}" Classes="caption" Margin="4,0,0,0" />
+                    <ComboBox ItemsSource="{Binding Networks}" SelectedItem="{Binding SelectedNetwork, Mode=TwoWay}" IsEnabled="{Binding HasManyNetworks}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Network}" TextTrimming="CharacterEllipsis" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <Border Classes="card" Padding="18">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="2" HorizontalAlignment="Center">
+                        <TextBlock Text="{Binding Title}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding Subtitle}" Classes="label" HorizontalAlignment="Center" />
+                    </StackPanel>
+                    <Border Background="#FFFFFF" CornerRadius="18" Padding="14" HorizontalAlignment="Center">
+                        <Image Width="210" Height="210" Source="{Binding Address, Converter={StaticResource Qr}}" RenderOptions.BitmapInterpolationMode="None" />
+                    </Border>
+                    <Border Classes="soft">
+                        <SelectableTextBlock Text="{Binding Address}" FontFamily="monospace" FontSize="13.5" TextWrapping="Wrap" TextAlignment="Center" />
+                    </Border>
+                    <Grid ColumnDefinitions="*,8,*,8,*">
+                        <Button Classes="primary" Command="{Binding CopyCommand}" HorizontalAlignment="Stretch" Padding="8,12">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <Path Classes="icon small" Data="{StaticResource IconCopy}" />
+                                <Panel HorizontalAlignment="Center">
+                                    <TextBlock Text="{ui:Tr 'Copy'}" FontSize="12" IsVisible="{Binding !Copied}" />
+                                    <TextBlock Text="{ui:Tr 'Copied'}" FontSize="12" IsVisible="{Binding Copied}" />
+                                </Panel>
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" Classes="secondary" HorizontalAlignment="Stretch" Padding="8,12" Click="ShareAddress_Click">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <Path Classes="icon small" Data="{StaticResource IconShare}" />
+                                <TextBlock Text="{ui:Tr 'Share address'}" FontSize="12" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="4" Classes="secondary" HorizontalAlignment="Stretch" Padding="8,12" Click="ShareQr_Click">
+                            <StackPanel Spacing="4" HorizontalAlignment="Center">
+                                <Path Classes="icon small" Data="{StaticResource IconShare}" />
+                                <TextBlock Text="{ui:Tr 'Share QR'}" FontSize="12" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Background="{DynamicResource WarningSoftBrush}" CornerRadius="14" Padding="14,10">
+                <TextBlock Text="{Binding WarningText}" Foreground="{DynamicResource WarningBrush}" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" />
+            </Border>
+
+            <Border Classes="card">
+                <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,10,Auto,10,Auto">
+                    <TextBlock Text="{ui:Tr 'Type'}" Classes="label" />
+                    <TextBlock Grid.Column="1" Text="{Binding TokenText}" HorizontalAlignment="Right" TextWrapping="Wrap" TextAlignment="Right" Margin="12,0,0,0" />
+                    <TextBlock Grid.Row="2" Text="{ui:Tr 'Balance here'}" Classes="label" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding BalanceText}" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Row="4" Text="{ui:Tr 'Derivation path'}" Classes="label" />
+                    <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PathText}" FontFamily="monospace" FontSize="12" HorizontalAlignment="Right" />
+                </Grid>
+            </Border>
+            <Button Classes="link" HorizontalAlignment="Center" Command="{Binding OpenExplorerCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="{ui:Tr 'View address'}" VerticalAlignment="Center" />
+                    <Path Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                </StackPanel>
+            </Button>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

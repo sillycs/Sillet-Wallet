@@ -1,0 +1,6 @@
+bin/
+obj/
+.vs/
+*.user
+# Nunca subir la bóveda con la frase cifrada
+vault.json

@@ -1,0 +1,19 @@
+{
+  "news": [
+    {
+      "id": 1,
+      "author": "Raton",
+      "title": "Welcome to Sillet",
+      "description": "Your keys stay on your computer. Pick a coin and a network in Receive to get your address",
+      "date": "2026-11-01",
+      "url": "https://raton.fun"
+    },
+    {
+      "id": 2,
+      "author": "Raton",
+      "title": "Themes are here",
+      "description": "Open Settings and choose between Dark, Light, Midnight, Forest and Rose",
+      "date": "2026-11-01"
+    }
+  ]
+}

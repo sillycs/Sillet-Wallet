@@ -1,0 +1,726 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.SettingsView">
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,28" Spacing="10">
+            <TextBlock Text="{ui:Tr 'Settings'}" Classes="title" Margin="4,4,0,4" />
+            <Panel Tag="fixed">
+                <TextBox x:Name="SearchBox" Watermark="{ui:Tr 'Search settings'}" TextChanged="Search_Changed" Padding="42,10,12,10" />
+                <Path Classes="icon small" Data="{StaticResource IconSearch}" Stroke="{DynamicResource TextTertiaryBrush}" Margin="14,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center" IsHitTestVisible="False" />
+            </Panel>
+            <Border Tag="fixed" Classes="card" Padding="16">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Border Width="52" Height="52" CornerRadius="18" Background="{DynamicResource SurfaceAltBrush}">
+                        <Image Width="28" Height="28" Source="{Binding HeroIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding HeroName}" FontSize="17" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding HeroDetail}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+            <TextBlock x:Name="NoResults" Tag="fixed" Text="{ui:Tr 'No settings found'}" Classes="label" Margin="4,18,0,0" IsVisible="False" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconWallet}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Wallets'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card">
+                <StackPanel Spacing="10">
+                    <ItemsControl ItemsSource="{Binding Wallets}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+                                    <Button Classes="row" Padding="0" Command="{Binding ChoosePhotoCommand}">
+                                        <Border Width="36" Height="36" CornerRadius="12" Background="{DynamicResource SurfaceAltBrush}" ClipToBounds="True">
+                                            <Panel>
+                                                <Image Width="20" Height="20" Source="{Binding WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                <Image Stretch="UniformToFill" Source="{Binding PhotoPath, Converter={StaticResource FileImage}}" IsVisible="{Binding HasPhoto}" />
+                                            </Panel>
+                                        </Border>
+                                    </Button>
+                                    <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <StackPanel Orientation="Horizontal" Spacing="6">
+                                            <TextBlock Text="{Binding KindText, Converter={StaticResource Tr}}" Classes="caption" />
+                                            <TextBlock Text="{ui:Tr '·  In use'}" FontSize="12" Foreground="{DynamicResource PositiveBrush}" IsVisible="{Binding IsActive}" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                                        <Button Classes="secondary" Content="{ui:Tr 'Remove photo'}" Padding="10,6" FontSize="12" Command="{Binding RemovePhotoCommand}" IsVisible="{Binding HasPhoto}" />
+                                        <Button Classes="secondary" Content="{ui:Tr 'Switch'}" Padding="12,6" FontSize="12" Command="{Binding SwitchCommand}" IsVisible="{Binding IsOther}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Grid ColumnDefinitions="*,10,*">
+                        <Button Classes="secondary" Content="{ui:Tr 'Add a wallet'}" Command="{Binding AddWalletCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                        <Button Grid.Column="2" Classes="secondary" Content="{ui:Tr 'Hardware wallet'}" Command="{Binding AddWatchWalletCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="10" IsVisible="{Binding IsSeedWallet}">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                    <Path Classes="icon small" Data="{StaticResource IconStar}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Accounts'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                </StackPanel>
+                <Border Classes="card">
+                    <StackPanel Spacing="10">
+                        <ItemsControl ItemsSource="{Binding AccountRows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,4">
+                                        <Button Classes="row" Padding="0" Margin="0,0,10,0" VerticalAlignment="Center" Command="{Binding ChoosePhotoCommand}">
+                                            <Panel Width="46" Height="44">
+
+                                            <Border Width="40" Height="40" CornerRadius="20" HorizontalAlignment="Left" VerticalAlignment="Top" Background="{DynamicResource SurfaceAltBrush}" ClipToBounds="True">
+                                                <Panel>
+                                                    <TextBlock Text="{Binding Initial}" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <Image Stretch="UniformToFill" Source="{Binding PhotoPath, Converter={StaticResource FileImage}}" IsVisible="{Binding HasPhoto}" />
+                                                </Panel>
+                                            </Border>
+                                        
+                                                <Border Width="19" Height="19" CornerRadius="10" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource SurfaceAltBrush}" BorderThickness="2">
+                                                    <Image Width="10" Height="10" Source="{Binding WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                </Border>
+                                            </Panel>
+                                        </Button>
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBox Text="{Binding Name, Mode=TwoWay}" MaxLength="32" />
+                                            <TextBlock Text="{ui:Tr 'In use'}" FontSize="12" Foreground="{DynamicResource PositiveBrush}" IsVisible="{Binding IsActive}" />
+                                        </StackPanel>
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <Button Classes="secondary" Content="{ui:Tr 'Remove photo'}" Padding="10,6" FontSize="12" Command="{Binding RemovePhotoCommand}" IsVisible="{Binding HasPhoto}" />
+                                            <Button Classes="secondary" Content="{ui:Tr 'Switch'}" Padding="12,6" FontSize="12" Command="{Binding SwitchCommand}" IsVisible="{Binding IsOther}" />
+                                        </StackPanel>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Classes="secondary" Content="{ui:Tr 'Add an account'}" Command="{Binding AddAccountCommand}" HorizontalAlignment="Stretch" FontSize="13" IsVisible="{Binding CanAddAccount}" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{ui:Tr 'Addresses for each account'}" Classes="caption" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'Every account has its own addresses on every network, all from the same recovery phrase. Use them to keep savings, DeFi and spending apart'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconSettings}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'General'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{ui:Tr 'Language'}" />
+                            <TextBlock Text="{ui:Tr 'The whole app changes right away'}" Classes="caption" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="1" MinWidth="130" ItemsSource="{Binding Languages}" SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock Text="{ui:Tr 'Currency'}" />
+                            <TextBlock Text="{ui:Tr 'Prices and totals'}" Classes="caption" />
+                        </StackPanel>
+                        <Button Grid.Column="1" Classes="secondary" MinWidth="130" Padding="14,0" Command="{Binding ToggleCurrencyPickerCommand}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding SelectedCurrency.Label}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                <Path Classes="icon small" Data="{StaticResource IconChevron}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{ui:Tr 'Private mode'}" />
+                            <TextBlock Text="{ui:Tr 'Hides balances'}" Classes="caption" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding HideBalances, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{ui:Tr 'Hide small balances'}" />
+                            <TextBlock Text="{Binding SmallBalanceText}" Classes="caption" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding HideSmallBalances, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Refresh prices'}" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="3">
+                                <RadioButton Classes="seg" GroupName="Refresh" Content="{ui:Tr '1 min'}" IsChecked="{Binding Refresh1, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Refresh" Content="{ui:Tr '2 min'}" IsChecked="{Binding Refresh2, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Refresh" Content="{ui:Tr '5 min'}" IsChecked="{Binding Refresh5, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Start page'}" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="2">
+                                <RadioButton Classes="seg" GroupName="Start" Content="{ui:Tr 'Home'}" IsChecked="{Binding StartHome, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Start" Content="{ui:Tr 'Market'}" IsChecked="{Binding StartMarket, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Default fee speed'}" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="3">
+                                <RadioButton Classes="seg" GroupName="DefFee" Content="{ui:Tr 'Slow'}" IsChecked="{Binding DefaultFeeSlow, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="DefFee" Content="{ui:Tr 'Normal'}" IsChecked="{Binding DefaultFeeNormal, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="DefFee" Content="{ui:Tr 'Fast'}" IsChecked="{Binding DefaultFeeFast, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconImage}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Appearance'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <ItemsControl ItemsSource="{Binding Themes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><UniformGrid Columns="3" /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Button Classes="row" Margin="0,0,8,8" Command="{Binding $parent[ItemsControl].DataContext.SelectThemeCommand}" CommandParameter="{Binding}">
+                            <Border CornerRadius="16" Padding="12,12" Background="{Binding Background, Converter={StaticResource HexBrush}}"
+                                    BorderBrush="{Binding Accent, Converter={StaticResource HexBrush}}" BorderThickness="2">
+                                <StackPanel Spacing="8">
+                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                        <Ellipse Width="10" Height="10" Fill="{Binding Accent, Converter={StaticResource HexBrush}}" />
+                                        <Ellipse Width="10" Height="10" Fill="{Binding Text, Converter={StaticResource HexBrush}}" />
+                                        <Ellipse Width="10" Height="10" Fill="{Binding Surface, Converter={StaticResource HexBrush}}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Name, Converter={StaticResource Tr}}" Foreground="{Binding Text, Converter={StaticResource HexBrush}}" FontSize="13" FontWeight="SemiBold" />
+                                </StackPanel>
+                            </Border>
+                        </Button>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconShield}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Security'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card">
+                <StackPanel Spacing="14">
+                    <StackPanel Spacing="10" IsVisible="{Binding IsSeedWallet}">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Border Width="38" Height="38" CornerRadius="12" Background="{DynamicResource SurfaceAltBrush}">
+                                <Path Classes="icon" Data="{StaticResource IconFinger}" />
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="{ui:Tr 'Biometric unlock'}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding PasskeyStatusText}" Classes="caption" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Text="{Binding PasskeyUnavailableText}" FontSize="12" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" IsVisible="{Binding !PasskeyAvailable}" />
+                        <StackPanel Spacing="8" IsVisible="{Binding CanSetupPasskey}">
+                            <TextBox x:Name="PasskeyPasswordBox" PasswordChar="•" Watermark="{ui:Tr 'Your password'}" TextChanged="PasskeyPassword_Changed" />
+                            <Button Classes="primary" Command="{Binding SetupPasskeyCommand}" HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <ProgressBar IsIndeterminate="True" Width="18" MinWidth="18" IsVisible="{Binding IsPasskeyBusy}" />
+                                    <TextBlock Text="{ui:Tr 'Set up'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <Button Classes="secondary" Content="{ui:Tr 'Remove'}" Command="{Binding RemovePasskeyCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding HasPasskey}" />
+                        <TextBlock Text="{Binding PasskeyError}" Classes="error" IsVisible="{Binding HasPasskeyError}" />
+                        <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" Margin="0,4,0,0" />
+                    </StackPanel>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Auto-lock'}" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="4">
+                                <RadioButton Classes="seg" GroupName="Lock" Content="{ui:Tr 'Off'}" IsChecked="{Binding AutoLockOff, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Lock" Content="{ui:Tr '5 min'}" IsChecked="{Binding AutoLock5, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Lock" Content="{ui:Tr '15 min'}" IsChecked="{Binding AutoLock15, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Lock" Content="{ui:Tr '30 min'}" IsChecked="{Binding AutoLock30, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{ui:Tr 'Hide from screenshots'}" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{ui:Tr 'Blocks screenshots'}" Classes="caption" VerticalAlignment="Center" />
+                                <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                        <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <TextBlock Text="{ui:Tr 'Turn off to share screenshots of Sillet'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding BlockScreenCapture, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{ui:Tr 'Screenshot reminder'}" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{ui:Tr 'Offers to share your screenshots'}" Classes="caption" VerticalAlignment="Center" />
+                                <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                        <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <TextBlock Text="{ui:Tr 'Shows the screenshot and asks if you want to share it when you take one'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding ScreenshotReminder, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="{ui:Tr 'Slow down wrong passwords'}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'After 3 wrong tries each new try waits longer, and you see how many happened'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SlowDownUnlock, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Margin="0,0,12,0" Spacing="2" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{ui:Tr 'Rotating receive addresses'}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                        <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <TextBlock Text="{ui:Tr 'A fresh address after each payment'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                            <TextBlock Text="{ui:Tr 'Bitcoin, Litecoin and Dogecoin show a fresh address each time the last one receives a payment. Older addresses keep working and their funds still count in your balance'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding RotateReceive, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="{ui:Tr 'Warn on new addresses'}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'Highlights the first send to an address you never used'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding WarnNewAddress, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" Spacing="2">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{ui:Tr 'Catch lookalike addresses'}" TextWrapping="Wrap" VerticalAlignment="Center" />
+                                <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                        <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <TextBlock Text="{ui:Tr 'Scammers send tiny payments from addresses that start and end like one you use, hoping you copy them from your history. Sillet compares the whole address with your contacts, your earlier sends and your own addresses, and warns before you send'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                            <TextBlock Text="{ui:Tr 'Warns when an address looks like one you used before but is not the same'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding WarnLookalike, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'Only send to saved contacts'}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding ContactsOnly, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IsSeedWallet}">
+                        <TextBlock Text="{ui:Tr 'Require password to send'}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding RequirePasswordToSend, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Extra check for large sends'}" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="3">
+                                <RadioButton Classes="seg" GroupName="Large" Content="{ui:Tr 'Off'}" IsChecked="{Binding LargeSendOff, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Large" Content="{Binding LargeSendLowText}" IsChecked="{Binding LargeSendLow, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Large" Content="{Binding LargeSendHighText}" IsChecked="{Binding LargeSendHigh, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconBell}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Notifications'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card">
+                <StackPanel Spacing="14">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'Notifications'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotificationsOn, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'Sounds'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding SoundsOn, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'New payments'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotifyPayments, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'News'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotifyNews, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Text="{ui:Tr 'Bitcoin price moves'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotifyBitcoin, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" Spacing="2">
+                            <TextBlock Text="{ui:Tr 'Push notifications'}" />
+                            <TextBlock Text="{ui:Tr 'Everything in the bell also shows in your phone notifications'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding PushNotifications, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel Margin="0,0,12,0" VerticalAlignment="Center">
+                            <TextBlock Text="{ui:Tr 'Keep watching for payments'}" TextWrapping="Wrap" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{ui:Tr 'Runs in the background'}" Classes="caption" VerticalAlignment="Center" />
+                                <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                    <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                        <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <Button.Flyout>
+                                        <Flyout Placement="Bottom">
+                                            <TextBlock Text="{ui:Tr 'Runs in the background with a small notification, so you hear about payments right away'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                        </Flyout>
+                                    </Button.Flyout>
+                                </Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding RunInBackground, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Button Classes="secondary" Content="{ui:Tr 'Send a test notification'}" Command="{Binding TestPushCommand}" HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSeedWallet}" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconLock}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Change password'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card" IsVisible="{Binding IsSeedWallet}">
+                <StackPanel Spacing="10">
+                    <TextBox x:Name="CurrentPasswordBox" PasswordChar="•" Watermark="{ui:Tr 'Current password'}" TextChanged="CurrentPassword_Changed" />
+                    <TextBox x:Name="NewPasswordBox" PasswordChar="•" Watermark="{ui:Tr 'New password'}" TextChanged="NewPassword_Changed" />
+                    <TextBlock Text="{Binding PasswordError}" Classes="error" IsVisible="{Binding HasPasswordError}" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Change password'}" Command="{Binding ChangePasswordCommand}" HorizontalAlignment="Stretch" />
+                    <TextBlock Text="{ui:Tr 'Your recovery phrase stays the same'}" Classes="caption" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSeedWallet}" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconEye}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Recovery phrase'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card" IsVisible="{Binding IsSeedWallet}">
+                <StackPanel Spacing="10">
+                    <StackPanel Spacing="10" IsVisible="{Binding !IsRevealed}">
+                        <TextBlock Text="{ui:Tr 'Only reveal it somewhere private'}" Classes="label" />
+                        <TextBox Text="{Binding RevealPassword, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'Password'}" />
+                        <Button Classes="secondary" Content="{ui:Tr 'Show'}" Command="{Binding RevealCommand}" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding RevealError}" Classes="error" IsVisible="{Binding HasRevealError}" />
+                    <StackPanel Spacing="10" IsVisible="{Binding IsRevealed}">
+                        <ItemsControl ItemsSource="{Binding Words}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Classes="soft" Margin="0,0,6,6" Padding="10,8">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding Number}" Classes="caption" Width="20" />
+                                            <TextBlock Text="{Binding Word}" FontFamily="monospace" />
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <Button Classes="secondary" Content="{ui:Tr 'Hide'}" Command="{Binding HideWordsCommand}" HorizontalAlignment="Stretch" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                    <Path Classes="icon small" Data="{StaticResource IconPlus}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Custom tokens'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                </StackPanel>
+                <Border Classes="card">
+                    <StackPanel Spacing="10">
+                        <ItemsControl ItemsSource="{Binding TokenRows}" IsVisible="{Binding HasTokens}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+                                        <StackPanel VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                            <TextBlock Text="{Binding Network}" Classes="caption" />
+                                            <TextBlock Text="{Binding Contract}" Classes="caption" />
+                                        </StackPanel>
+                                        <Button Grid.Column="1" Classes="secondary" Content="{ui:Tr 'Remove'}" Padding="12,6" FontSize="12" Command="{Binding RemoveCommand}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Classes="icon small" Data="{StaticResource IconGlobe}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{ui:Tr 'Network'}" Classes="caption" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ComboBox ItemsSource="{Binding TokenNetworks}" SelectedItem="{Binding SelectedTokenNetwork, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Name}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Classes="icon small" Data="{StaticResource IconWallet}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{ui:Tr 'Contract address'}" Classes="caption" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <TextBox Text="{Binding TokenContract, Mode=TwoWay}" Watermark="0x..." />
+                        <TextBlock Text="{Binding TokenError}" Classes="error" IsVisible="{Binding HasTokenError}" TextWrapping="Wrap" />
+                        <StackPanel Spacing="4" IsVisible="{Binding HasFoundToken}">
+                            <TextBlock Text="{Binding FoundTokenText}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                            <TextBlock Text="{ui:Tr 'Anyone can create a token with any name, even a copy of a real one. Add only tokens you trust and check the contract on the official site of the project'}" Classes="caption" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Button Classes="secondary" Command="{Binding LookupTokenCommand}" HorizontalAlignment="Stretch" FontSize="13">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <Path Classes="icon small" Data="{StaticResource IconEye}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{ui:Tr 'Look up'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="1" Margin="10,0,0,0" Classes="primary" Command="{Binding AddTokenCommand}" HorizontalAlignment="Stretch" FontSize="13" IsVisible="{Binding HasFoundToken}">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <Path Classes="icon small" Data="{StaticResource IconPlus}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{ui:Tr 'Add token'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{ui:Tr 'Add it by its contract address'}" Classes="caption" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'Add a token by its contract address. Custom tokens show no price'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <StackPanel Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                    <Path Classes="icon small" Data="{StaticResource IconGlobe}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Network privacy'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                </StackPanel>
+                <Border Classes="card">
+                    <StackPanel Spacing="10">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <Path Classes="icon small" Data="{StaticResource IconLock}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{ui:Tr 'Proxy or Tor'}" Classes="caption" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'Hides your IP address from nodes and price services. Tor Browser listens on 127.0.0.1:9150 and the Tor service on 127.0.0.1:9050. Leave empty for a direct connection'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        <TextBox Text="{Binding ProxyText, Mode=TwoWay}" Watermark="socks5://127.0.0.1:9050" />
+                        <TextBlock Text="{ui:Tr 'Leave empty for a direct connection'}" Classes="caption" TextWrapping="Wrap" />
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,6,0,0">
+                            <Path Classes="icon small" Data="{StaticResource IconSettings}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{ui:Tr 'Your own nodes'}" Classes="caption" VerticalAlignment="Center" />
+                            <Button Classes="ghost" Padding="4" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <Border Width="18" Height="18" CornerRadius="9" BorderThickness="1" BorderBrush="{DynamicResource TextTertiaryBrush}">
+                                    <TextBlock Text="i" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <TextBlock Text="{ui:Tr 'When set, that network uses only your node and never falls back to ours'}" MaxWidth="260" TextWrapping="Wrap" FontSize="13" />
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                        <TextBox Text="{Binding EndpointsText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" Watermark="ethereum=https://my-node.example" />
+                        <TextBlock Text="{ui:Tr 'One per line, like ethereum=https://my-node.example'}" Classes="caption" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding NetworkMessage}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasNetworkMessage}" />
+                        <Grid ColumnDefinitions="*,10,*">
+                            <Button Classes="secondary" Command="{Binding UseTorCommand}" HorizontalAlignment="Stretch" FontSize="13">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <Path Classes="icon small" Data="{StaticResource IconGlobe}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{ui:Tr 'Use Tor'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Grid.Column="2" Classes="primary" Command="{Binding SaveNetworkCommand}" HorizontalAlignment="Stretch" FontSize="13">
+                                <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                                    <Path Classes="icon small" Data="{StaticResource IconCheck}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{ui:Tr 'Save'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconHeart}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'About'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Border Classes="card">
+                <StackPanel Spacing="12">
+                    <Button Classes="row" Click="Donate_Click">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Path Classes="icon" Data="{StaticResource IconHeart}" Stroke="{DynamicResource NegativeBrush}" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                <TextBlock Text="{ui:Tr 'Support Sillet'}" FontWeight="SemiBold" />
+                                <TextBlock Text="{ui:Tr 'Free forever'}" Classes="caption" />
+                            </StackPanel>
+                            <Path Grid.Column="2" Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextTertiaryBrush}" />
+                        </Grid>
+                    </Button>
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" />
+                    <Button Classes="row" Command="{Binding CheckUpdateCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Path Classes="icon" Data="{StaticResource IconRefresh}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                <TextBlock Text="{ui:Tr 'Check for updates'}" FontWeight="SemiBold" />
+                                <TextBlock Text="{Binding UpdateStatus}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasUpdateStatus}" />
+                            </StackPanel>
+                        </Grid>
+                    </Button>
+                    <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" />
+                    <Button Classes="row" Command="{Binding OpenRatonCommand}">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Image Width="24" Height="24" Source="/Assets/silleticon.png" />
+                            <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                <TextBlock Text="{ui:Tr 'Made by the Raton team'}" FontWeight="SemiBold" />
+                                <TextBlock Text="raton.fun/wallet" Classes="caption" />
+                            </StackPanel>
+                            <Path Grid.Column="2" Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextTertiaryBrush}" />
+                        </Grid>
+                    </Button>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsSeedWallet}" Margin="4,10,0,0">
+
+                <Path Classes="icon small" Data="{StaticResource IconClose}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+
+                <TextBlock Text="{ui:Tr 'Danger zone'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+
+            </StackPanel>
+            <Button Classes="secondary" Command="{Binding DeleteCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding IsSeedWallet}">
+                <TextBlock Text="{ui:Tr 'Delete wallet'}" Foreground="{DynamicResource NegativeBrush}" />
+            </Button>
+
+            <TextBlock Tag="fixed" Text="{Binding Version}" Classes="caption" HorizontalAlignment="Center" Margin="0,14,0,0" Foreground="White" Opacity="0.7" />
+            <Button Tag="fixed" Classes="ghost" Command="{Binding ToggleDeveloperCommand}" HorizontalAlignment="Center" Padding="10,4" Margin="0,-6,0,0">
+                <TextBlock Text="{ui:Tr 'Developer mode'}" FontSize="9.5" Foreground="White" Opacity="0.4" />
+            </Button>
+            <Border Tag="fixed" Classes="card" IsVisible="{Binding IsDeveloperOpen}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{ui:Tr 'Developer mode'}" FontWeight="SemiBold" />
+                    <TextBlock Text="{ui:Tr 'Made-up payments, receipts and notifications. Nothing is signed or sent'}" Classes="caption" TextWrapping="Wrap" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test sent payment'}" Command="{Binding DevFakeSentCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test received payment'}" Command="{Binding DevFakeReceivedCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test notifications'}" Command="{Binding DevNotificationsCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test receipt'}" Command="{Binding DevReceiptCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test large payment'}" Command="{Binding DevBigPaymentCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Test 40 transfers'}" Command="{Binding DevManyEntriesCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Clear test data'}" Command="{Binding DevClearCommand}" HorizontalAlignment="Stretch" FontSize="13" />
+                    <TextBlock Text="{Binding DevStatus}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasDevStatus}" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

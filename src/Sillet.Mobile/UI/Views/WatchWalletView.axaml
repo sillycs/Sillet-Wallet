@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.WatchWalletView">
+    <ScrollViewer>
+        <StackPanel Margin="22,30,22,30" Spacing="10">
+            <TextBlock Text="{ui:Tr 'Watch a hardware wallet'}" Classes="title" />
+            <TextBlock Text="{ui:Tr 'Paste the receive addresses from Ledger Live, Trezor Suite or your device app. Sillet shows balances; sending is done from the device app'}"
+                       Classes="label" TextWrapping="Wrap" Margin="0,0,0,8" />
+            <TextBlock Text="{ui:Tr 'Name'}" Classes="label" />
+            <TextBox Text="{Binding Name, Mode=TwoWay}" MaxLength="32" />
+            <ItemsControl ItemsSource="{Binding Fields}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Spacing="6" Margin="0,10,0,0">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{Binding Title}" Classes="label" />
+                                <TextBlock Grid.Column="1" Text="{ui:Tr 'Invalid address'}" Classes="error" IsVisible="{Binding IsInvalid}" />
+                            </Grid>
+                            <TextBox Text="{Binding Address, Mode=TwoWay}" Watermark="{Binding Hint}" FontFamily="monospace" FontSize="13" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock Text="{Binding Error}" Classes="error" IsVisible="{Binding HasError}" />
+            <Grid ColumnDefinitions="Auto,10,*" Margin="0,10,0,0">
+                <Button Classes="secondary" Content="{ui:Tr 'Back'}" Command="{Binding CancelCommand}" />
+                <Button Grid.Column="2" Classes="primary" Content="{ui:Tr 'Start watching'}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" />
+            </Grid>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,409 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.SendView">
+    <UserControl.Styles>
+        <Style Selector="Control.rise">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateY(22px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.rise.in">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
+        <Style Selector="Control.rise.d1">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.25" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.25" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.rise.d2">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.35" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.35" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.rise.d3">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.55" Delay="0:0:0.5" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.55" Delay="0:0:0.5" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.rise.d4">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.7" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.7" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.rise.d5">
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.8" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.8" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.pop">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(0.3)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.65" Easing="BackEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.pop.in">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+        <Style Selector="Control.ringpulse">
+            <Setter Property="Opacity" Value="0.7" />
+            <Setter Property="RenderTransform" Value="scale(1)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:1.1" Delay="0:0:0.3" Easing="CubicEaseOut" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1.1" Delay="0:0:0.3" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Control.ringpulse.in">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="scale(1.4)" />
+        </Style>
+        <Style Selector="Button.ongreen">
+            <Setter Property="Padding" Value="16,14" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="CornerRadius" Value="16" />
+        </Style>
+        <Style Selector="Button.ongreen.soft">
+            <Setter Property="Background" Value="#26FFFFFF" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.ongreen.soft /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#26FFFFFF" />
+            <Setter Property="Foreground" Value="White" />
+        </Style>
+        <Style Selector="Button.ongreen.solid">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#0A6B3E" />
+        </Style>
+        <Style Selector="Button.ongreen.solid /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="White" />
+            <Setter Property="Foreground" Value="#0A6B3E" />
+        </Style>
+        <Style Selector="Button.ongreen.solid:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#E8FFF3" />
+            <Setter Property="Foreground" Value="#0A6B3E" />
+        </Style>
+    </UserControl.Styles>
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,24" Spacing="12">
+            <StackPanel Spacing="12" IsVisible="{Binding IsFormStep}">
+                <StackPanel Spacing="2" Margin="4,4,0,0">
+                    <TextBlock Text="{ui:Tr 'Send'}" Classes="title" />
+                    <TextBlock Text="{ui:Tr 'Paste, scan or pick a contact'}" Classes="caption" />
+                </StackPanel>
+                <Grid ColumnDefinitions="*,10,*">
+                    <Button Classes="tile" Click="Scan_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconScan}" />
+                            <TextBlock Text="{ui:Tr 'Scan QR'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" Classes="tile" Click="ScanImage_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconImage}" />
+                            <TextBlock Text="{ui:Tr 'From image'}" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+                <Grid ColumnDefinitions="*,10,*">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Coin'}" Classes="caption" Margin="4,0,0,0" />
+                        <ComboBox ItemsSource="{Binding Coins}" SelectedItem="{Binding SelectedCoin, Mode=TwoWay}" PlaceholderText="{ui:Tr 'Choose a coin'}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Grid Width="20" Height="20">
+                                            <Border CornerRadius="10" Background="{DynamicResource SurfacePressedBrush}" />
+                                            <Image Source="{Binding Primary.IconPath, Converter={StaticResource FileImage}}" />
+                                        </Grid>
+                                        <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding AmountText}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="6">
+                        <TextBlock Text="{ui:Tr 'Network'}" Classes="caption" Margin="4,0,0,0" />
+                        <ComboBox ItemsSource="{Binding Networks}" SelectedItem="{Binding SelectedAsset, Mode=TwoWay}" IsEnabled="{Binding HasManyNetworks}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Network}" TextTrimming="CharacterEllipsis" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </StackPanel>
+                </Grid>
+
+                <StackPanel Spacing="12" IsVisible="{Binding HasSelection}">
+                    <Border Classes="card" Padding="14">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{ui:Tr 'To'}" Classes="label" VerticalAlignment="Center" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                    <Button Classes="link" Click="Scan_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <Path Classes="icon small" Data="{StaticResource IconScan}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{ui:Tr 'Scan'}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button Classes="link" Click="Paste_Click">
+                                        <StackPanel Orientation="Horizontal" Spacing="4">
+                                            <Path Classes="icon small" Data="{StaticResource IconCopy}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                                            <TextBlock Text="{ui:Tr 'Paste'}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                            <TextBox Text="{Binding ToAddress, Mode=TwoWay}" Watermark="{Binding AddressHint}" FontFamily="monospace" FontSize="13" TextWrapping="Wrap" />
+                            <TextBlock Text="{Binding AddressError}" Classes="error" IsVisible="{Binding HasAddressError}" />
+                            <TextBlock Text="{Binding ToContactName}" Foreground="{DynamicResource PositiveBrush}" FontSize="13" IsVisible="{Binding HasToContact}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Classes="card" Padding="14">
+                        <StackPanel Spacing="8">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Text="{ui:Tr 'Amount'}" Classes="label" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding AvailableText}" Classes="caption" VerticalAlignment="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                <TextBox Text="{Binding AmountText, Mode=TwoWay}" Watermark="0" FontSize="24" FontWeight="SemiBold" BorderThickness="0" Background="Transparent" Padding="0,4" />
+                                <Button Grid.Column="1" Classes="secondary" Command="{Binding ToggleAmountModeCommand}" IsVisible="{Binding CanToggleAmountMode}" Padding="10,7" FontSize="12" Margin="0,0,6,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <TextBlock Text="{Binding AmountUnit}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <Path Classes="icon small" Data="{StaticResource IconSwap}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                                        <TextBlock Text="{Binding OtherUnit}" Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Grid.Column="2" Classes="secondary" Content="{ui:Tr 'Max'}" Command="{Binding MaxCommand}" Padding="14,7" FontSize="12" VerticalAlignment="Center" />
+                            </Grid>
+                            <TextBlock Text="{Binding FiatEquivalentText}" Classes="caption" />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="6" IsVisible="{Binding SupportsFeeSpeed}">
+                        <TextBlock Text="{ui:Tr 'Fee speed'}" Classes="caption" Margin="4,0,0,0" />
+                        <Border Classes="seghost">
+                            <UniformGrid Columns="3">
+                                <RadioButton Classes="seg" GroupName="Fee" Content="{ui:Tr 'Slow'}" IsChecked="{Binding FeeSlow, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Fee" Content="{ui:Tr 'Normal'}" IsChecked="{Binding FeeNormal, Mode=TwoWay}" />
+                                <RadioButton Classes="seg" GroupName="Fee" Content="{ui:Tr 'Fast'}" IsChecked="{Binding FeeFast, Mode=TwoWay}" />
+                            </UniformGrid>
+                        </Border>
+                    </StackPanel>
+                    <TextBlock Text="{Binding FeeHint}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasFeeHint}" Margin="4,0,0,0" />
+                    <Button Classes="primary" Content="{ui:Tr 'Continue'}" Command="{Binding ReviewCommand}" HorizontalAlignment="Stretch" Margin="0,4,0,0" />
+
+                    <StackPanel Spacing="8" IsVisible="{Binding HasRecipients}" Margin="0,8,0,0">
+                        <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                            <Path Classes="icon small" Data="{StaticResource IconActivity}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            <TextBlock Text="{ui:Tr 'Recent'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ItemsControl ItemsSource="{Binding Recipients}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.UseRecipientCommand}" CommandParameter="{Binding}">
+                                        <Border Classes="soft" Padding="12,10">
+                                            <Grid ColumnDefinitions="*,Auto">
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding ShortAddress}" FontFamily="monospace" FontSize="13" />
+                                                    <TextBlock Text="{Binding DetailText}" Classes="caption" />
+                                                </StackPanel>
+                                                <Path Grid.Column="1" Classes="icon small" Data="{StaticResource IconForward}" Stroke="{DynamicResource TextTertiaryBrush}" />
+                                            </Grid>
+                                        </Border>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Spacing="12" IsVisible="{Binding IsReviewStep}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Button Classes="ghost" Command="{Binding BackCommand}">
+                        <Path Classes="icon" Data="{StaticResource IconBack}" />
+                    </Button>
+                    <TextBlock Grid.Column="1" Text="{ui:Tr 'Confirm send'}" Classes="title" VerticalAlignment="Center" Margin="6,0,0,0" />
+                </Grid>
+                <Border Classes="card" Padding="20,24">
+                    <StackPanel Spacing="4" HorizontalAlignment="Center">
+                        <TextBlock Text="{ui:Tr 'You are sending'}" Classes="caption" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding ReviewAmountText}" FontSize="32" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding ReviewFiatText}" Classes="label" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="card" Padding="16,14">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="{ui:Tr 'To'}" Classes="caption" />
+                        <SelectableTextBlock Text="{Binding ReviewToText}" FontFamily="monospace" FontSize="13" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding ReviewHistoryNote}" Classes="caption" TextWrapping="Wrap" Classes.warn="{Binding ReviewIsNewAddress}" />
+                    </StackPanel>
+                </Border>
+                <Border Classes="card" Padding="16,8">
+                    <StackPanel>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,9">
+                            <TextBlock Text="{ui:Tr 'Network'}" Classes="label" />
+                            <TextBlock Grid.Column="1" Text="{Binding ReviewNetworkText}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,9">
+                            <TextBlock Text="{ui:Tr 'They receive'}" Classes="label" />
+                            <TextBlock Grid.Column="1" Text="{Binding ReviewAmountText}" TextWrapping="Wrap" TextAlignment="Right" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,9">
+                            <TextBlock Text="{ui:Tr 'Network fee'}" Classes="label" />
+                            <TextBlock Grid.Column="1" Text="{Binding ReviewFeeText}" TextWrapping="Wrap" TextAlignment="Right" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                        <Border Height="1" Background="{DynamicResource BorderSubtleBrush}" />
+                        <Grid ColumnDefinitions="Auto,*" Margin="0,12">
+                            <TextBlock Text="{ui:Tr 'You pay'}" FontWeight="SemiBold" />
+                            <TextBlock Grid.Column="1" Text="{Binding ReviewYouPayText}" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Right" HorizontalAlignment="Right" Margin="12,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+                <TextBlock Text="{ui:Tr 'The fee is paid on top. The recipient gets the full amount'}" Classes="caption" TextWrapping="Wrap" Margin="4,0" />
+                <ItemsControl ItemsSource="{Binding Notes}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{DynamicResource WarningSoftBrush}" CornerRadius="12" Padding="12,9" Margin="0,0,0,6">
+                                <TextBlock Text="{Binding}" Foreground="{DynamicResource WarningBrush}" FontSize="13" TextWrapping="Wrap" />
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Spacing="6" IsVisible="{Binding RequiresAddressCheck}">
+                    <TextBlock Text="{Binding AddressCheckHint}" Foreground="{DynamicResource WarningBrush}" FontSize="13" TextWrapping="Wrap" />
+                    <TextBox Text="{Binding AddressCheck, Mode=TwoWay}" MaxLength="4" Watermark="{ui:Tr 'Last 4 characters'}" FontFamily="monospace" />
+                </StackPanel>
+                <StackPanel Spacing="6" IsVisible="{Binding RequiresPassword}">
+                    <TextBlock Text="{ui:Tr 'Password'}" Classes="caption" Margin="4,0,0,0" />
+                    <TextBox x:Name="ConfirmBox" PasswordChar="•" Watermark="{ui:Tr 'Enter your password to send'}" TextChanged="ConfirmBox_TextChanged" />
+                    <Button Classes="secondary" Command="{Binding ConfirmWithHelloCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding CanUseHello}">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Path Classes="icon small" Data="{StaticResource IconFinger}" />
+                            <TextBlock Text="{ui:Tr 'Confirm with fingerprint'}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+                <ui:SwipeButton Command="{Binding ConfirmCommand}" Text="{ui:Tr 'Swipe to send'}" DoneText="{ui:Tr 'Sending...'}" Margin="0,4,0,0" />
+            </StackPanel>
+
+            <Border x:Name="DonePanel" IsVisible="{Binding IsDoneStep}" Margin="0,16,0,0" CornerRadius="28" Padding="18,30,18,18">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                        <GradientStop Color="#1BB56C" Offset="0" />
+                        <GradientStop Color="#0A6B3E" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+                <StackPanel Spacing="14">
+                    <Panel Width="150" Height="150" HorizontalAlignment="Center">
+                        <Ellipse Classes="ringpulse" Width="104" Height="104" Stroke="#66FFFFFF" StrokeThickness="2" />
+                        <Border Classes="pop" Width="112" Height="112" CornerRadius="56" Background="#24FFFFFF" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Border Width="78" Height="78" CornerRadius="39" Background="White" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                <Path Classes="icon" Data="{StaticResource IconCheck}" Stroke="#0A6B3E" StrokeThickness="2.8" RenderTransform="scale(1.7)" />
+                            </Border>
+                        </Border>
+                    </Panel>
+                    <TextBlock Classes="rise d1" Text="{Binding StageTitle}" FontSize="15" FontWeight="SemiBold" Foreground="#CCFFFFFF" HorizontalAlignment="Center" />
+                    <TextBlock Classes="rise d2" Text="{Binding ResultAmountText}" FontSize="34" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" TextWrapping="Wrap" TextAlignment="Center" />
+                    <TextBlock Classes="rise d2" Text="{Binding ResultFiatText}" FontSize="14" Foreground="#CCFFFFFF" HorizontalAlignment="Center" IsVisible="{Binding HasResultFiat}" />
+                    <StackPanel Classes="rise d3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,6,0,0">
+                            <StackPanel Spacing="6" Width="84">
+                                <Panel Width="30" Height="30" HorizontalAlignment="Center">
+                                    <Ellipse Width="30" Height="30" Stroke="#66FFFFFF" StrokeThickness="2" />
+                                    <Ellipse Classes="stepfill" Width="30" Height="30" Fill="White" IsVisible="{Binding S1Done}" />
+                                    <Ellipse Width="9" Height="9" Fill="White" IsVisible="{Binding S1Active}" />
+                                    <Path Classes="icon small" Data="{StaticResource IconCheck}" Stroke="#0A6B3E" StrokeThickness="2.8" IsVisible="{Binding S1Done}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Panel>
+                                <TextBlock Text="{ui:Tr 'Pending'}" FontSize="12" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <Panel Width="40" Margin="-10,14,-10,0" VerticalAlignment="Top">
+                                <Border Height="2" CornerRadius="1" Background="#55FFFFFF" />
+                                <Border Height="2" CornerRadius="1" Background="White" IsVisible="{Binding S1Done}" />
+                            </Panel>
+                            <StackPanel Spacing="6" Width="84">
+                                <Panel Width="30" Height="30" HorizontalAlignment="Center">
+                                    <Ellipse Width="30" Height="30" Stroke="#66FFFFFF" StrokeThickness="2" />
+                                    <Ellipse Classes="stepfill" Width="30" Height="30" Fill="White" IsVisible="{Binding S2Done}" />
+                                    <Ellipse Width="9" Height="9" Fill="White" IsVisible="{Binding S2Active}" />
+                                    <Path Classes="icon small" Data="{StaticResource IconCheck}" Stroke="#0A6B3E" StrokeThickness="2.8" IsVisible="{Binding S2Done}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Panel>
+                                <TextBlock Text="{ui:Tr 'Confirmed'}" FontSize="12" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                            </StackPanel>
+                            <Panel Width="40" Margin="-10,14,-10,0" VerticalAlignment="Top">
+                                <Border Height="2" CornerRadius="1" Background="#55FFFFFF" />
+                                <Border Height="2" CornerRadius="1" Background="White" IsVisible="{Binding S2Done}" />
+                            </Panel>
+                            <StackPanel Spacing="6" Width="84">
+                                <Panel Width="30" Height="30" HorizontalAlignment="Center">
+                                    <Ellipse Width="30" Height="30" Stroke="#66FFFFFF" StrokeThickness="2" />
+                                    <Ellipse Classes="stepfill" Width="30" Height="30" Fill="White" IsVisible="{Binding S3Done}" />
+                                    <Ellipse Width="9" Height="9" Fill="White" IsVisible="{Binding S3Active}" />
+                                    <Path Classes="icon small" Data="{StaticResource IconCheck}" Stroke="#0A6B3E" StrokeThickness="2.8" IsVisible="{Binding S3Done}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Panel>
+                                <TextBlock Text="{ui:Tr 'Sent'}" FontSize="12" FontWeight="SemiBold" Foreground="White" HorizontalAlignment="Center" />
+                            </StackPanel>
+                    </StackPanel>
+                    <TextBlock Classes="rise d3" Text="{Binding StageHint}" FontSize="13" Foreground="#CCFFFFFF" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                    <Border Classes="rise d4" CornerRadius="20" Background="#22FFFFFF" Padding="14,6" Margin="0,8,0,0">
+                        <ItemsControl ItemsSource="{Binding Receipt}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,10">
+                                        <Border Width="32" Height="32" CornerRadius="16" Background="#26FFFFFF" VerticalAlignment="Top">
+                                            <Path Classes="icon small" Data="{Binding Icon, Converter={StaticResource IconKey}}" Stroke="White" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Spacing="2" Margin="12,0,6,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Label}" FontSize="12" Foreground="#B3FFFFFF" />
+                                            <SelectableTextBlock Text="{Binding Value}" TextWrapping="Wrap" FontSize="15" FontWeight="SemiBold" Foreground="White" IsVisible="{Binding !Mono}" />
+                                            <SelectableTextBlock Text="{Binding Value}" TextWrapping="Wrap" FontFamily="monospace" FontSize="12" Foreground="White" IsVisible="{Binding Mono}" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Classes="ghost" Width="38" Height="38" Padding="0" VerticalAlignment="Top" IsVisible="{Binding Copyable}"
+                                                Command="{Binding $parent[ItemsControl].DataContext.CopyRowCommand}" CommandParameter="{Binding}">
+                                            <Path Classes="icon" Data="{StaticResource IconCopy}" Stroke="White" StrokeThickness="1.8" RenderTransform="scale(0.8)" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                    <Button Classes="rise d5 ongreen soft" Content="{ui:Tr 'Explorer'}" Command="{Binding OpenExplorerCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                    <Button Classes="rise d5 ongreen solid" Content="{ui:Tr 'New transfer'}" Command="{Binding NewCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" />
+                </StackPanel>
+            </Border>
+
+            <ProgressBar IsIndeterminate="True" IsVisible="{Binding IsBusy}" />
+            <TextBlock Text="{Binding Error}" Classes="error" IsVisible="{Binding HasError}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

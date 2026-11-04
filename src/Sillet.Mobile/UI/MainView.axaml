@@ -1,0 +1,356 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Sillet.App.ViewModels"
+             xmlns:views="using:Sillet.Mobile.UI.Views"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.MainView"
+             Background="{DynamicResource BgBrush}">
+    <UserControl.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:OnboardingViewModel}"><views:OnboardingView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:UnlockViewModel}"><views:UnlockView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WatchWalletViewModel}"><views:WatchWalletView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:HomeViewModel}"><views:HomeView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:MarketViewModel}"><views:MarketView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SendViewModel}"><views:SendView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ReceiveViewModel}"><views:ReceiveView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:ActivityViewModel}"><views:ActivityView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:DonateViewModel}"><views:DonateView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:TradeViewModel}"><views:SoonView /></DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Grid x:Name="Root" ClipToBounds="True" Background="{DynamicResource BgBrush}">
+        <ContentControl Content="{Binding AuthPage}" IsVisible="{Binding !IsUnlocked}" />
+
+        <Grid RowDefinitions="Auto,*,Auto" IsVisible="{Binding IsUnlocked}">
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" Margin="14,10,10,6">
+                <Button Classes="row" Command="{Binding ToggleProfilesCommand}" HorizontalAlignment="Left">
+                    <Border Background="{DynamicResource SurfaceAltBrush}" CornerRadius="20" Padding="6,6,14,6">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <Panel Width="34" Height="34">
+                                <Border Width="30" Height="30" CornerRadius="15" Background="{DynamicResource SurfacePressedBrush}" ClipToBounds="True" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                    <Panel>
+                                        <TextBlock Text="{Binding ActiveProfileInitial}" FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Image Stretch="UniformToFill" Source="{Binding ActiveProfilePhoto, Converter={StaticResource FileImage}}" IsVisible="{Binding ActiveProfileHasPhoto}" />
+                                    </Panel>
+                                </Border>
+                                <Border Width="17" Height="17" CornerRadius="9" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource SurfaceAltBrush}" BorderThickness="2">
+                                    <Image Width="10" Height="10" Source="{Binding WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </Panel>
+                            <StackPanel VerticalAlignment="Center" MaxWidth="170">
+                                <TextBlock Text="{Binding ActiveProfileName}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{ui:Tr 'Watch-only'}" Classes="caption" FontSize="11" IsVisible="{Binding IsWatchOnly}" />
+                            </StackPanel>
+                            <Path Classes="icon small" Data="{StaticResource IconChevron}" Stroke="{DynamicResource TextSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Button>
+                <Button Grid.Column="1" Classes="ghost" Click="Scan_Click">
+                    <Path Classes="icon" Data="{StaticResource IconScan}" />
+                </Button>
+                <Button Grid.Column="2" Classes="ghost" Command="{Binding ToggleNotificationsCommand}">
+                    <Grid Width="24" Height="24">
+                        <Path Classes="icon" Data="{StaticResource IconBell}" />
+                        <Ellipse Width="9" Height="9" Fill="{DynamicResource NegativeBrush}" Stroke="{DynamicResource BgBrush}" StrokeThickness="2"
+                                 HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0" IsVisible="{Binding HasUnread}" />
+                    </Grid>
+                </Button>
+                <Button Grid.Column="3" Classes="ghost" Command="{Binding LockCommand}">
+                    <Path Classes="icon" Data="{StaticResource IconLock}" />
+                </Button>
+            </Grid>
+
+            <Panel Grid.Row="1">
+                <Panel x:Name="PageHost" Background="Transparent">
+                    <Panel.RenderTransform>
+                        <TranslateTransform />
+                    </Panel.RenderTransform>
+                </Panel>
+                <Border x:Name="PullIcon" Width="38" Height="38" CornerRadius="19" Opacity="0" IsHitTestVisible="False"
+                        HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-44,0,0"
+                        Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderStrongBrush}" BorderThickness="1">
+                    <Path Classes="icon" Data="{StaticResource IconRefresh}" RenderTransformOrigin="50%,50%">
+                        <Path.RenderTransform>
+                            <RotateTransform />
+                        </Path.RenderTransform>
+                    </Path>
+                </Border>
+                <Border x:Name="PageLoader" Classes="pageloader" Background="{DynamicResource BgBrush}">
+                    <Image Width="72" Height="72" Source="/Assets/silleticon.png" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                </Border>
+            </Panel>
+
+            <Grid Grid.Row="2">
+                <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
+                        CornerRadius="24,24,0,0">
+                    <Grid ColumnDefinitions="*,*,84,*,*" Margin="6,4,6,10">
+                        <Button Grid.Column="0" Classes="nav" Classes.active="{Binding SelectedNav.Key, Converter={StaticResource Equals}, ConverterParameter=home}"
+                                Command="{Binding NavigateCommand}" CommandParameter="home">
+                            <StackPanel>
+                                <Path Classes="icon" Data="{StaticResource IconHome}" />
+                                <TextBlock Text="{ui:Tr 'Home'}" />
+                                <Border Classes="navdot" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="1" Classes="nav" Classes.active="{Binding SelectedNav.Key, Converter={StaticResource Equals}, ConverterParameter=market}"
+                                Command="{Binding NavigateCommand}" CommandParameter="market">
+                            <StackPanel>
+                                <Path Classes="icon" Data="{StaticResource IconMarket}" />
+                                <TextBlock Text="{ui:Tr 'Market'}" />
+                                <Border Classes="navdot" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="2" Classes="fab" Classes.open="{Binding IsProfilesOpen}" Command="{Binding ToggleProfilesCommand}" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <Path Classes="icon" Data="{StaticResource IconPlus}" />
+                        </Button>
+                        <Button Grid.Column="3" Classes="nav" Classes.active="{Binding SelectedNav.Key, Converter={StaticResource Equals}, ConverterParameter=activity}"
+                                Command="{Binding NavigateCommand}" CommandParameter="activity">
+                            <StackPanel>
+                                <Path Classes="icon" Data="{StaticResource IconActivity}" />
+                                <TextBlock Text="{ui:Tr 'Activity'}" />
+                                <Border Classes="navdot" />
+                            </StackPanel>
+                        </Button>
+                        <Button Grid.Column="4" Classes="nav" Classes.active="{Binding SelectedNav.Key, Converter={StaticResource Equals}, ConverterParameter=settings}"
+                                Command="{Binding NavigateCommand}" CommandParameter="settings">
+                            <StackPanel>
+                                <Path Classes="icon" Data="{StaticResource IconSettings}" />
+                                <TextBlock Text="{ui:Tr 'Settings'}" />
+                                <Border Classes="navdot" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Border Classes="scrim" Classes.open="{Binding IsProfilesOpen}" Tapped="Scrim_Tapped" />
+        <Border Classes="sheet" Classes.open="{Binding IsProfilesOpen}" Margin="0,0,0,0">
+            <StackPanel Spacing="14">
+                <Border Classes="grab" Tag="profiles" PointerPressed="Grab_Pressed" PointerReleased="Grab_Released">
+                    <Border Classes="handle" />
+                </Border>
+                <UniformGrid Columns="5">
+                    <Button Classes="tile" Margin="0,0,4,0" Command="{Binding NavigateCommand}" CommandParameter="send" Click="SheetAction_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconSend}" />
+                            <TextBlock Text="{ui:Tr 'Send'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="tile" Margin="2,0,2,0" Command="{Binding NavigateCommand}" CommandParameter="receive" Click="SheetAction_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconReceive}" />
+                            <TextBlock Text="{ui:Tr 'Receive'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="tile" Margin="2,0,2,0" Command="{Binding NavigateCommand}" CommandParameter="trade" Click="SheetAction_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconSwap}" />
+                            <TextBlock Text="{ui:Tr 'Trade'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="tile" Margin="2,0,2,0" Command="{Binding DonateCommand}" Click="SheetAction_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconHeart}" Stroke="{DynamicResource NegativeBrush}" />
+                            <TextBlock Text="{ui:Tr 'Donate'}" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="tile" Margin="4,0,0,0" Command="{Binding LockCommand}" Click="SheetAction_Click">
+                        <StackPanel Spacing="6">
+                            <Path Classes="icon" Data="{StaticResource IconLock}" />
+                            <TextBlock Text="{ui:Tr 'Lock'}" />
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
+
+                <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
+                    <Path Classes="icon small" Data="{StaticResource IconWallet}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Your wallets'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+                </StackPanel>
+                <ScrollViewer IsScrollChainingEnabled="False" MaxHeight="260">
+                    <ItemsControl ItemsSource="{Binding ProfileList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.SwitchProfileCommand}" CommandParameter="{Binding}">
+                                    <Border Classes="soft" Padding="12,10">
+                                        <Grid ColumnDefinitions="Auto,*">
+                                            <Border Width="34" Height="34" CornerRadius="11" Background="{DynamicResource SurfacePressedBrush}" ClipToBounds="True">
+                                                <Panel>
+                                                    <Image Width="17" Height="17" Source="{Binding WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <Image Stretch="UniformToFill" Source="{Binding PhotoPath, Converter={StaticResource FileImage}}" IsVisible="{Binding HasPhoto}" />
+                                                </Panel>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding KindText, Converter={StaticResource Tr}}" Classes="caption" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <Grid ColumnDefinitions="*,10,*">
+                    <Button Classes="secondary" Command="{Binding AddWalletCommand}" HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Path Classes="icon small" Data="{StaticResource IconPlus}" />
+                            <TextBlock Text="{ui:Tr 'Add a wallet'}" FontSize="13" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Grid.Column="2" Classes="secondary" Command="{Binding AddWatchWalletCommand}" HorizontalAlignment="Stretch">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Path Classes="icon small" Data="{StaticResource IconShield}" />
+                            <TextBlock Text="{ui:Tr 'Hardware wallet'}" FontSize="13" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="scrim" Classes.open="{Binding IsNotificationsOpen}" Tapped="Scrim_Tapped" />
+        <Border Classes="sheet" Classes.open="{Binding IsNotificationsOpen}">
+            <StackPanel Spacing="10">
+                <Border Classes="grab" Tag="notifications" PointerPressed="Grab_Pressed" PointerReleased="Grab_Released">
+                    <Border Classes="handle" />
+                </Border>
+                <Grid ColumnDefinitions="*,Auto,Auto">
+                    <TextBlock Text="{ui:Tr 'Notifications'}" FontSize="18" FontWeight="Bold" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Classes="link" Content="{ui:Tr 'Mark all read'}" Command="{Binding MarkAllReadCommand}" IsVisible="{Binding HasNotifications}" />
+                    <Button Grid.Column="2" Classes="link" Content="{ui:Tr 'Clear'}" Command="{Binding ClearNotificationsCommand}" IsVisible="{Binding HasNotifications}" />
+                </Grid>
+                <StackPanel Spacing="6" Margin="0,24,0,24" HorizontalAlignment="Center" IsVisible="{Binding !HasNotifications}">
+                    <Path Classes="icon" Data="{StaticResource IconBell}" Stroke="{DynamicResource TextTertiaryBrush}" />
+                    <TextBlock Text="{ui:Tr 'Nothing new'}" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                    <TextBlock Text="{ui:Tr 'Payments, news and price moves show up here'}" Classes="label" TextWrapping="Wrap" TextAlignment="Center" />
+                </StackPanel>
+                <ScrollViewer IsScrollChainingEnabled="False" x:Name="NotifList" MaxHeight="380" IsVisible="{Binding HasNotifications}">
+                    <ScrollViewer.Transitions>
+                        <Transitions>
+                            <DoubleTransition Property="MaxHeight" Duration="0:0:0.28" Easing="CubicEaseOut" />
+                        </Transitions>
+                    </ScrollViewer.Transitions>
+                    <ItemsControl ItemsSource="{Binding NotificationList}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.OpenNotificationCommand}" CommandParameter="{Binding}"
+                                        Click="SheetAction_Click">
+                                    <Border Classes="soft" Padding="12,10">
+                                        <Grid ColumnDefinitions="Auto,*,Auto">
+                                            <Border Classes="tone" Classes.positive="{Binding IsPositive}" Classes.negative="{Binding IsNegative}" Classes.warning="{Binding IsWarning}"
+                                                    Width="38" Height="38" CornerRadius="12" VerticalAlignment="Top">
+                                                <Panel>
+                                                    <Path Classes="icon" Data="{StaticResource IconReceive}" IsVisible="{Binding IsPayment}" />
+                                                    <Path Classes="icon" Data="{StaticResource IconGlobe}" IsVisible="{Binding IsNews}" />
+                                                    <Path Classes="icon" Data="{StaticResource IconMarket}" IsVisible="{Binding IsPrice}" />
+                                                    <Path Classes="icon" Data="{StaticResource IconShield}" IsVisible="{Binding IsSecurity}" />
+                                                    <Path Classes="icon" Data="{StaticResource IconBell}" IsVisible="{Binding IsOther}" />
+                                                </Panel>
+                                            </Border>
+                                            <StackPanel Grid.Column="1" Margin="12,0,6,0" Spacing="2">
+                                                <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Message}" Classes="label" TextWrapping="Wrap" MaxLines="3" TextTrimming="CharacterEllipsis" IsVisible="{Binding HasMessage}" />
+                                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                                    <TextBlock Text="{Binding TimeText}" Classes="caption" VerticalAlignment="Center" />
+                                                    <Border Classes="chip" IsVisible="{Binding HasAction}">
+                                                        <TextBlock Text="{Binding ActionText}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </Border>
+                                                </StackPanel>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Spacing="2" HorizontalAlignment="Right">
+                                                <Ellipse Width="8" Height="8" Fill="{DynamicResource NegativeBrush}" HorizontalAlignment="Right" Margin="0,4,4,0" IsVisible="{Binding IsNew}" />
+                                                <Button Classes="ghost" Width="34" Height="34" Padding="0" Command="{Binding $parent[ItemsControl].DataContext.DismissNotificationCommand}" CommandParameter="{Binding}">
+                                                    <Path Classes="icon" Data="{StaticResource IconClose}" Stroke="{DynamicResource TextTertiaryBrush}" StrokeThickness="2" RenderTransform="scale(0.7)" />
+                                                </Button>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="scrim" Classes.open="{Binding SettingsPage.IsCurrencyPickerOpen}" Tapped="CurrencyScrim_Tapped" />
+        <Border Classes="sheet" Classes.open="{Binding SettingsPage.IsCurrencyPickerOpen}">
+            <StackPanel Spacing="10" DataContext="{Binding SettingsPage}">
+                <Border Classes="handle" />
+                <TextBlock Text="{ui:Tr 'Currency'}" FontSize="18" FontWeight="Bold" />
+                <TextBox Text="{Binding CurrencyQuery, Mode=TwoWay}" Watermark="{ui:Tr 'Search currency or country'}" />
+                <TextBlock Text="{ui:Tr 'No currency found'}" Classes="label" HorizontalAlignment="Center" Margin="0,18" IsVisible="{Binding !HasCurrencyResults}" />
+                <ScrollViewer IsScrollChainingEnabled="False" MaxHeight="400">
+                    <ItemsControl ItemsSource="{Binding CurrencyResults}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Classes="row" Margin="0,0,0,4" Command="{Binding $parent[ItemsControl].DataContext.PickCurrencyCommand}" CommandParameter="{Binding}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,6">
+                                        <Border Width="40" Height="40" CornerRadius="20" Background="{DynamicResource SurfacePressedBrush}" ClipToBounds="True">
+                                            <Panel>
+                                                <Image Stretch="UniformToFill" Source="{Binding FlagPath, Converter={StaticResource FileImage}}" IsVisible="{Binding HasFlag}" />
+                                                <TextBlock Text="{Binding FlagEmoji}" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding ShowEmoji}" />
+                                                <TextBlock Text="{Binding IconText}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="{Binding ShowText}" />
+                                            </Panel>
+                                        </Border>
+                                        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Title}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding Description}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Path Grid.Column="2" Classes="icon" Data="{StaticResource IconCheck}" Stroke="{DynamicResource PositiveBrush}" IsVisible="{Binding IsSelected}" />
+                                    </Grid>
+                                </Button>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="ShotScrim" Classes="scrim" Tapped="ShotScrim_Tapped" />
+        <Border x:Name="ShotSheet" Classes="sheet">
+            <StackPanel Spacing="12">
+                <Border Classes="handle" />
+                <Border CornerRadius="14" ClipToBounds="True" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}"
+                        Background="{DynamicResource SurfaceAltBrush}">
+                    <Image x:Name="ShotPreview" MaxHeight="300" MaxWidth="220" Stretch="Uniform" />
+                </Border>
+                <TextBlock Text="{ui:Tr 'Want to share this screenshot?'}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <TextBlock Text="{ui:Tr 'Check that it shows nothing private before sending it'}" Classes="label" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
+                <Grid ColumnDefinitions="*,10,*" Margin="0,6,0,0">
+                    <Button Classes="secondary" Content="{ui:Tr 'Not now'}" HorizontalAlignment="Stretch" Click="ShotDismiss_Click" />
+                    <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" Click="ShotShare_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                            <Path Classes="icon small" Data="{StaticResource IconShare}" />
+                            <TextBlock Text="{ui:Tr 'Share'}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border Classes="toast" Classes.open="{Binding IsToastVisible}" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="16,0,16,104"
+                CornerRadius="14" Padding="16,11" Background="{DynamicResource ToastBrush}" IsHitTestVisible="False" BoxShadow="0 4 12 0 #55000000">
+            <TextBlock Text="{Binding ToastMessage}" Foreground="{DynamicResource OnToastBrush}" TextWrapping="Wrap" MaxWidth="320" FontSize="13" />
+        </Border>
+
+        <Grid IsVisible="{Binding IsDialogOpen}">
+            <Border Background="#C0000000" />
+            <Border Classes="card" Margin="30" MaxWidth="360" VerticalAlignment="Center" Padding="22,26,22,14" CornerRadius="26" BoxShadow="0 8 20 0 #88000000">
+                <StackPanel Spacing="10">
+                    <Border Width="52" Height="52" CornerRadius="26" HorizontalAlignment="Center" Classes="dialogicon" Classes.danger="{Binding DialogIsDanger}">
+                        <Path Classes="icon" Data="{StaticResource IconShield}" />
+                    </Border>
+                    <TextBlock Text="{Binding DialogTitle}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" TextAlignment="Center" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                    <TextBlock Text="{Binding DialogMessage}" Classes="label" FontSize="14" LineHeight="21" TextWrapping="Wrap" TextAlignment="Center"
+                               HorizontalAlignment="Center" MaxWidth="260" />
+                    <Button Classes="primary" Classes.danger="{Binding DialogIsDanger}" Content="{Binding DialogConfirmText}" Command="{Binding DialogConfirmCommand}"
+                            HorizontalAlignment="Stretch" Margin="0,12,0,0" />
+                    <Button Classes="link" Content="{ui:Tr 'Cancel'}" Command="{Binding DialogCancelCommand}" HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

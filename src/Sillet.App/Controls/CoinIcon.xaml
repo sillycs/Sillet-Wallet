@@ -1,0 +1,14 @@
+<UserControl x:Class="Sillet.App.Controls.CoinIcon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Name="Root" Focusable="False">
+    <Grid x:Name="Host" Width="36" Height="36">
+        <Ellipse Fill="{DynamicResource SurfacePressedBrush}"
+                 Visibility="{Binding Source, ElementName=Root, Converter={StaticResource NullToVis}}" />
+        <TextBlock x:Name="Letter" Text="{Binding Initial, ElementName=Root}" FontWeight="SemiBold" FontSize="15"
+                   Foreground="{DynamicResource TextSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"
+                   Visibility="{Binding Source, ElementName=Root, Converter={StaticResource NullToVis}}" />
+        <Image Source="{Binding Source, ElementName=Root, Converter={StaticResource PathToImage}}"
+               RenderOptions.BitmapScalingMode="HighQuality" Stretch="Uniform" />
+    </Grid>
+</UserControl>

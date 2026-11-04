@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <RootNamespace>Sillet.Desktop</RootNamespace>
+    <AssemblyName>Sillet.Desktop</AssemblyName>
+    <ApplicationIcon>..\Sillet.App\Assets\silleticon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.3" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sillet.Mobile\Sillet.Mobile.csproj" />
+  </ItemGroup>
+
+</Project>

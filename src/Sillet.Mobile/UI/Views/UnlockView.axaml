@@ -1,0 +1,47 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.UnlockView">
+    <ScrollViewer>
+        <StackPanel Margin="26,70,26,30" Spacing="12">
+            <Image Width="80" Height="80" Source="/Assets/silleticon.png" HorizontalAlignment="Center" />
+            <TextBlock Text="sillet" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,20" />
+            <ComboBox ItemsSource="{Binding Profiles}" SelectedItem="{Binding SelectedProfile, Mode=TwoWay}" IsVisible="{Binding HasManyProfiles}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding KindText}" Classes="caption" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <StackPanel Spacing="10" IsVisible="{Binding IsWatch}">
+                <TextBlock Text="{Binding ProfileName}" FontSize="18" FontWeight="SemiBold" HorizontalAlignment="Center" />
+                <TextBlock Text="{ui:Tr 'Watch-only. Balances and receive addresses, no keys on this phone'}" Classes="label" TextAlignment="Center" TextWrapping="Wrap" />
+                <Button Classes="primary" Content="{ui:Tr 'Open'}" Command="{Binding OpenWatchCommand}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <StackPanel Spacing="10" IsVisible="{Binding IsSeed}">
+                <TextBox x:Name="PasswordInput" Text="{Binding Password, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'Password'}" />
+                <Button Classes="primary" Command="{Binding UnlockCommand}" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                        <ProgressBar IsIndeterminate="True" Width="18" MinWidth="18" IsVisible="{Binding IsBusy}" />
+                        <TextBlock Text="{ui:Tr 'Unlock'}" Foreground="{DynamicResource OnAccentBrush}" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="secondary" Command="{Binding HelloCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding HasPasskey}">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Path Classes="icon small" Data="{StaticResource IconFinger}" />
+                        <TextBlock Text="{ui:Tr 'Unlock with fingerprint'}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Classes="link" Content="{ui:Tr 'Restore with recovery phrase'}" Command="{Binding ForgotCommand}" HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding Error}" Classes="error" IsVisible="{Binding HasError}" HorizontalAlignment="Center" />
+            <TextBlock Text="{Binding LastOpenedText}" Classes="caption" HorizontalAlignment="Center" IsVisible="{Binding HasLastOpened}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,253 @@
+<UserControl x:Class="Sillet.App.Views.MarketView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="clr-namespace:Sillet.App.Controls">
+    <Grid Margin="0,10,0,0">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="20" />
+            <ColumnDefinition />
+        </Grid.ColumnDefinitions>
+
+        <Border Style="{StaticResource Card}" Padding="8,18,8,10" c:Anim.Enter="True">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="{c:Tr 'Market'}" Style="{StaticResource Text.Subtitle}" Margin="12,0,0,10" />
+                <Grid DockPanel.Dock="Top" Margin="4,0,4,10">
+                    <TextBox x:Name="SearchBox" Style="{StaticResource Input}" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Tag="{c:Tr 'Search coins  (Ctrl+K)'}"
+                             FontSize="13" Padding="34,8,10,8" />
+                    <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFont}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
+                               VerticalAlignment="Center" Margin="13,0,0,0" IsHitTestVisible="False" />
+                </Grid>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Attribution}" Style="{StaticResource Text.Label}" FontSize="11"
+                           Foreground="{DynamicResource TextTertiaryBrush}" Margin="12,8,0,2" />
+                <TextBlock DockPanel.Dock="Top" Text="{c:Tr 'No coins match your search'}" Style="{StaticResource Text.Caption}" Margin="12,8,0,0"
+                           Visibility="{Binding HasNoMatches, Converter={StaticResource BoolToVis}}" />
+                <ListBox ItemsSource="{Binding VisibleCoins}" SelectedItem="{Binding SelectedCoin, Mode=TwoWay}"
+                         Style="{StaticResource List.Plain}" ItemContainerStyle="{StaticResource ListItem}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <Grid c:Anim.Stagger="True" c:Anim.Enter="True" c:Anim.Offset="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="54" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <c:CoinIcon Source="{Binding IconPath}" Initial="{Binding Initial}" Size="28" />
+                                <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Symbol}" FontSize="13" FontWeight="SemiBold" />
+                                        <TextBlock Text="&#xE735;" FontFamily="{StaticResource IconFont}" FontSize="10" Margin="5,0,0,0" VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource WarningBrush}" Visibility="{Binding IsFavorite, Converter={StaticResource BoolToVis}}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Label}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <c:Sparkline Grid.Column="2" Height="22" Values="{Binding Sparkline}" VerticalAlignment="Center">
+                                    <c:Sparkline.Style>
+                                        <Style TargetType="c:Sparkline">
+                                            <Setter Property="Stroke" Value="{DynamicResource PositiveBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SparklineUp}" Value="False">
+                                                    <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </c:Sparkline.Style>
+                                </c:Sparkline>
+                                <StackPanel Grid.Column="3" Margin="10,0,2,0" VerticalAlignment="Center" MinWidth="74">
+                                    <TextBlock Text="{Binding PriceText}" FontSize="12.5" HorizontalAlignment="Right" />
+                                    <TextBlock Text="{Binding ChangeText}" Tag="{Binding IsUp}" Style="{StaticResource Text.Change}" FontSize="11.5" HorizontalAlignment="Right" />
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto" Focusable="False">
+            <StackPanel Margin="0,0,8,0">
+                <Grid c:Anim.Enter="True" c:Anim.Delay="60">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
+                    </Grid.ColumnDefinitions>
+                    <c:CoinIcon Source="{Binding SelectedCoin.IconPath}" Initial="{Binding SelectedCoin.Initial}" Size="40" VerticalAlignment="Top" Margin="0,2,0,0" />
+                    <StackPanel Grid.Column="1" Margin="14,0,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding SelectedCoin.Name}" Style="{StaticResource Text.Subtitle}" />
+                            <TextBlock Text="{Binding SelectedCoin.Symbol}" Style="{StaticResource Text.Label}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding RankText}" Style="{StaticResource Text.Label}" Foreground="{DynamicResource TextTertiaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center" />
+                            <Button Command="{Binding ToggleFavoriteCommand}" Width="28" Height="28" FontSize="13" Margin="4,0,0,0" VerticalAlignment="Center">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+                                        <Setter Property="Content" Value="&#xE734;" />
+                                        <Setter Property="ToolTip" Value="{c:Tr 'Add to favorites'}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsSelectedFavorite}" Value="True">
+                                                <Setter Property="Content" Value="&#xE735;" />
+                                                <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+                                                <Setter Property="ToolTip" Value="{c:Tr 'Remove from favorites'}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                            <Button Style="{StaticResource Button.Icon}" Content="&#xE81C;" Width="28" Height="28" FontSize="13" Margin="2,0,0,0" VerticalAlignment="Center"
+                                    Command="{Binding HistoryCommand}" ToolTip="{c:Tr 'Transaction history'}" />
+                        </StackPanel>
+                        <c:AnimatedAmount Value="{Binding PriceValue}" Currency="{Binding Currency}" Style="{StaticResource Text.Display}" Margin="0,0,0,2" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="{Binding Change24hText}" Tag="{Binding IsUp24h}" Style="{StaticResource Text.Change}" />
+                            <TextBlock Text="{c:Tr '24 h'}" Style="{StaticResource Text.Label}" Margin="8,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Grid>
+
+                <Border Style="{StaticResource Card}" Margin="0,24,0,0" Padding="20,16,20,14" c:Anim.Enter="True" c:Anim.Delay="120">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="{Binding ChartChangeText}" Tag="{Binding ChartIsUp}" Style="{StaticResource Text.Change}" VerticalAlignment="Center" />
+                            <Border Style="{StaticResource SegmentHost}" HorizontalAlignment="Right">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Style="{StaticResource Segment}" Content="{c:Tr '24H'}" GroupName="Range" IsChecked="{Binding Range1, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource Segment}" Content="{c:Tr '7D'}" GroupName="Range" IsChecked="{Binding Range7, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource Segment}" Content="{c:Tr '1M'}" GroupName="Range" IsChecked="{Binding Range30, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource Segment}" Content="{c:Tr '1A'}" GroupName="Range" IsChecked="{Binding Range365, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                        <Grid Height="300" Margin="0,8,0,0">
+                            <c:LineChart Points="{Binding ChartPoints}" Currency="{Binding Currency}"
+                                         LabelBrush="{DynamicResource TextTertiaryBrush}" TooltipBackground="{DynamicResource ToastBrush}"
+                                         TooltipForeground="{DynamicResource OnToastBrush}">
+                                <c:LineChart.Style>
+                                    <Style TargetType="c:LineChart">
+                                        <Setter Property="Stroke" Value="{DynamicResource PositiveBrush}" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ChartIsUp}" Value="False">
+                                                <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </c:LineChart.Style>
+                            </c:LineChart>
+                            <Control Style="{StaticResource Spinner}" Width="22" Height="22"
+                                     Visibility="{Binding IsChartLoading, Converter={StaticResource BoolToVis}}" />
+                            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                        Visibility="{Binding HasChartError, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding ChartError}" Style="{StaticResource Text.Caption}" TextAlignment="Center" MaxWidth="320" />
+                                <Button Style="{StaticResource Button.Outline}" Content="{c:Tr 'Retry'}" Command="{Binding RetryChartCommand}"
+                                        HorizontalAlignment="Center" Margin="0,12,0,0" Padding="14,6" FontSize="12" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0" Padding="22,6" c:Anim.Enter="True" c:Anim.Delay="180">
+                    <UniformGrid Columns="4">
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr '24h high'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding High24hText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr '24h low'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding Low24hText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr 'Market cap'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding MarketCapText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,0,14">
+                            <TextBlock Text="{c:Tr '24h volume'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding VolumeText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr '7 days'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding Change7dText}" Tag="{Binding IsUp7d}" Style="{StaticResource Text.Change}" FontSize="14" Margin="0,4,0,0" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr 'All-time high'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding AthText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,12,14">
+                            <TextBlock Text="{c:Tr 'From high'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding FromAthText}" Margin="0,4,0,0" TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <StackPanel Margin="0,14,0,14">
+                            <TextBlock Text="{c:Tr 'Rank'}" Style="{StaticResource Text.Label}" FontSize="12" />
+                            <TextBlock Text="{Binding RankText}" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </UniformGrid>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0" c:Anim.Enter="True" c:Anim.Delay="240">
+                    <StackPanel>
+                        <TextBlock Text="{c:Tr 'Convert'}" Style="{StaticResource Text.Subtitle}" />
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Grid>
+                                <TextBox Style="{StaticResource Input.Big}" Text="{Binding ConvertInput, UpdateSourceTrigger=PropertyChanged}" Tag="0" Padding="14,11,64,11" />
+                                <TextBlock Text="{Binding ConvertFromLabel}" Style="{StaticResource Text.Label}" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,16,0" />
+                            </Grid>
+                            <Button Grid.Column="1" Style="{StaticResource Button.Icon}" Content="&#xE8CB;" Margin="10,0" Command="{Binding SwapConvertCommand}" ToolTip="{c:Tr 'Swap'}" />
+                            <Border Grid.Column="2" Style="{StaticResource Card.Soft}" Padding="16,0">
+                                <TextBlock Text="{Binding ConvertOutput}" FontFamily="{StaticResource DisplayFont}" FontSize="22" FontWeight="SemiBold"
+                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0" c:Anim.Enter="True" c:Anim.Delay="300">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="{c:Tr 'Price alerts'}" Style="{StaticResource Text.Subtitle}" />
+                            <TextBlock Text="{c:Tr 'Checked on every price update'}" Style="{StaticResource Text.Label}" FontSize="12" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Margin="0,14,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Border Style="{StaticResource SegmentHost}" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <RadioButton Style="{StaticResource Segment}" GroupName="AlertDir" Content="{c:Tr 'Above'}" IsChecked="{Binding AlertAbove, Mode=TwoWay}" />
+                                    <RadioButton Style="{StaticResource Segment}" GroupName="AlertDir" Content="{c:Tr 'Below'}" IsChecked="{Binding AlertBelow, Mode=TwoWay}" />
+                                </StackPanel>
+                            </Border>
+                            <TextBox Grid.Column="2" Style="{StaticResource Input}" Text="{Binding AlertPriceText, UpdateSourceTrigger=PropertyChanged}"
+                                     Tag="{Binding PriceText}" />
+                            <Button Grid.Column="3" Style="{StaticResource Button.Secondary}" Content="{c:Tr 'Add alert'}" Margin="8,0,0,0" Command="{Binding AddAlertCommand}" />
+                        </Grid>
+                        <ItemsControl ItemsSource="{Binding Alerts}" Focusable="False" Margin="0,10,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,4">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="&#xEA8F;" FontFamily="{StaticResource IconFont}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding Text}" FontSize="13" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                        <Button Grid.Column="2" Style="{StaticResource Button.Icon}" Content="&#xE711;" Width="28" Height="28" FontSize="10" ToolTip="{c:Tr 'Remove'}"
+                                                Command="{Binding DataContext.RemoveAlertCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                CommandParameter="{Binding}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

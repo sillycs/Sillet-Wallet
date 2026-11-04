@@ -1,0 +1,483 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.App"
+             RequestedThemeVariant="Dark">
+    <Application.Resources>
+        <SolidColorBrush x:Key="BgBrush" Color="#09090B" />
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#111113" />
+        <SolidColorBrush x:Key="SurfaceAltBrush" Color="#18181B" />
+        <SolidColorBrush x:Key="SurfacePressedBrush" Color="#222226" />
+        <SolidColorBrush x:Key="BorderSubtleBrush" Color="#1C1C20" />
+        <SolidColorBrush x:Key="BorderStrongBrush" Color="#3A3A41" />
+        <SolidColorBrush x:Key="TextBrush" Color="#F4F4F5" />
+        <SolidColorBrush x:Key="TextSecondaryBrush" Color="#8C8C96" />
+        <SolidColorBrush x:Key="TextTertiaryBrush" Color="#56565F" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#F4F4F5" />
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="AccentSoftBrush" Color="#1C1C20" />
+        <SolidColorBrush x:Key="OnAccentBrush" Color="#09090B" />
+        <SolidColorBrush x:Key="PositiveBrush" Color="#3DD68C" />
+        <SolidColorBrush x:Key="PositiveSoftBrush" Color="#0E2419" />
+        <SolidColorBrush x:Key="NegativeBrush" Color="#F2555A" />
+        <SolidColorBrush x:Key="NegativeSoftBrush" Color="#2A1114" />
+        <SolidColorBrush x:Key="WarningBrush" Color="#E2B464" />
+        <SolidColorBrush x:Key="WarningSoftBrush" Color="#1F190D" />
+        <SolidColorBrush x:Key="ToastBrush" Color="#F4F4F5" />
+        <SolidColorBrush x:Key="OnToastBrush" Color="#09090B" />
+        <SolidColorBrush x:Key="HoverOverlayBrush" Color="#FFFFFF" />
+        <ui:EqualsConverter x:Key="Equals" />
+        <ui:QrConverter x:Key="Qr" />
+        <ui:FileImageConverter x:Key="FileImage" />
+        <ui:AssetImageConverter x:Key="AssetImage" />
+        <ui:HexBrushConverter x:Key="HexBrush" />
+        <ui:TrConverter x:Key="Tr" />
+        <ui:IconKeyConverter x:Key="IconKey" />
+
+        <StreamGeometry x:Key="IconHome">M4,10.5 L12,4 L20,10.5 L20,19.5 L14.5,19.5 L14.5,14 L9.5,14 L9.5,19.5 L4,19.5 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconMarket">M3,17 L9,11 L13,15 L21,7 M15,7 L21,7 L21,13</StreamGeometry>
+        <StreamGeometry x:Key="IconActivity">M3.5,12 A8.5,8.5 0 1 0 20.5,12 A8.5,8.5 0 1 0 3.5,12 Z M12,7.5 L12,12 L15,14</StreamGeometry>
+        <StreamGeometry x:Key="IconSettings">M4,7 L20,7 M4,17 L20,17 M9,4.5 L9,9.5 M15,14.5 L15,19.5</StreamGeometry>
+        <StreamGeometry x:Key="IconPlus">M12,5 L12,19 M5,12 L19,12</StreamGeometry>
+        <StreamGeometry x:Key="IconSend">M4,12 L3,4 L21,12 L3,20 Z M4,12 L12,12</StreamGeometry>
+        <StreamGeometry x:Key="IconReceive">M12,3 L12,16 M6,10 L12,16 L18,10 M4,21 L20,21</StreamGeometry>
+        <StreamGeometry x:Key="IconScan">M4,8 L4,5.5 A1.5,1.5 0 0 1 5.5,4 L8,4 M16,4 L18.5,4 A1.5,1.5 0 0 1 20,5.5 L20,8 M20,16 L20,18.5 A1.5,1.5 0 0 1 18.5,20 L16,20 M8,20 L5.5,20 A1.5,1.5 0 0 1 4,18.5 L4,16 M4,12 L20,12</StreamGeometry>
+        <StreamGeometry x:Key="IconImage">M4,5 L20,5 L20,19 L4,19 Z M4,16 L9,11 L14,16 M13,14.5 L16,11.5 L20,15.5 M8,8 L9,8</StreamGeometry>
+        <StreamGeometry x:Key="IconBell">M6,16 L6,10 A6,6 0 0 1 18,10 L18,16 L20,18 L4,18 Z M10,21 L14,21</StreamGeometry>
+        <StreamGeometry x:Key="IconLock">M6,11 L18,11 L18,20 L6,20 Z M8.5,11 L8.5,8 A3.5,3.5 0 0 1 15.5,8 L15.5,11</StreamGeometry>
+        <StreamGeometry x:Key="IconEye">M2.5,12 C5,7 8.5,5.5 12,5.5 C15.5,5.5 19,7 21.5,12 C19,17 15.5,18.5 12,18.5 C8.5,18.5 5,17 2.5,12 Z M9,12 A3,3 0 1 0 15,12 A3,3 0 1 0 9,12 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconCopy">M9,9 L20,9 L20,20 L9,20 Z M15,9 L15,4 L4,4 L4,15 L9,15</StreamGeometry>
+        <StreamGeometry x:Key="IconShare">M12,3 L12,15 M7,8 L12,3 L17,8 M5,13 L5,20 L19,20 L19,13</StreamGeometry>
+        <StreamGeometry x:Key="IconSearch">M10.5,4 A6.5,6.5 0 1 0 10.5,17 A6.5,6.5 0 1 0 10.5,4 Z M15.5,15.5 L20,20</StreamGeometry>
+        <StreamGeometry x:Key="IconUser">M8,8 A4,4 0 1 0 16,8 A4,4 0 1 0 8,8 Z M4.5,20.5 C4.5,16.5 7.7,14 12,14 C16.3,14 19.5,16.5 19.5,20.5</StreamGeometry>
+        <StreamGeometry x:Key="IconWallet">M3.5,7 L20.5,7 L20.5,19 L3.5,19 Z M15,13 L17,13 M3.5,7 L6,4 L17,4 L18.5,7</StreamGeometry>
+        <StreamGeometry x:Key="IconHeart">M12,20 C5,15.5 3,12 3,8.8 A4.3,4.3 0 0 1 12,7 A4.3,4.3 0 0 1 21,8.8 C21,12 19,15.5 12,20 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconChevron">M6,9 L12,15 L18,9</StreamGeometry>
+        <StreamGeometry x:Key="IconBack">M19,12 L5,12 M11,6 L5,12 L11,18</StreamGeometry>
+        <StreamGeometry x:Key="IconClose">M6,6 L18,18 M18,6 L6,18</StreamGeometry>
+        <StreamGeometry x:Key="IconCheck">M5,12.5 L9.5,17 L19,7.5</StreamGeometry>
+        <StreamGeometry x:Key="IconFinger">M4.5,10 A8,8 0 0 1 19.5,10 M7,13 A5,5 0 0 1 17,13 L17,15 M9.5,13.5 A2.5,2.5 0 0 1 14.5,13.5 L14.5,18 M12,13 L12,20 M7,16 L7,18</StreamGeometry>
+        <StreamGeometry x:Key="IconForward">M5,12 L19,12 M13,6 L19,12 L13,18</StreamGeometry>
+        <StreamGeometry x:Key="IconStar">M12,3.5 L14.6,9 L20.5,9.6 L16,13.6 L17.4,19.5 L12,16.4 L6.6,19.5 L8,13.6 L3.5,9.6 L9.4,9 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconSwap">M4,8 L19,8 M15,4 L19,8 L15,12 M20,16 L5,16 M9,12 L5,16 L9,20</StreamGeometry>
+        <StreamGeometry x:Key="IconRefresh">M19,12 A7,7 0 1 1 16.95,7.05 M17,3 L17,7.05 L21,7.05</StreamGeometry>
+        <StreamGeometry x:Key="IconShield">M12,3 L5,6 L5,11.5 C5,15.9 8,19.7 12,21 C16,19.7 19,15.9 19,11.5 L19,6 Z M9,12 L11,14 L15,10</StreamGeometry>
+        <StreamGeometry x:Key="IconGlobe">M3,12 A9,9 0 1 0 21,12 A9,9 0 1 0 3,12 Z M3,12 L21,12 M12,3 C14.5,5.6 15.8,8.6 15.8,12 C15.8,15.4 14.5,18.4 12,21 C9.5,18.4 8.2,15.4 8.2,12 C8.2,8.6 9.5,5.6 12,3 Z</StreamGeometry>
+        <StreamGeometry x:Key="IconEyeOff">M3,3 L21,21 M10.6,5.6 C11.1,5.5 11.5,5.5 12,5.5 C15.5,5.5 19,7 21.5,12 C20.8,13.4 20,14.5 19.1,15.4 M6.6,6.6 C5,7.7 3.6,9.5 2.5,12 C5,17 8.5,18.5 12,18.5 C13.6,18.5 15.1,18.2 16.4,17.4</StreamGeometry>
+    </Application.Resources>
+    <Application.Styles>
+        <FluentTheme />
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="13" />
+        </Style>
+        <Style Selector="TextBlock.caption">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+        </Style>
+        <Style Selector="TextBlock.title">
+            <Setter Property="FontSize" Value="24" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="4,10,0,0" />
+        </Style>
+        <Style Selector="TextBlock.error">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+        <Style Selector="TextBlock.warn">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="TextBlock.up">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}" />
+        </Style>
+        <Style Selector="TextBlock.down">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}" />
+        </Style>
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="18" />
+            <Setter Property="Padding" Value="16" />
+        </Style>
+        <Style Selector="Border.soft">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="12" />
+        </Style>
+        <Style Selector="Border.tone">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="Border.tone.positive">
+            <Setter Property="Background" Value="{DynamicResource PositiveSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tone.negative">
+            <Setter Property="Background" Value="{DynamicResource NegativeSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tone.warning">
+            <Setter Property="Background" Value="{DynamicResource WarningSoftBrush}" />
+        </Style>
+        <Style Selector="Border.tone Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Border.tone.positive Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource PositiveBrush}" />
+        </Style>
+        <Style Selector="Border.tone.negative Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
+        </Style>
+        <Style Selector="Border.tone.warning Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource WarningBrush}" />
+        </Style>
+        <Style Selector="Border.opt">
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+        </Style>
+        <Style Selector="Border.opt.selected">
+            <Setter Property="BorderBrush" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <Style Selector="Border.chip">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="8" />
+            <Setter Property="Padding" Value="7,2" />
+        </Style>
+
+        <Style Selector="Path.icon">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="24" />
+            <Setter Property="Stretch" Value="None" />
+            <Setter Property="StrokeThickness" Value="1.8" />
+            <Setter Property="StrokeLineCap" Value="Round" />
+            <Setter Property="StrokeJoin" Value="Round" />
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Path.small">
+            <Setter Property="RenderTransform" Value="scale(0.75)" />
+        </Style>
+
+        <Style Selector="Button">
+            <Setter Property="CornerRadius" Value="14" />
+            <Setter Property="Padding" Value="16,13" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <!-- Only the big action buttons get the press animation: a transform on every button made each one its own layer and slowed scrolling -->
+        <Style Selector="Button.primary, Button.tile, Button.fab">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.12" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.primary:pressed, Button.tile:pressed, Button.fab:pressed">
+            <Setter Property="RenderTransform" Value="scale(0.96)" />
+        </Style>
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.primary /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.primary:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource AccentHoverBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.primary Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.primary TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
+        </Style>
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.link">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,4" />
+            <Setter Property="FontWeight" Value="Normal" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Button.ghost">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="CornerRadius" Value="12" />
+        </Style>
+        <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Border.newsdot">
+            <Setter Property="Width" Value="6" />
+            <Setter Property="Height" Value="6" />
+            <Setter Property="CornerRadius" Value="3" />
+            <Setter Property="Background" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Width" Duration="0:0:0.18" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.newsdot.active">
+            <Setter Property="Width" Value="18" />
+            <Setter Property="Background" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <!-- Hidden loader is not drawn at all (no invisible full-screen layer, nothing animating) -->
+        <Style Selector="Border.pageloader">
+            <Setter Property="IsVisible" Value="False" />
+        </Style>
+        <Style Selector="Border.pageloader.on">
+            <Setter Property="IsVisible" Value="True" />
+        </Style>
+        <Style Selector="Button.row">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.row:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.row:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.row">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+            <Setter Property="Transitions" Value="{x:Null}" />
+        </Style>
+        <Style Selector="Button.row:pressed">
+            <Setter Property="RenderTransform" Value="scale(1)" />
+        </Style>
+
+        <Style Selector="Button.tile">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6,14" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.tile TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+        </Style>
+
+        <Style Selector="Button.nav">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="0,8,0,6" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="FontWeight" Value="Normal" />
+        </Style>
+        <Style Selector="Button.nav:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.nav:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.nav Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource TextTertiaryBrush}" />
+        </Style>
+        <Style Selector="Button.nav TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextTertiaryBrush}" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,3,0,0" />
+        </Style>
+        <Style Selector="Button.nav.active Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}" />
+            <Setter Property="StrokeThickness" Value="2.1" />
+        </Style>
+        <Style Selector="Button.nav.active TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Border.navdot">
+            <Setter Property="Width" Value="4" />
+            <Setter Property="Height" Value="4" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Margin" Value="0,4,0,0" />
+            <Setter Property="Background" Value="Transparent" />
+        </Style>
+        <Style Selector="Button.nav.active Border.navdot">
+            <Setter Property="Background" Value="{DynamicResource TextBrush}" />
+        </Style>
+
+        <Style Selector="Button.fab">
+            <Setter Property="Width" Value="58" />
+            <Setter Property="Height" Value="58" />
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style Selector="Button.fab /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="CornerRadius" Value="20" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+        </Style>
+        <Style Selector="Button.fab Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource OnAccentBrush}" />
+            <Setter Property="StrokeThickness" Value="2.6" />
+            <Setter Property="RenderTransform" Value="rotate(0deg)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Button.fab.open Path.icon">
+            <Setter Property="RenderTransform" Value="rotate(45deg)" />
+        </Style>
+
+        <Style Selector="Border.scrim">
+            <Setter Property="Background" Value="#B3000000" />
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="IsHitTestVisible" Value="False" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.22" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.scrim.open">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="IsHitTestVisible" Value="True" />
+        </Style>
+        <Style Selector="Border.sheet">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderSubtleBrush}" />
+            <Setter Property="BorderThickness" Value="1,1,1,0" />
+            <Setter Property="CornerRadius" Value="26,26,0,0" />
+            <Setter Property="Padding" Value="18,10,18,26" />
+            <Setter Property="VerticalAlignment" Value="Bottom" />
+            <Setter Property="RenderTransform" Value="translateY(1200px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.32" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.sheet.open">
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
+        <Style Selector="Border.grab">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Padding" Value="0,8,0,0" />
+            <Setter Property="Margin" Value="0,-10,0,-4" />
+        </Style>
+        <Style Selector="Border.dialogicon">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style Selector="Border.dialogicon Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <Style Selector="Border.dialogicon.danger">
+            <Setter Property="Background" Value="{DynamicResource NegativeSoftBrush}" />
+        </Style>
+        <Style Selector="Border.dialogicon.danger Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
+        </Style>
+        <Style Selector="Button.primary.danger /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource NegativeBrush}" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
+        </Style>
+        <Style Selector="Button.primary.danger TextBlock">
+            <Setter Property="Foreground" Value="#FFFFFF" />
+        </Style>
+        <Style Selector="Border.handle">
+            <Setter Property="Width" Value="40" />
+            <Setter Property="Height" Value="4" />
+            <Setter Property="CornerRadius" Value="2" />
+            <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,0,14" />
+        </Style>
+
+        <Style Selector="Border.toast">
+            <Setter Property="Opacity" Value="0" />
+            <Setter Property="RenderTransform" Value="translateY(16px)" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <DoubleTransition Property="Opacity" Duration="0:0:0.2" />
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.25" Easing="CubicEaseOut" />
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.toast.open">
+            <Setter Property="Opacity" Value="1" />
+            <Setter Property="RenderTransform" Value="translateY(0px)" />
+        </Style>
+
+        <Style Selector="RadioButton.seg">
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="9" Padding="{TemplateBinding Padding}">
+                        <ContentPresenter Content="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+            <Setter Property="Padding" Value="12,7" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="RadioButton.seg:checked /template/ Border#Bd">
+            <Setter Property="Background" Value="{DynamicResource SurfacePressedBrush}" />
+        </Style>
+        <Style Selector="RadioButton.seg:checked">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="RadioButton.seg TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="RadioButton.seg:checked TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        </Style>
+        <Style Selector="Button.link TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextSecondaryBrush}" />
+        </Style>
+        <Style Selector="Border.seghost">
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="3" />
+        </Style>
+
+        <Style Selector="TextBox">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="Padding" Value="12,11" />
+            <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}" />
+        </Style>
+        <Style Selector="ComboBox">
+            <Setter Property="CornerRadius" Value="12" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="12,9" />
+        </Style>
+        <Style Selector="ToggleSwitch">
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+        </Style>
+        <Style Selector="ProgressBar.strength">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+        </Style>
+    </Application.Styles>
+</Application>

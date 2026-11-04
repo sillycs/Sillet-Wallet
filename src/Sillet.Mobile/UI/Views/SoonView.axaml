@@ -1,0 +1,9 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.SoonView">
+    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="8" Margin="30">
+        <TextBlock Text="{ui:Tr 'Coming soon'}" Classes="title" HorizontalAlignment="Center" />
+        <TextBlock Text="{ui:Tr 'This part is available on the desktop app for now'}" Classes="label" TextWrapping="Wrap" TextAlignment="Center" />
+    </StackPanel>
+</UserControl>

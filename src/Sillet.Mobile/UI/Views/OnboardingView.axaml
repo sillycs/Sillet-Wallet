@@ -1,0 +1,81 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.OnboardingView">
+    <ScrollViewer>
+        <StackPanel Margin="22,40,22,30" Spacing="12">
+            <StackPanel Spacing="12" IsVisible="{Binding StepIndex, Converter={StaticResource Equals}, ConverterParameter=0}">
+                <Image Width="72" Height="72" Source="/Assets/silleticon.png" HorizontalAlignment="Center" Margin="0,30,0,0" />
+                <TextBlock Text="{Binding WelcomeTitle}" FontSize="40" FontWeight="Bold" HorizontalAlignment="Center" />
+                <TextBlock Text="{ui:Tr 'Bitcoin, Ethereum, Solana, TRON and more in one wallet'}" Classes="label" HorizontalAlignment="Center"
+                           TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,24" />
+                <Button Classes="primary" Content="{ui:Tr 'Create wallet'}" Command="{Binding CreateCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="secondary" Content="{ui:Tr 'Import recovery phrase'}" Command="{Binding ImportCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="secondary" Content="{ui:Tr 'Watch a hardware wallet'}" Command="{Binding WatchCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="link" Content="{ui:Tr 'Back to my wallets'}" Command="{Binding CancelAddCommand}" HorizontalAlignment="Center"
+                        IsVisible="{Binding CanCancelAdd}" />
+            </StackPanel>
+
+            <StackPanel Spacing="12" IsVisible="{Binding StepIndex, Converter={StaticResource Equals}, ConverterParameter=1}">
+                <TextBlock Text="{ui:Tr 'Recovery phrase'}" Classes="title" />
+                <TextBlock Text="{ui:Tr 'Write it down on paper, in order. It is the only way to recover your wallet'}" Classes="label" TextWrapping="Wrap" />
+                <ItemsControl ItemsSource="{Binding Words}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><UniformGrid Columns="2" /></ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="soft" Margin="0,0,6,6" Padding="10,8">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Number}" Classes="caption" Width="20" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Word}" FontFamily="monospace" FontSize="15" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{ui:Tr 'Do not share it or store it in photos or the cloud. Whoever has it controls your funds'}" Foreground="{DynamicResource WarningBrush}"
+                           FontSize="13" TextWrapping="Wrap" />
+                <CheckBox IsChecked="{Binding SavedConfirmed, Mode=TwoWay}" Content="{ui:Tr 'I wrote it down and stored it somewhere safe'}" />
+                <Button Classes="primary" Content="{ui:Tr 'Continue'}" Command="{Binding ContinueFromPhraseCommand}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <StackPanel Spacing="10" IsVisible="{Binding StepIndex, Converter={StaticResource Equals}, ConverterParameter=2}">
+                <TextBlock Text="{ui:Tr 'Confirm the phrase'}" Classes="title" />
+                <TextBlock Classes="label"><Run Text="{ui:Tr 'Word '}" /><Run Text="{Binding VerifyIndexA}" /></TextBlock>
+                <TextBox Text="{Binding VerifyA, Mode=TwoWay}" />
+                <TextBlock Classes="label"><Run Text="{ui:Tr 'Word '}" /><Run Text="{Binding VerifyIndexB}" /></TextBlock>
+                <TextBox Text="{Binding VerifyB, Mode=TwoWay}" />
+                <Button Classes="primary" Content="{ui:Tr 'Continue'}" Command="{Binding VerifyCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+            </StackPanel>
+
+            <StackPanel Spacing="10" IsVisible="{Binding StepIndex, Converter={StaticResource Equals}, ConverterParameter=3}">
+                <TextBlock Text="{ui:Tr 'Import'}" Classes="title" />
+                <TextBlock Text="{ui:Tr 'Your 12 or 24 words, separated by spaces'}" Classes="label" />
+                <TextBox Text="{Binding ImportText, Mode=TwoWay}" Watermark="word1 word2 word3" TextWrapping="Wrap" AcceptsReturn="False" Height="120"
+                         FontFamily="monospace" />
+                <Button Classes="primary" Content="{ui:Tr 'Continue'}" Command="{Binding ImportNextCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="link" Content="{ui:Tr 'Cancel'}" Command="{Binding CancelRestoreCommand}" HorizontalAlignment="Center" IsVisible="{Binding CanCancelRestore}" />
+            </StackPanel>
+
+            <StackPanel Spacing="10" IsVisible="{Binding StepIndex, Converter={StaticResource Equals}, ConverterParameter=4}">
+                <TextBlock Text="{ui:Tr 'Password'}" Classes="title" />
+                <TextBlock Text="{ui:Tr 'Protects the wallet on this phone. At least 8 characters'}" Classes="label" TextWrapping="Wrap" />
+                <TextBox Text="{Binding Password, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'New password'}" />
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding HasStrength}">
+                    <ProgressBar Value="{Binding StrengthScore}" Maximum="4" Height="5" MinHeight="5" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1" Text="{Binding StrengthText}" Classes="caption" Margin="10,0,0,0" />
+                </Grid>
+                <TextBox Text="{Binding PasswordRepeat, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'Repeat password'}" />
+                <TextBlock Text="{ui:Tr 'Passphrase, optional'}" Classes="label" Margin="0,12,0,0" />
+                <TextBlock Text="{ui:Tr 'A passphrase opens a different, hidden wallet from the same words. If you lose it, those funds cannot be recovered'}" Classes="caption" TextWrapping="Wrap" />
+                <TextBox Text="{Binding Passphrase, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'Passphrase'}" />
+                <TextBox Text="{Binding PassphraseRepeat, Mode=TwoWay}" PasswordChar="•" Watermark="{ui:Tr 'Repeat passphrase'}" />
+                <Button Classes="primary" Content="{ui:Tr 'Finish'}" Command="{Binding FinishCommand}" HorizontalAlignment="Stretch" Margin="0,8,0,0" />
+            </StackPanel>
+
+            <TextBlock Text="{Binding Error}" Classes="error" IsVisible="{Binding HasError}" />
+            <Button Classes="link" Content="{ui:Tr 'Back'}" Command="{Binding BackCommand}" HorizontalAlignment="Center" IsVisible="{Binding CanGoBack}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

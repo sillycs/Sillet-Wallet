@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Sillet
+GenericName=Crypto wallet
+Comment=Multi-network crypto wallet by Raton
+Exec=@EXEC@
+Icon=sillet
+Terminal=false
+Categories=Finance;Office;
+Keywords=crypto;wallet;bitcoin;ethereum;solana;
+StartupWMClass=Sillet.Desktop
