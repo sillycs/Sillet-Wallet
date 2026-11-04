@@ -2,7 +2,7 @@
 
 A wallet for Windows, Android and Linux with 16 networks and 42 assets, all from one 12-word phrase. Your keys never leave your device
 
-Made by the Raton team → [raton.fun](https://raton.fun)
+Made by the Raton team - [SillyCS](https://t.me/sillyisafed)
 
 ## Networks
 
