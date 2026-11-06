@@ -37,6 +37,12 @@ function Close-Sillet {
     Write-Host "   Closed"
 }
 
+function Quiet([scriptblock]$Block) {
+    $old = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try { & $Block *> $null } finally { $ErrorActionPreference = $old }
+}
+
 function Show-Size([string]$Path) {
     $mb = [math]::Round((Get-Item $Path).Length / 1MB, 1)
     Write-Host ("   {0}  {1} MB" -f (Split-Path $Path -Leaf), $mb)
@@ -125,8 +131,8 @@ if ($Release) {
     } else {
         Write-Host "   No source changes"
     }
-    git -C $Root fetch origin 2>$null
-    git -C $Root rev-parse --verify origin/main 2>$null | Out-Null
+    Quiet { git -C $Root fetch origin }
+    Quiet { git -C $Root rev-parse --verify origin/main }
     if ($LASTEXITCODE -eq 0) {
         Invoke-Checked "git pull" { git -C $Root pull --rebase --allow-unrelated-histories -X theirs origin main }
     }
@@ -134,7 +140,7 @@ if ($Release) {
     $files = @("Sillet.exe", "Sillet-CLI.exe", "Sillet.apk", "Sillet-Linux-x64.tar.gz") | ForEach-Object { Join-Path $Dist $_ }
     $sums = Join-Path $Dist "SHA256SUMS.txt"
     ($files | ForEach-Object { (Get-FileHash $_ -Algorithm SHA256).Hash.ToLowerInvariant() + "  " + (Split-Path $_ -Leaf) }) | Set-Content -Encoding ascii $sums
-    $exists = gh release view $tag 2>$null
+    Quiet { gh release view $tag }
     if ($LASTEXITCODE -eq 0) {
         Invoke-Checked "gh upload" { gh release upload $tag @($files + $sums) --clobber }
     } else {
