@@ -52,15 +52,6 @@ New-Item -ItemType Directory -Force $Dist | Out-Null
 Step "Closing Sillet if it is open"
 Close-Sillet
 
-Step "Windows app (single Sillet.exe)"
-Invoke-Checked "Windows build" { dotnet build src\Sillet.App -c Release }
-Copy-Item src\Sillet.App\bin\Release\net472\Sillet.exe (Join-Path $Dist "Sillet.exe") -Force
-
-Step "Windows command line (single sillet-cli.exe)"
-Invoke-Checked "CLI build" { dotnet publish src\Sillet.Cli -c Release -f net8.0 -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o (Join-Path $Dist "cli") }
-Copy-Item (Join-Path $Dist "cli\sillet-cli.exe") (Join-Path $Dist "Sillet-CLI.exe") -Force
-Remove-Item -Recurse -Force (Join-Path $Dist "cli")
-
 Step "Android app"
 Remove-Item -Recurse -Force src\Sillet.Android\bin, src\Sillet.Android\obj, src\Sillet.Mobile\bin, src\Sillet.Mobile\obj -ErrorAction SilentlyContinue
 Invoke-Checked "Android build" { dotnet publish src\Sillet.Android -c Release -f net9.0-android }
@@ -69,7 +60,18 @@ if ($null -eq $apk) {
     Write-Host "Signed APK not found" -ForegroundColor Red
     exit 1
 }
+New-Item -ItemType Directory -Force $Dist | Out-Null
 Copy-Item $apk.FullName (Join-Path $Dist "Sillet.apk") -Force
+
+Step "Windows app (single Sillet.exe)"
+Invoke-Checked "Windows build" { dotnet build src\Sillet.App -c Release }
+New-Item -ItemType Directory -Force $Dist | Out-Null
+Copy-Item src\Sillet.App\bin\Release\net472\Sillet.exe (Join-Path $Dist "Sillet.exe") -Force
+
+Step "Windows command line (single sillet-cli.exe)"
+Invoke-Checked "CLI build" { dotnet publish src\Sillet.Cli -c Release -f net8.0 -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o (Join-Path $Dist "cli") }
+Copy-Item (Join-Path $Dist "cli\sillet-cli.exe") (Join-Path $Dist "Sillet-CLI.exe") -Force
+Remove-Item -Recurse -Force (Join-Path $Dist "cli")
 
 Step "Linux app and command line (Sillet-Linux-x64.tar.gz)"
 $stage = Join-Path $Dist "linux-stage"
@@ -122,6 +124,11 @@ if ($Release) {
         Invoke-Checked "git commit" { git -C $Root commit -m ("Sillet " + $tag) }
     } else {
         Write-Host "   No source changes"
+    }
+    git -C $Root fetch origin 2>$null
+    git -C $Root rev-parse --verify origin/main 2>$null | Out-Null
+    if ($LASTEXITCODE -eq 0) {
+        Invoke-Checked "git pull" { git -C $Root pull --rebase --allow-unrelated-histories -X theirs origin main }
     }
     Invoke-Checked "git push" { git -C $Root push -u origin HEAD }
     $files = @("Sillet.exe", "Sillet-CLI.exe", "Sillet.apk", "Sillet-Linux-x64.tar.gz") | ForEach-Object { Join-Path $Dist $_ }
