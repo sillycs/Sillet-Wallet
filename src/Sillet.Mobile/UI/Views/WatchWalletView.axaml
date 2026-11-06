@@ -4,9 +4,10 @@
              x:Class="Sillet.Mobile.UI.Views.WatchWalletView">
     <ScrollViewer>
         <StackPanel Margin="22,30,22,30" Spacing="10">
-            <TextBlock Text="{ui:Tr 'Watch a hardware wallet'}" Classes="title" />
-            <TextBlock Text="{ui:Tr 'Paste the receive addresses from Ledger Live, Trezor Suite or your device app. Sillet shows balances; sending is done from the device app'}"
+            <TextBlock Text="{ui:Tr 'Add a hardware wallet'}" Classes="title" />
+            <TextBlock Text="{ui:Tr 'Paste the receive addresses from Ledger Live, Trezor Suite or your device app. Ledger can also sign payments on Ethereum and EVM networks with a cable'}"
                        Classes="label" TextWrapping="Wrap" Margin="0,0,0,8" />
+            <Button Classes="secondary" Content="{ui:Tr 'Read from Ledger'}" Command="{Binding ReadLedgerCommand}" HorizontalAlignment="Stretch" />
             <TextBlock Text="{ui:Tr 'Name'}" Classes="label" />
             <TextBox Text="{Binding Name, Mode=TwoWay}" MaxLength="32" />
             <ItemsControl ItemsSource="{Binding Fields}">
@@ -25,7 +26,7 @@
             <TextBlock Text="{Binding Error}" Classes="error" IsVisible="{Binding HasError}" />
             <Grid ColumnDefinitions="Auto,10,*" Margin="0,10,0,0">
                 <Button Classes="secondary" Content="{ui:Tr 'Back'}" Command="{Binding CancelCommand}" />
-                <Button Grid.Column="2" Classes="primary" Content="{ui:Tr 'Start watching'}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" />
+                <Button Grid.Column="2" Classes="primary" Content="{ui:Tr 'Add wallet'}" Command="{Binding SaveCommand}" HorizontalAlignment="Stretch" />
             </Grid>
         </StackPanel>
     </ScrollViewer>

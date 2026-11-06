@@ -113,7 +113,7 @@
                         <Button Style="{StaticResource Button.Secondary}" Command="{Binding AddWatchWalletCommand}" Padding="14,9">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
-                                <TextBlock Text="{c:Tr 'Watch a hardware wallet'}" Margin="8,0,0,0" FontWeight="Normal" />
+                                <TextBlock Text="{c:Tr 'Add a hardware wallet'}" Margin="8,0,0,0" FontWeight="Normal" />
                             </StackPanel>
                         </Button>
                     </WrapPanel>
@@ -341,14 +341,14 @@
                                                                     <ColumnDefinition />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <Border Width="36" Height="36" CornerRadius="18" Background="{DynamicResource SurfacePressedBrush}">
+                                                                <Border Width="42" Height="28" CornerRadius="3" Background="{DynamicResource SurfacePressedBrush}" VerticalAlignment="Center">
                                                                     <Grid>
-                                                                        <Border CornerRadius="18" Visibility="{Binding HasFlag, Converter={StaticResource BoolToVis}}">
+                                                                        <Border CornerRadius="3" Visibility="{Binding HasFlag, Converter={StaticResource BoolToVis}}">
                                                                             <Border.Background>
-                                                                                <ImageBrush ImageSource="{Binding FlagPath}" Stretch="UniformToFill" />
+                                                                                <ImageBrush ImageSource="{Binding FlagPath}" Stretch="Fill" />
                                                                             </Border.Background>
                                                                         </Border>
-                                                                        <TextBlock Text="{Binding FlagEmoji}" FontFamily="Segoe UI Emoji" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                        <TextBlock Text="{Binding FlagEmoji}" FontFamily="Segoe UI Emoji" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                                    Visibility="{Binding ShowEmoji, Converter={StaticResource BoolToVis}}" />
                                                                         <TextBlock Text="{Binding IconText}" FontSize="12" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"
                                                                                    Visibility="{Binding ShowText, Converter={StaticResource BoolToVis}}" />
@@ -538,8 +538,8 @@
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
-                            <TextBlock Text="{c:Tr 'Bitcoin price moves'}" />
-                            <TextBlock Text="{c:Tr 'When Bitcoin goes up or down by this much'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{c:Tr 'Price moves'}" />
+                            <TextBlock Text="{c:Tr 'When the coins you pick go up or down by this much'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
                             <Border Style="{StaticResource SegmentHost}" HorizontalAlignment="Left" Margin="0,10,0,0" IsEnabled="{Binding NotifyBitcoin}">
                                 <StackPanel Orientation="Horizontal">
                                     <RadioButton Style="{StaticResource Segment}" GroupName="BtcMove" Content="3%" IsChecked="{Binding BitcoinMove3, Mode=TwoWay}" />
@@ -547,6 +547,40 @@
                                     <RadioButton Style="{StaticResource Segment}" GroupName="BtcMove" Content="10%" IsChecked="{Binding BitcoinMove10, Mode=TwoWay}" />
                                 </StackPanel>
                             </Border>
+                            <Button x:Name="PriceCoinsButton" Style="{StaticResource Button.Link}" Content="{Binding PriceCoinsSummary}" FontSize="12" HorizontalAlignment="Left" Margin="0,8,0,0"
+                                    Command="{Binding OpenPricePickerCommand}" IsEnabled="{Binding NotifyBitcoin}" ToolTip="{c:Tr 'Choose coins'}" />
+                            <Popup IsOpen="{Binding IsPricePickerOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=PriceCoinsButton}" Placement="Bottom"
+                                   HorizontalOffset="0" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                                <Border Width="340" Margin="12,0,12,16" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                                        BorderThickness="1" Padding="16,14">
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="28" ShadowDepth="6" Opacity="0.45" Color="Black" />
+                                    </Border.Effect>
+                                    <StackPanel>
+                                        <TextBlock Text="{c:Tr 'Which coins do you want to follow?'}" Style="{StaticResource Text.Subtitle}" FontSize="15" TextWrapping="Wrap" />
+                                        <ScrollViewer MaxHeight="300" VerticalScrollBarVisibility="Auto" Margin="0,10,0,0">
+                                            <ItemsControl ItemsSource="{Binding PriceCoinRows}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,6">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                                <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" Width="56" />
+                                                                <TextBlock Text="{Binding Name}" Style="{StaticResource Text.Label}" TextTrimming="CharacterEllipsis" MaxWidth="170" />
+                                                            </StackPanel>
+                                                            <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding Selected, Mode=TwoWay}" VerticalAlignment="Center" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                        <Button Style="{StaticResource Button.Primary}" Content="{c:Tr 'Save'}" Command="{Binding SavePricePickerCommand}" HorizontalAlignment="Stretch" Margin="0,12,0,0" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
                         </StackPanel>
                         <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding NotifyBitcoin, Mode=TwoWay}" VerticalAlignment="Center" />
                     </Grid>
@@ -558,7 +592,7 @@
                         </Grid.ColumnDefinitions>
                         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                             <TextBlock Text="{c:Tr 'Push notifications'}" />
-                            <TextBlock Text="{c:Tr 'Windows notifications while Sillet is in the background'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{c:Tr 'Everything in the bell also shows in your phone'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
                             <Button Style="{StaticResource Button.Link}" Content="{c:Tr 'Send a test notification'}" FontSize="12" HorizontalAlignment="Left" Margin="0,8,0,0"
                                     Command="{Binding TestPushCommand}" />
                         </StackPanel>
@@ -1047,6 +1081,19 @@
                         </StackPanel>
                         <TextBox Style="{StaticResource Input}" Text="{Binding EndpointsText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" Padding="10,8" FontSize="13" Tag="{c:Tr 'ethereum=https://my-node.example'}" />
                         <TextBlock Text="{c:Tr 'One per line, like ethereum=https://my-node.example'}" Style="{StaticResource Text.Label}" FontSize="11.5" Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" Margin="2,6,0,0" />
+                        <TextBlock Text="{c:Tr 'Optional connections'}" Style="{StaticResource Text.Label}" Margin="0,18,0,8" />
+                        <Grid Margin="0,4">
+                            <TextBlock Text="{c:Tr 'News from raton.fun'}" VerticalAlignment="Center" />
+                            <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding NewsOn, Mode=TwoWay}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <TextBlock Text="{c:Tr 'Prediction markets from Polymarket'}" VerticalAlignment="Center" />
+                            <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding PredictionsOn, Mode=TwoWay}" HorizontalAlignment="Right" />
+                        </Grid>
+                        <Grid Margin="0,4">
+                            <TextBlock Text="{c:Tr 'Check for updates on raton.fun'}" VerticalAlignment="Center" />
+                            <CheckBox Style="{StaticResource Switch}" IsChecked="{Binding UpdateChecksOn, Mode=TwoWay}" HorizontalAlignment="Right" />
+                        </Grid>
                         <TextBlock Text="{Binding NetworkMessage}" FontSize="12.5" TextWrapping="Wrap" Margin="2,10,0,0" Visibility="{Binding HasNetworkMessage, Converter={StaticResource BoolToVis}}" />
                         <WrapPanel Margin="0,14,0,0">
                             <Button Style="{StaticResource Button.Secondary}" Command="{Binding UseTorCommand}" Padding="14,9" Margin="0,0,8,0">
@@ -1388,9 +1435,9 @@
                         <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{c:Tr 'Update automatically'}" />
-                                <ToggleButton Style="{StaticResource InfoTip}" Tag="{c:Tr 'Installs each new version as soon as it is published. Sillet checks every 20 minutes, then closes, downloads the update and asks for administrator permission to replace itself. If you decline, the update is cancelled'}" />
+                                <ToggleButton Style="{StaticResource InfoTip}" Tag="{c:Tr 'Sillet checks every 20 minutes and shows you each new version with its changelog. Nothing is installed until you press Install update. Every update must carry a valid signature from the Sillet release key, or it is refused. Administrator permission is requested only if Sillet is installed in a protected folder'}" />
                             </StackPanel>
-                            <TextBlock Text="{c:Tr 'Installs new versions as soon as they are out'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+                            <TextBlock Text="{c:Tr 'Offers new versions and asks before installing'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
                         </StackPanel>
                         <CheckBox Grid.Column="1" Style="{StaticResource Switch}" IsChecked="{Binding AutoUpdate, Mode=TwoWay}" VerticalAlignment="Center" />
                     </Grid>
@@ -1441,6 +1488,8 @@
             </Border>
             <StackPanel Uid="fixed" HorizontalAlignment="Center" Margin="0,22,0,0">
                 <TextBlock Text="{Binding Version}" Style="{StaticResource Text.Caption}" FontSize="11" Foreground="White" Opacity="0.7" HorizontalAlignment="Center" />
+                <Button Style="{StaticResource Button.Link}" Command="{Binding CopyIdCommand}" Content="{c:Tr 'Copy Raton ID'}" FontSize="9.5" Foreground="White" Opacity="0.4"
+                        HorizontalAlignment="Center" Margin="0,2,0,0" Padding="6,2" />
                 <Button Style="{StaticResource Button.Link}" Command="{Binding ToggleDeveloperCommand}" Content="{c:Tr 'Developer mode'}" FontSize="9.5" Foreground="White" Opacity="0.4"
                         HorizontalAlignment="Center" Margin="0,2,0,0" Padding="6,2" />
             </StackPanel>

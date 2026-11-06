@@ -15,12 +15,10 @@ namespace Sillet.Mobile.UI.Views
             InitializeComponent();
             var card = this.FindControl<Border>("NewsCard");
             if (card == null) return;
-            // handledEventsToo: the text and the buttons inside the card handle their own touches first
             card.AddHandler(PointerPressedEvent, News_Pressed, RoutingStrategies.Bubble, true);
             card.AddHandler(PointerReleasedEvent, News_Released, RoutingStrategies.Bubble, true);
         }
 
-        /// <summary>Touching the news stops them from rotating, so a long post can be read and scrolled in peace.</summary>
         private void News_Pressed(object sender, PointerPressedEventArgs e)
         {
             _newsStart = e.GetPosition(this);
@@ -28,7 +26,6 @@ namespace Sillet.Mobile.UI.Views
             if (home != null) home.PauseNews();
         }
 
-        /// <summary>A sideways swipe on the news goes to the next or the previous one. Vertical drags still scroll the text.</summary>
         private void News_Released(object sender, PointerReleasedEventArgs e)
         {
             var home = DataContext as HomeViewModel;

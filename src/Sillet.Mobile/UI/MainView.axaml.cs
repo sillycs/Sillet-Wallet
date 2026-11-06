@@ -67,8 +67,21 @@ namespace Sillet.Mobile.UI
             if (_watched != null) _watched.PropertyChanged -= OnMainChanged;
             _watched = Vm;
             if (_watched != null) _watched.PropertyChanged += OnMainChanged;
+            ApplyLite();
             ApplyTarget();
             ShowPage();
+        }
+
+        private bool _liteHooked;
+
+        private void ApplyLite()
+        {
+            if (!_liteHooked)
+            {
+                _liteHooked = true;
+                Performance.Changed += () => Avalonia.Threading.Dispatcher.UIThread.Post(ApplyLite);
+            }
+            Classes.Set("lite", Performance.Lite);
         }
 
         private void OnMainChanged(object sender, PropertyChangedEventArgs e)
@@ -134,14 +147,12 @@ namespace Sillet.Mobile.UI
             Control known;
             if (_views.TryGetValue(page, out known) && ReferenceEquals(_current, known)) return;
 
-            // Changing page rebuilds a lot of layout in one frame. A short loading screen covers it, so the change looks like an animation instead of a stutter.
             var loader = this.FindControl<Border>("PageLoader");
             if (_current == null || loader == null || _splashActive)
             {
                 ApplyPage();
                 return;
             }
-            // The loader comes first and the page is only built once it has been on screen for PageLoaderMs, never before
             _loaderGeneration++;
             if (!loader.Classes.Contains("on")) loader.Classes.Add("on");
             if (_applyQueued) return;
@@ -151,7 +162,6 @@ namespace Sillet.Mobile.UI
                 _applyQueued = false;
                 ApplyPage();
                 var done = ++_loaderGeneration;
-                // A moment for the new page to lay out under the loader, then it goes away
                 DispatcherTimer.RunOnce(() =>
                 {
                     if (done == _loaderGeneration) loader.Classes.Remove("on");
@@ -181,7 +191,7 @@ namespace Sillet.Mobile.UI
             if (!_warmed)
             {
                 _warmed = true;
-                DispatcherTimer.RunOnce(WarmUp, TimeSpan.FromMilliseconds(1800));
+                if (!Performance.Lite) DispatcherTimer.RunOnce(WarmUp, TimeSpan.FromMilliseconds(1800));
             }
         }
 
@@ -238,7 +248,6 @@ namespace Sillet.Mobile.UI
 
         private readonly Dictionary<Control, List<ScrollViewer>> _scrollers = new Dictionary<Control, List<ScrollViewer>>();
 
-        /// <summary>Walking the whole visual tree on every touch made scrolling start late, so the scroll viewers of each page are found once.</summary>
         private ScrollViewer FindScroller(Control view)
         {
             List<ScrollViewer> list;
@@ -250,7 +259,6 @@ namespace Sillet.Mobile.UI
                     var found = d as ScrollViewer;
                     if (found != null) list.Add(found);
                 }
-                // Only keep the result when the page has been laid out and has a real scroller.
                 if (list.Count > 0) _scrollers[view] = list;
             }
             foreach (var sv in list)
@@ -262,8 +270,6 @@ namespace Sillet.Mobile.UI
         {
             if (_pullBusy || _current == null || Vm == null || !Vm.IsUnlocked) return;
 
-            // Reset defensivo: si una pulsación anterior quedó a medias,
-            // limpiamos el estado visual antes de empezar.
             if (_pullDistance > 0) ApplyPull(0, 0);
             _pullDistance = 0;
 
@@ -300,8 +306,6 @@ namespace Sillet.Mobile.UI
                 _pullStart = new Point(now.X, now.Y - 14);
                 dy = 14;
 
-                // Capturar el puntero: PageHost se desplaza con RenderTransform,
-                // así que sin captura los eventos se pierden al salir de su área.
                 var host = this.FindControl<Panel>("PageHost");
                 if (host != null) e.Pointer.Capture(host);
             }
@@ -321,8 +325,6 @@ namespace Sillet.Mobile.UI
 
         private void Pull_Released(object sender, PointerReleasedEventArgs e)
         {
-            // Solo soltamos la captura si estábamos jalando; si no, un tap normal
-            // perdería la captura del botón y nunca dispararía Click.
             if (_pulling) e.Pointer.Capture(null);
             FinishPull();
         }
@@ -395,8 +397,6 @@ namespace Sillet.Mobile.UI
                 if (vm != null)
                 {
                     var refresh = vm.RefreshAllAsync() ?? Task.CompletedTask;
-                    // Esperar refresh + 700ms, pero como máximo 5s para no
-                    // dejar _pullBusy bloqueado si el refresh se cuelga.
                     await Task.WhenAny(
                         Task.WhenAll(refresh, Task.Delay(700)),
                         Task.Delay(5000));
@@ -453,6 +453,12 @@ namespace Sillet.Mobile.UI
         {
             var page = Vm == null ? null : Vm.SettingsPage;
             if (page != null) page.IsCurrencyPickerOpen = false;
+        }
+
+        private void PriceScrim_Tapped(object sender, TappedEventArgs e)
+        {
+            var page = Vm == null ? null : Vm.SettingsPage;
+            if (page != null) page.IsPricePickerOpen = false;
         }
 
         private void Scrim_Tapped(object sender, TappedEventArgs e)
@@ -560,7 +566,6 @@ namespace Sillet.Mobile.UI
 
         private byte[] _shotPng;
 
-        /// <summary>Keeps the picture taken at the moment of the screenshot and shows it in the sheet, so what is shared is what the user saw.</summary>
         private void ShowPreview(byte[] png)
         {
             _shotPng = png;
@@ -577,6 +582,67 @@ namespace Sillet.Mobile.UI
             }
             if (old != null) old.Dispose();
             image.IsVisible = image.Source != null;
+        }
+
+        private void ShowSupport(bool open)
+        {
+            var scrim = this.FindControl<Border>("SupportScrim");
+            var sheet = this.FindControl<Border>("SupportSheet");
+            if (scrim == null || sheet == null) return;
+            if (open)
+            {
+                if (!scrim.Classes.Contains("open")) scrim.Classes.Add("open");
+                if (!sheet.Classes.Contains("open")) sheet.Classes.Add("open");
+            }
+            else
+            {
+                scrim.Classes.Remove("open");
+                sheet.Classes.Remove("open");
+            }
+        }
+
+        private void Support_Click(object sender, RoutedEventArgs e)
+        {
+            var vm = Vm;
+            if (vm != null)
+            {
+                vm.IsProfilesOpen = false;
+                vm.IsNotificationsOpen = false;
+            }
+            ShowSupport(true);
+        }
+
+        private void SupportScrim_Tapped(object sender, TappedEventArgs e)
+        {
+            ShowSupport(false);
+        }
+
+        private void SupportTelegram_Click(object sender, RoutedEventArgs e)
+        {
+            ShowSupport(false);
+            OpenLink("https://t.me/sillycs");
+        }
+
+        private void SupportDiscord_Click(object sender, RoutedEventArgs e)
+        {
+            ShowSupport(false);
+            OpenLink("https://discord.gg/NBMWgX9Crq");
+        }
+
+        private void OpenLink(string url)
+        {
+            var top = TopLevel.GetTopLevel(this);
+            if (top == null) return;
+            var ignored = top.Launcher.LaunchUriAsync(new Uri(url));
+        }
+
+        private void ShotSave_Click(object sender, RoutedEventArgs e)
+        {
+            ShowShot(false);
+            var png = _shotPng ?? Capture();
+            var save = MobilePlatform.SaveImage;
+            if (png == null || save == null) return;
+            save("sillet-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".png", png);
         }
 
         private void ShotDismiss_Click(object sender, RoutedEventArgs e)
@@ -605,9 +671,8 @@ namespace Sillet.Mobile.UI
             if (root == null || root.Bounds.Width <= 0 || root.Bounds.Height <= 0) return null;
             var top = TopLevel.GetTopLevel(this);
             var scale = top == null ? 1.0 : top.RenderScaling;
-            // The share sheet itself must not end up in the picture, so it is hidden while the page is drawn.
             var overlays = new List<Control>();
-            foreach (var name in new[] { "ShotScrim", "ShotSheet" })
+            foreach (var name in new[] { "ShotScrim", "ShotSheet", "SupportScrim", "SupportSheet" })
             {
                 var overlay = this.FindControl<Control>(name);
                 if (overlay != null && overlay.IsVisible) overlays.Add(overlay);

@@ -24,13 +24,12 @@ namespace Sillet.Mobile
         {
             var host = new MobileHost(this);
             var soundBytes = new System.Collections.Generic.Dictionary<string, byte[]>();
-            Sillet.App.Services.Sounds.Player = name =>
+            System.Func<string, byte[]> load = name =>
             {
-                var play = MobilePlatform.PlaySound;
-                if (play == null) return;
-                byte[] bytes;
-                if (!soundBytes.TryGetValue(name, out bytes))
+                lock (soundBytes)
                 {
+                    byte[] bytes;
+                    if (soundBytes.TryGetValue(name, out bytes)) return bytes;
                     using (var stream = AssetLoader.Open(new System.Uri("avares://Sillet.Mobile/Assets/sounds/" + name + ".mp3")))
                     using (var memory = new System.IO.MemoryStream())
                     {
@@ -38,9 +37,22 @@ namespace Sillet.Mobile
                         bytes = memory.ToArray();
                     }
                     soundBytes[name] = bytes;
+                    return bytes;
                 }
-                play(name, bytes);
             };
+            Sillet.App.Services.Sounds.Player = name =>
+            {
+                var play = MobilePlatform.PlaySound;
+                if (play == null) return;
+                play(name, load(name));
+            };
+            Sillet.App.Services.Sounds.Preloader = name =>
+            {
+                var bytes = load(name);
+                var preload = MobilePlatform.PreloadSound;
+                if (preload != null) preload(name, bytes);
+            };
+            System.Threading.Tasks.Task.Run(() => Sillet.App.Services.Sounds.Preload());
             var view = new MainView();
             host.View = view;
             view.DataContext = new MainViewModel(host);

@@ -36,9 +36,7 @@ namespace Sillet.App.Services
         public string Author { get; }
         public string Description { get; }
         public string Title { get; }
-        /// <summary>The date as written in the news file, "2026-11-03" or "2026-11-03 18:30".</summary>
         public string RawDate { get; }
-        /// <summary>Today, Yesterday, "3 days ago" and the plain date after a week.</summary>
         public string Date => NewsDates.Describe(RawDate, DateTime.Now);
         public string Url { get; }
         public bool HasTitle => !string.IsNullOrEmpty(Title);
@@ -83,12 +81,10 @@ namespace Sillet.App.Services
             get { return Path.Combine(AppSettings.DataFolder, "cache", "news.json"); }
         }
 
-        // The Home page, the notifier and the background watcher all ask for the news. One download is shared for a short while.
         private static IReadOnlyList<NewsItem> _memory;
         private static DateTime _memoryUtc = DateTime.MinValue;
         private static readonly TimeSpan MemoryLife = TimeSpan.FromSeconds(45);
 
-        /// <summary>What is already known without the network: the last download or the copy kept on disk.</summary>
         public IReadOnlyList<NewsItem> GetCached()
         {
             var known = _memory;
@@ -105,6 +101,7 @@ namespace Sillet.App.Services
 
         public async Task<IReadOnlyList<NewsItem>> GetAsync(CancellationToken ct = default(CancellationToken))
         {
+            if (!AppSettings.NewsAllowed) return new List<NewsItem>();
             var recent = _memory;
             if (recent != null && DateTime.UtcNow - _memoryUtc < MemoryLife) return recent;
             var fresh = await DownloadAsync(ct);

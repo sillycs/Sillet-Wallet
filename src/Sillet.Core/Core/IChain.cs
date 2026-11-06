@@ -32,7 +32,9 @@ namespace Sillet.Core
         bool SupportsFeeSpeed { get; }
         FeeSpeed FeeSpeed { get; set; }
 
-        /// <summary>Asks the network how far along a transaction is. Unknown when the network does not know it (yet) or cannot be reached.</summary>
+        bool SupportsReplacement { get; }
+        Task<PreparedTransfer> PrepareReplacementAsync(string txId, bool cancel, Asset asset, decimal amount, CancellationToken ct = default(CancellationToken));
+
         Task<TxStage> GetTxStageAsync(string txId, CancellationToken ct = default(CancellationToken));
 
         string ExplorerAddressUrl(string address);

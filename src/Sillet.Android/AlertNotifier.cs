@@ -130,7 +130,6 @@ namespace Sillet.Droid
                 launch.SetFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTop | ActivityFlags.NewTask);
                 if (target != null) launch.PutExtra(TargetExtra, target);
             }
-            // A distinct request code per target, so the extras of one notification never overwrite another's.
             var code = target == null ? 0 : 1 + Math.Abs(target.GetHashCode() % 1000);
             return PendingIntent.GetActivity(context, code, launch, PendingIntentFlags.Immutable | PendingIntentFlags.UpdateCurrent);
         }
@@ -165,7 +164,6 @@ namespace Sillet.Droid
                     if (kind == "payment") builder.SetVibrate(new long[] { 0, 180, 90, 180 });
                 }
                 builder.AddAction(Resource.Drawable.notify_icon, kind == "payment" ? Loc.T("See in Activity") : Loc.T("Open Sillet"), pending);
-                // On the lock screen show only the title, never the amount.
                 builder.SetVisibility(NotificationVisibility.Private);
                 var hidden = OperatingSystem.IsAndroidVersionAtLeast(26) ? new Notification.Builder(context, channel) : new Notification.Builder(context);
                 hidden.SetSmallIcon(Resource.Drawable.notify_icon).SetColor(accent).SetContentTitle(title);

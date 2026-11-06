@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace Sillet.App.Services
 {
-    /// <summary>Short sound effects. Each platform sets Player; where it stays null nothing plays.</summary>
     public static class Sounds
     {
         public const string Favorite = "favorite";
@@ -12,11 +11,29 @@ namespace Sillet.App.Services
         public const string Updated = "updated";
         public const string Payment = "payment";
 
-        /// <summary>Set by the app. Plays the sound with that name.</summary>
         public static Action<string> Player { get; set; }
 
-        /// <summary>Set by the app. True when the person has sounds turned on.</summary>
         public static Func<bool> Enabled { get; set; }
+
+        public static Action<string> Preloader { get; set; }
+
+        public static readonly string[] All = { Favorite, Unlocked, Error, Updated, Payment };
+
+        public static void Preload()
+        {
+            var preloader = Preloader;
+            if (preloader == null) return;
+            foreach (var name in All)
+            {
+                try
+                {
+                    preloader(name);
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
 
         private static readonly Dictionary<string, DateTime> Last = new Dictionary<string, DateTime>();
 
@@ -39,7 +56,6 @@ namespace Sillet.App.Services
             }
             catch (Exception)
             {
-                // A missing sound must never break the app
             }
         }
     }

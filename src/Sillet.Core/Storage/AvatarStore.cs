@@ -5,14 +5,12 @@ using System.Linq;
 
 namespace Sillet.Storage
 {
-    /// <summary>Profile photos picked by the user. They stay on this device, next to the profiles, and are never uploaded anywhere.</summary>
     public static class AvatarStore
     {
         public const int MaxBytes = 3 * 1024 * 1024;
         private static readonly Dictionary<string, string> Cache = new Dictionary<string, string>();
         private static readonly object Gate = new object();
 
-        /// <summary>Set by the profile store. Null until then, so nothing is found or written.</summary>
         public static string Folder { get; set; }
 
         public static string PathFor(string id)
@@ -39,7 +37,6 @@ namespace Sillet.Storage
             }
         }
 
-        /// <summary>True when the bytes look like a PNG or a JPEG of a sensible size.</summary>
         public static bool IsImage(byte[] data)
         {
             if (data == null || data.Length < 16 || data.Length > MaxBytes) return false;
@@ -48,7 +45,6 @@ namespace Sillet.Storage
             return png || jpeg;
         }
 
-        /// <summary>Stores the photo under a new name each time, so image caches never show the old one. Returns false when it is not a usable image.</summary>
         public static bool Save(string id, byte[] data)
         {
             if (string.IsNullOrEmpty(Folder) || string.IsNullOrEmpty(id) || !IsImage(data)) return false;

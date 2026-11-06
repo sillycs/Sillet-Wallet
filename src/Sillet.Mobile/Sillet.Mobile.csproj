@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <AvaloniaResource Include="Assets\**" />
+    <EmbeddedResource Include="..\Sillet.App\Assets\flags\*.png" LogicalName="Sillet.flag.%(Filename)" />
   </ItemGroup>
 
   <ItemGroup>

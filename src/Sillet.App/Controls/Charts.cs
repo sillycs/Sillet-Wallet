@@ -28,24 +28,20 @@ namespace Sillet.App.Controls
             return s != null ? s.Color : Colors.White;
         }
 
-
         public static double Clamp(double value, double min, double max)
         {
             return value < min ? min : value > max ? max : value;
         }
-
 
         public static int Clamp(int value, int min, int max)
         {
             return value < min ? min : value > max ? max : value;
         }
 
-
         public static Point At(Point c, double r, double deg)
         {
             return new Point(c.X + r * Math.Cos(deg * Math.PI / 180), c.Y + r * Math.Sin(deg * Math.PI / 180));
         }
-
 
         public static Brush Frozen(Brush brush)
         {
@@ -53,13 +49,11 @@ namespace Sillet.App.Controls
             return brush;
         }
 
-
         public static Brush Hex(string hex)
         {
             try { return Frozen(new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex))); }
             catch (FormatException) { return Brushes.Gray; }
         }
-
 
         public static Pen Pen(Brush brush, double thickness, bool round = true)
         {
@@ -205,7 +199,6 @@ namespace Sillet.App.Controls
             }
         }
 
-
         private void DrawExtreme(DrawingContext dc, double x, double y, double value, bool above, double width)
         {
             var text = Draw.Text(this, Formatters.Fiat((decimal)value, Currency), 11, LabelBrush);
@@ -285,7 +278,6 @@ namespace Sillet.App.Controls
             chart.AnimateIfChanged();
         }
 
-
         private void OnCollectionChanged(object sender, NotifyCollectionChangedEventArgs e) => AnimateIfChanged();
         private void AnimateIfChanged()
         {
@@ -325,7 +317,6 @@ namespace Sillet.App.Controls
             }
         }
 
-
         private static void DrawArc(DrawingContext dc, Point c, double r, double startDeg, double sweepDeg, Pen pen)
         {
             var geometry = new StreamGeometry();
@@ -358,7 +349,6 @@ namespace Sillet.App.Controls
             Loaded += (s, e) => Swing(Value);
         }
 
-
         private static void OnValueChanged(DependencyObject d, DependencyPropertyChangedEventArgs e) =>
             ((FearGreedGauge)d).Swing((double)e.NewValue);
 
@@ -377,7 +367,6 @@ namespace Sillet.App.Controls
             double radius = Math.Min(RenderSize.Width / 2, RenderSize.Height) - thickness / 2 - 2;
             if (radius < 10) return;
             var center = new Point(RenderSize.Width / 2, RenderSize.Height - 4);
-
 
             double segment = 180.0 / Segments.Length;
             for (int i = 0; i < Segments.Length; i++)

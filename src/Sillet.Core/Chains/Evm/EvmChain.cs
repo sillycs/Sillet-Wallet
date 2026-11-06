@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Sillet.Core;
 using Sillet.Crypto;
 using Sillet.Encoding;
+using Sillet.Hardware;
 using Sillet.Net;
 
 namespace Sillet.Chains.Evm
@@ -20,6 +21,8 @@ namespace Sillet.Chains.Evm
         private const string GasPriceOracle = "0x420000000000000000000000000000000000000F";
 
         private JsonRpcClient _rpc;
+
+        public override bool SupportsDeviceSigning { get { return true; } }
 
         public abstract long ChainId { get; }
         protected abstract string[] RpcUrls { get; }
@@ -291,7 +294,10 @@ namespace Sillet.Chains.Evm
                                           Units.FromRaw(nativeBalance, Native.Decimals));
             }
 
-            var signed = build(value).Sign(Key);
+            var unsigned = build(value);
+            byte[] signed = null;
+            if (!IsWatchOnly) signed = unsigned.Sign(Key);
+            else if (!CanSignOnDevice) throw new WalletException("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
             var transfer = new PreparedTransfer
             {
                 Chain = this,
@@ -300,16 +306,101 @@ namespace Sillet.Chains.Evm
                 Amount = Units.FromRaw(asset.IsNative ? value : raw, asset.Decimals),
                 Fee = Units.FromRaw(expectedFee, Native.Decimals),
                 FeeAsset = Native,
+                TxId = signed == null ? null : "0x" + Hex.Encode(Hashes.Keccak256(signed)),
+                Payload = signed != null ? (object)signed : unsigned,
+            };
+            if (signed == null) transfer.Notes.Add("Confirm the payment on your Ledger");
+            transfer.Notes.AddRange(notes);
+            return transfer;
+        }
+
+        public override bool SupportsReplacement
+        {
+            get { return !IsWatchOnly; }
+        }
+
+        public override async Task<PreparedTransfer> PrepareReplacementAsync(string txId, bool cancel, Asset asset, decimal amount, CancellationToken ct = default(CancellationToken))
+        {
+            if (IsWatchOnly) throw new WalletException("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
+            JsonValue old;
+            try
+            {
+                old = await Rpc.CallAsync("eth_getTransactionByHash", new object[] { txId }, ct);
+            }
+            catch (RpcException e)
+            {
+                throw new WalletException("Could not read the transaction: " + e.Message);
+            }
+            if (old == null || old.IsNull) throw new WalletException("The network no longer has this transaction. Send it again instead");
+            JsonValue block;
+            if (old.TryGet("blockNumber", out block) && !block.IsNull) throw new WalletException("This transaction is already confirmed");
+            if (!string.Equals(old["from"].AsString(), Address, StringComparison.OrdinalIgnoreCase)) throw new WalletException("This transaction was not created by this wallet, so it can't be sped up here");
+
+            var fees = await GetGasPricesAsync(ct);
+            var oldGas = EvmAbi.DecodeUint(old["gas"].AsString());
+            var oldMax = SupportsEip1559 && old.Has("maxFeePerGas") && !old["maxFeePerGas"].IsNull ? EvmAbi.DecodeUint(old["maxFeePerGas"].AsString()) : EvmAbi.DecodeUint(old["gasPrice"].AsString());
+            var oldTip = SupportsEip1559 && old.Has("maxPriorityFeePerGas") && !old["maxPriorityFeePerGas"].IsNull ? EvmAbi.DecodeUint(old["maxPriorityFeePerGas"].AsString()) : oldMax;
+            Func<BigInteger, BigInteger, BigInteger> bump = (prior, suggested) => BigInteger.Max(suggested, prior * 125 / 100 + 1);
+            var newMax = bump(oldMax, fees.Item1);
+            var newTip = bump(oldTip, fees.Item3);
+            if (newTip > newMax) newMax = newTip;
+
+            byte[] to;
+            BigInteger value;
+            byte[] data;
+            BigInteger gas;
+            if (cancel)
+            {
+                to = EvmAddress.ToBytes(Address);
+                value = 0;
+                data = Bytes.Empty;
+                gas = 21000;
+            }
+            else
+            {
+                to = old.TryGet("to", out block) && !block.IsNull ? EvmAddress.ToBytes(block.AsString()) : Bytes.Empty;
+                value = EvmAbi.DecodeUint(old["value"].AsString());
+                var input = old["input"].AsString();
+                data = input.Length > 2 ? Hex.Decode(input.Substring(2)) : Bytes.Empty;
+                gas = oldGas;
+            }
+            var nonce = EvmAbi.DecodeUint(old["nonce"].AsString());
+            var tx = SupportsEip1559
+                ? new EvmTransaction { ChainId = ChainId, Nonce = nonce, GasLimit = gas, To = to, Value = value, Data = data, MaxFeePerGas = newMax, MaxPriorityFeePerGas = newTip }
+                : new EvmTransaction { ChainId = ChainId, Nonce = nonce, GasLimit = gas, To = to, Value = value, Data = data, GasPrice = newMax };
+            var l1Fee = IsOpStack ? await L1FeeAsync(tx.SigningPayload().Length + 68, ct) : BigInteger.Zero;
+            var balance = await NativeBalanceAsync(ct);
+            if (balance < value + gas * newMax + l1Fee * 5 / 4) throw new WalletException("You do not have enough " + Native.Symbol + " to pay the higher fee");
+            var signed = tx.Sign(Key);
+            var transfer = new PreparedTransfer
+            {
+                Chain = this,
+                Asset = cancel ? Native : (asset ?? Native),
+                To = cancel ? Address : "0x" + Hex.Encode(to),
+                Amount = cancel ? 0m : amount,
+                Fee = Units.FromRaw(gas * fees.Item2 * newMax / BigInteger.Max(fees.Item1, 1) + l1Fee, Native.Decimals),
+                FeeAsset = Native,
                 TxId = "0x" + Hex.Encode(Hashes.Keccak256(signed)),
                 Payload = signed,
             };
-            transfer.Notes.AddRange(notes);
+            transfer.Notes.Add("Replaces the pending transaction with the same payment and a higher fee");
+            if (cancel) transfer.Notes.Add("This cancels the payment: nothing is sent and only the fee is paid");
             return transfer;
         }
 
         protected override async Task<string> BroadcastPayloadAsync(PreparedTransfer transfer, CancellationToken ct)
         {
-            var signed = (byte[])transfer.Payload;
+            var pending = transfer.Payload as EvmTransaction;
+            byte[] signed;
+            if (pending != null)
+            {
+                signed = await SignOnLedgerAsync(pending, ct);
+                transfer.TxId = "0x" + Hex.Encode(Hashes.Keccak256(signed));
+            }
+            else
+            {
+                signed = (byte[])transfer.Payload;
+            }
             try
             {
                 var result = await Rpc.CallAsync("eth_sendRawTransaction", new object[] { "0x" + Hex.Encode(signed) }, ct);
@@ -322,6 +413,29 @@ namespace Sillet.Chains.Evm
             catch (RpcException e)
             {
                 throw new WalletException("The network rejected the transaction: " + e.Message);
+            }
+        }
+
+        private async Task<byte[]> SignOnLedgerAsync(EvmTransaction tx, CancellationToken ct)
+        {
+            try
+            {
+                using (var device = await OpenLedgerAsync())
+                {
+                    var found = await LedgerEthereum.GetAddressAsync(device, LedgerEthereum.DefaultPath, ct);
+                    if (!string.Equals(found.Address, Address, StringComparison.OrdinalIgnoreCase))
+                        throw new WalletException("This Ledger has a different Ethereum address than this wallet");
+                    var payload = tx.SigningPayload();
+                    var signature = await LedgerEthereum.SignTransactionAsync(device, LedgerEthereum.DefaultPath, payload, tx.ChainId, tx.IsEip1559, ct);
+                    var recovered = Secp256k1.Recover(Hashes.Keccak256(payload), new Org.BouncyCastle.Math.BigInteger(1, signature.R), new Org.BouncyCastle.Math.BigInteger(1, signature.S), signature.RecoveryId);
+                    if (recovered == null || !string.Equals(EvmAddress.FromPublicKey(recovered), Address, StringComparison.OrdinalIgnoreCase))
+                        throw new WalletException("The Ledger signed something different from what Sillet showed. Nothing was sent");
+                    return tx.WithSignature(signature);
+                }
+            }
+            catch (LedgerException e)
+            {
+                throw new WalletException(e.Message);
             }
         }
 

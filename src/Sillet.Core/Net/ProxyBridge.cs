@@ -7,7 +7,6 @@ using System.Threading.Tasks;
 
 namespace Sillet.Net
 {
-    /// <summary>A tiny local HTTP proxy that tunnels every HTTPS request through a SOCKS5 proxy such as Tor. TLS stays end to end between Sillet and the server.</summary>
     internal static class ProxyBridge
     {
         private static readonly object Gate = new object();

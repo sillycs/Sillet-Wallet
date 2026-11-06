@@ -38,6 +38,7 @@
     <None Remove="Assets\silly.png" />
     <Resource Include="Assets\silleticon.ico" />
     <EmbeddedResource Include="Assets\sounds\*.mp3" LogicalName="Sillet.sound.%(Filename)" />
+    <EmbeddedResource Include="Assets\flags\*.png" LogicalName="Sillet.flag.%(Filename)" />
     <Resource Include="Assets\Fonts\*.otf" />
     <Resource Include="Assets\Fonts\OFL.txt" />
   </ItemGroup>

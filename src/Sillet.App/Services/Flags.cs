@@ -2,30 +2,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
-using Sillet.Net;
+using System.Reflection;
 
 namespace Sillet.App.Services
 {
-    /// <summary>
-    /// Flags for the currency list. The pictures come from the disease.sh countries API (countryInfo.flag) and are kept on disk;
-    /// while a picture is not there (offline, or a currency without a country such as the euro) the flag emoji is shown instead.
-    /// </summary>
     public static class Flags
     {
-        public const string CountriesUrl = "https://disease.sh/v3/covid-19/countries";
-
-        private static readonly HttpClient Http = new HttpClient(Sillet.Net.Http.NewHandler()) { Timeout = TimeSpan.FromSeconds(20) };
-        private static readonly SemaphoreSlim Gate = new SemaphoreSlim(4);
-        private static readonly SemaphoreSlim Once = new SemaphoreSlim(1);
-        private static Dictionary<string, string> _urls;
-
         private static readonly Dictionary<string, string> Country = new Dictionary<string, string>
         {
-            { "usd", "US" }, { "eur", "EU" }, { "gbp", "GB" }, { "clp", "CL" }, { "ars", "AR" }, { "brl", "BR" }, { "mxn", "MX" }, { "cop", "CO" }, { "pen", "PE" },
+            { "usd", "US" }, { "eur", "ES" }, { "gbp", "GB" }, { "clp", "CL" }, { "ars", "AR" }, { "brl", "BR" }, { "mxn", "MX" }, { "cop", "CO" }, { "pen", "PE" },
             { "uyu", "UY" }, { "pyg", "PY" }, { "bob", "BO" }, { "ves", "VE" }, { "crc", "CR" }, { "gtq", "GT" }, { "hnl", "HN" }, { "nio", "NI" }, { "dop", "DO" },
             { "cup", "CU" }, { "jmd", "JM" }, { "ttd", "TT" }, { "bbd", "BB" }, { "bsd", "BS" }, { "cad", "CA" }, { "aud", "AU" }, { "nzd", "NZ" }, { "fjd", "FJ" },
             { "chf", "CH" }, { "sek", "SE" }, { "nok", "NO" }, { "dkk", "DK" }, { "isk", "IS" }, { "pln", "PL" }, { "czk", "CZ" }, { "huf", "HU" }, { "ron", "RO" },
@@ -50,7 +37,6 @@ namespace Sillet.App.Services
             return currency != null && Country.TryGetValue(currency.ToLowerInvariant(), out iso) ? iso : null;
         }
 
-        /// <summary>The flag as an emoji (two regional indicator letters), or an empty string when the currency has no country.</summary>
         public static string Emoji(string currency)
         {
             var iso = Iso2(currency);
@@ -60,77 +46,38 @@ namespace Sillet.App.Services
             return text.ToString();
         }
 
-        /// <summary>The saved picture for a currency's country, or null while it has not been downloaded.</summary>
         public static string PathFor(string currency)
         {
             var iso = Iso2(currency);
             if (iso == null) return null;
             var path = Path.Combine(Folder, iso.ToLowerInvariant() + ".png");
-            return File.Exists(path) ? path : null;
+            if (File.Exists(path)) return path;
+            return Extract(iso, path) ? path : null;
         }
 
-        /// <summary>Downloads the country list once, then any flag picture still missing. Safe to call often; returns true when something new was saved.</summary>
-        public static async Task<bool> EnsureAsync()
+        public static Task<bool> EnsureAsync(bool force = false)
         {
-            if (!await Once.WaitAsync(0)) return false;
+            return Task.FromResult(false);
+        }
+
+        private static bool Extract(string iso, string path)
+        {
             try
             {
-                var missing = Country.Values.Distinct().Where(iso => !File.Exists(Path.Combine(Folder, iso.ToLowerInvariant() + ".png"))).ToList();
-                if (missing.Count == 0) return false;
-                if (_urls == null) _urls = await LoadUrlsAsync();
-                var tasks = missing.Where(iso => _urls.ContainsKey(iso)).Select(iso => DownloadAsync(iso, _urls[iso])).ToList();
-                var results = await Task.WhenAll(tasks);
-                return results.Any(r => r);
+                using (var stream = typeof(Flags).Assembly.GetManifestResourceStream("Sillet.flag." + iso.ToLowerInvariant()))
+                {
+                    if (stream == null) return false;
+                    Directory.CreateDirectory(Folder);
+                    var temp = path + ".tmp";
+                    using (var target = File.Create(temp)) stream.CopyTo(target);
+                    if (File.Exists(path)) File.Delete(path);
+                    File.Move(temp, path);
+                    return true;
+                }
             }
-            catch (Exception e) when (e is HttpRequestException || e is TaskCanceledException || e is IOException || e is UnauthorizedAccessException || e is FormatException || e is InvalidOperationException)
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
             {
                 return false;
-            }
-            finally
-            {
-                Once.Release();
-            }
-        }
-
-        private static async Task<Dictionary<string, string>> LoadUrlsAsync()
-        {
-            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var json = JsonValue.Parse(await Http.GetStringAsync(CountriesUrl));
-            if (!json.IsArray) return map;
-            foreach (var country in json.Items)
-            {
-                JsonValue info;
-                if (!country.TryGet("countryInfo", out info) || !info.IsObject) continue;
-                JsonValue iso, flag;
-                if (!info.TryGet("iso2", out iso) || iso.IsNull || !info.TryGet("flag", out flag) || flag.IsNull) continue;
-                var url = flag.AsString();
-                if (url.StartsWith("https://", StringComparison.OrdinalIgnoreCase)) map[iso.AsString()] = url;
-            }
-            return map;
-        }
-
-        private static async Task<bool> DownloadAsync(string iso, string url)
-        {
-            await Gate.WaitAsync();
-            try
-            {
-                var bytes = await Http.GetByteArrayAsync(url);
-                if (!IconCache.IsSupportedImage(bytes)) return false;
-                Directory.CreateDirectory(Folder);
-                var path = Path.Combine(Folder, iso.ToLowerInvariant() + ".png");
-                var temp = path + ".tmp";
-                File.WriteAllBytes(temp, bytes);
-                if (File.Exists(path)) File.Delete(path);
-                File.Move(temp, path);
-                return true;
-            }
-            catch (Exception e) when (e is HttpRequestException || e is TaskCanceledException || e is IOException || e is UnauthorizedAccessException)
-            {
-                return false;
-            }
-            finally
-            {
-                Gate.Release();
             }
         }
     }

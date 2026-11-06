@@ -111,6 +111,10 @@ namespace Sillet.App.Services
             { "TRUMP", "official-trump" },
             { "LINK", "chainlink" },
             { "XRP", "ripple" },
+            { "BCH", "bitcoin-cash" },
+            { "TON", "the-open-network" },
+            { "SUI", "sui" },
+            { "ATOM", "cosmos" },
         };
 
         private readonly HttpClient _http;
@@ -170,7 +174,6 @@ namespace Sillet.App.Services
 
         private DateTime _ratesAt = DateTime.MinValue;
 
-        /// <summary>Fresh exchange rates for the currencies CoinGecko does not price directly.</summary>
         public async Task EnsureRatesAsync(CancellationToken ct = default(CancellationToken))
         {
             if (DateTime.UtcNow - _ratesAt < TimeSpan.FromHours(6)) return;

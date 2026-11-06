@@ -58,7 +58,80 @@ namespace Sillet.App.ViewModels
                 _main.Alerts.Remove(alert);
                 ReloadAlerts();
             });
+            OpenPredictionCommand = new RelayCommand(p =>
+            {
+                var item = p as PredictionItem;
+                if (item != null) _main.Ui.OpenUrl(item.Url);
+            });
+            RefreshPredictionsCommand = new AsyncCommand(() => LoadPredictionsAsync(true));
             Sync();
+            var firstLoad = LoadPredictionsAsync(false);
+        }
+
+        private readonly PredictionService _predictions = new PredictionService();
+        private bool _showPredictions, _predictionsLoading, _reload;
+        private string _predictionsError;
+        private string _category = "trending";
+
+        public string PredictionCategory
+        {
+            get { return _category; }
+            set
+            {
+                if (string.IsNullOrEmpty(value) || value == _category) return;
+                _category = value;
+                Raise(nameof(PredictionCategory), nameof(IsTrending), nameof(IsNewest), nameof(IsSports), nameof(IsCrypto), nameof(IsPolitics));
+                Predictions.Clear();
+                Raise(nameof(HasPredictions));
+                var ignored = LoadPredictionsAsync(false);
+            }
+        }
+
+        public bool IsTrending { get { return _category == "trending"; } set { if (value) PredictionCategory = "trending"; } }
+        public bool IsNewest { get { return _category == "new"; } set { if (value) PredictionCategory = "new"; } }
+        public bool IsSports { get { return _category == "sports"; } set { if (value) PredictionCategory = "sports"; } }
+        public bool IsCrypto { get { return _category == "crypto"; } set { if (value) PredictionCategory = "crypto"; } }
+        public bool IsPolitics { get { return _category == "politics"; } set { if (value) PredictionCategory = "politics"; } }
+
+        public ObservableCollection<PredictionItem> Predictions { get; } = new ObservableCollection<PredictionItem>();
+        public RelayCommand OpenPredictionCommand { get; }
+        public AsyncCommand RefreshPredictionsCommand { get; }
+        public bool HasPredictions { get { return Predictions.Count > 0; } }
+        public bool HasPredictionsError { get { return _predictionsError != null; } }
+        public string PredictionsError { get { return _predictionsError; } }
+        public bool IsPredictionsLoading { get { return _predictionsLoading; } }
+
+        public bool ShowPredictions
+        {
+            get { return _showPredictions; }
+            set { if (Set(ref _showPredictions, value)) Raise(nameof(ShowCoins)); }
+        }
+
+        public bool ShowCoins { get { return !_showPredictions; } set { ShowPredictions = !value; } }
+
+        private async Task LoadPredictionsAsync(bool force)
+        {
+            if (_predictionsLoading) { _reload = true; return; }
+            _predictionsLoading = true;
+            _predictionsError = null;
+            Raise(nameof(IsPredictionsLoading), nameof(HasPredictionsError), nameof(PredictionsError));
+            try
+            {
+                var events = await _predictions.GetAsync(_category, force);
+                Predictions.Clear();
+                foreach (var e in events) Predictions.Add(new PredictionItem(e, url => _main.Ui.OpenUrl(url)));
+            }
+            catch (System.Exception e) when (e is System.Net.Http.HttpRequestException || e is System.FormatException || e is System.InvalidOperationException || e is TaskCanceledException || e is System.Collections.Generic.KeyNotFoundException)
+            {
+                _predictionsError = Loc.T("Could not load predictions");
+            }
+            _predictionsLoading = false;
+            Raise(nameof(IsPredictionsLoading), nameof(HasPredictions), nameof(HasPredictionsError), nameof(PredictionsError));
+            if (_reload)
+            {
+                _reload = false;
+                await LoadPredictionsAsync(false);
+            }
         }
 
         public ObservableCollection<CoinItem> Coins { get; }
@@ -400,6 +473,49 @@ namespace Sillet.App.ViewModels
                 if (version == _chartVersion) IsChartLoading = false;
                 Raise(nameof(ChartIsUp), nameof(ChartChangeText));
             }
+        }
+    }
+}
+
+namespace Sillet.App.ViewModels
+{
+    public sealed class PredictionRow
+    {
+        public PredictionRow(string label, int percent, System.Action open)
+        {
+            OpenCommand = new RelayCommand(open);
+            Label = label == "Chance" ? Loc.T("Chance") : label;
+            PercentText = percent + "%";
+        }
+
+        public RelayCommand OpenCommand { get; private set; }
+        public string Label { get; private set; }
+        public string PercentText { get; private set; }
+    }
+
+    public sealed class PredictionItem
+    {
+        private readonly PredictionEvent _event;
+
+        public PredictionItem(PredictionEvent e, System.Action<string> open)
+        {
+            _event = e;
+            Rows = e.Options.Select(o => new PredictionRow(o.Label, o.Percent, () => open(e.Url))).ToList();
+        }
+
+        public string Title { get { return _event.Title; } }
+        public string Url { get { return _event.Url; } }
+        public System.Collections.Generic.IReadOnlyList<PredictionRow> Rows { get; private set; }
+        public bool HasMore { get { return _event.More > 0; } }
+        public string MoreText { get { return Loc.F("+{0} outcomes", _event.More); } }
+        public string VolumeText { get { return _event.Volume > 0 ? Loc.F("{0} Vol.", Compact(_event.Volume)) : ""; } }
+
+        private static string Compact(decimal v)
+        {
+            var inv = System.Globalization.CultureInfo.InvariantCulture;
+            if (v >= 1000000m) return "$" + (v / 1000000m).ToString("0.#", inv) + "M";
+            if (v >= 1000m) return "$" + (v / 1000m).ToString("0.#", inv) + "K";
+            return "$" + v.ToString("0", inv);
         }
     }
 }

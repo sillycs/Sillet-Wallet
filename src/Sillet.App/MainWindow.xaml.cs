@@ -44,6 +44,22 @@ namespace Sillet.App
                 Splash.BeginAnimation(OpacityProperty, fade);
             };
             timer.Start();
+
+            var steps = new[] { "Loading resources", "Loading sounds", "Loading wallets", "Loading prices", "Almost ready" };
+            int step = 0;
+            SplashStatus.Text = Sillet.App.Services.Loc.T(steps[0]);
+            var status = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(520) };
+            status.Tick += (s, args) =>
+            {
+                step++;
+                if (step >= steps.Length || Splash.Visibility != Visibility.Visible)
+                {
+                    status.Stop();
+                    return;
+                }
+                SplashStatus.Text = Sillet.App.Services.Loc.T(steps[step]);
+            };
+            status.Start();
         }
 
         private void SetPrivacyBlur(bool on)

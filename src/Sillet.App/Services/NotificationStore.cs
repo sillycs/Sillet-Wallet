@@ -64,7 +64,7 @@ namespace Sillet.App.Services
         private readonly Dictionary<string, decimal> _balances = new Dictionary<string, decimal>();
         private long _lastNewsId = -1;
         private string _btcCurrency;
-        private decimal _btcReference;
+        private readonly Dictionary<string, decimal> _refs = new Dictionary<string, decimal>();
 
         public NotificationStore(string path = null)
         {
@@ -173,28 +173,33 @@ namespace Sillet.App.Services
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public decimal? DetectBitcoinMove(decimal price, string currency, decimal percent)
+        public decimal? DetectPriceMove(string coinId, decimal price, string currency, decimal percent)
         {
             if (price <= 0 || percent <= 0) return null;
-            if (_btcCurrency != currency || _btcReference <= 0)
+            if (_btcCurrency != currency)
             {
                 _btcCurrency = currency;
-                _btcReference = price;
+                _refs.Clear();
+            }
+            decimal reference;
+            if (!_refs.TryGetValue(coinId, out reference) || reference <= 0)
+            {
+                _refs[coinId] = price;
                 Save();
                 return null;
             }
-            var change = (price - _btcReference) / _btcReference * 100m;
+            var change = (price - reference) / reference * 100m;
             if (Math.Abs(change) < percent) return null;
-            _btcReference = price;
+            _refs[coinId] = price;
             Save();
             return change;
         }
 
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void ResetBitcoin()
+        public void ResetPrices()
         {
             _btcCurrency = null;
-            _btcReference = 0;
+            _refs.Clear();
             Save();
         }
 
@@ -235,7 +240,17 @@ namespace Sillet.App.Services
             var news = JsonFileStore.Number(json, "LastNewsId");
             if (news.HasValue) _lastNewsId = (long)news.Value;
             _btcCurrency = JsonFileStore.Text(json, "BtcCurrency");
-            _btcReference = JsonFileStore.Number(json, "BtcReference") ?? 0;
+            var oldReference = JsonFileStore.Number(json, "BtcReference") ?? 0;
+            if (oldReference > 0) _refs["bitcoin"] = oldReference;
+            if (json.TryGet("Refs", out value) && value.Kind == JsonKind.Array)
+            {
+                foreach (var item in value.Items)
+                {
+                    var coin = JsonFileStore.Text(item, "Coin");
+                    var price = JsonFileStore.Number(item, "Price");
+                    if (!string.IsNullOrEmpty(coin) && price.HasValue) _refs[coin] = price.Value;
+                }
+            }
         }
 
         private void Save()
@@ -244,7 +259,7 @@ namespace Sillet.App.Services
             {
                 LastNewsId = _lastNewsId,
                 BtcCurrency = _btcCurrency ?? "",
-                BtcReference = _btcReference,
+                Refs = _refs.Select(r => new { Coin = r.Key, Price = r.Value }).ToList(),
                 Balances = _balances.Select(b => new { Key = b.Key, Amount = b.Value }).ToList(),
                 Items = _items.Select(n => new
                 {

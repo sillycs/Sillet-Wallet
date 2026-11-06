@@ -10,7 +10,7 @@ namespace Sillet.Net
 
         public static readonly string[] Supported =
         {
-            "bitcoin", "ethereum", "arbitrum", "optimism", "base", "polygon", "bsc", "avalanche", "kaia", "linea", "blast", "gnosis", "tron", "solana", "litecoin",
+            "bitcoin", "ethereum", "arbitrum", "optimism", "base", "polygon", "bsc", "avalanche", "kaia", "linea", "blast", "gnosis", "tron", "solana", "litecoin", "bitcoincash", "xrp", "ton", "ton3", "sui", "cosmos",
         };
 
         public static string[] For(string chainId, string[] defaults)

@@ -105,6 +105,9 @@ namespace Sillet.App.ViewModels
             ReceiptRows = new ObservableCollection<ReceiptRow>();
             OpenReceiptCommand = new RelayCommand(p => ShowReceipt(p as ActivityItem));
             TrackPaymentCommand = new RelayCommand(p => TrackPayment());
+            SpeedUpCommand = new RelayCommand(p => Replace(false));
+            CancelPaymentCommand = new RelayCommand(p => Replace(true));
+            RetryCommand = new RelayCommand(p => Retry());
             CloseReceiptCommand = new RelayCommand(() => IsReceiptOpen = false);
             DownloadReceiptCommand = new RelayCommand(DownloadReceipt);
             CopyRowCommand = new RelayCommand(p =>
@@ -165,7 +168,6 @@ namespace Sillet.App.ViewModels
             Raise(nameof(CountText), nameof(ShowNoMatches));
         }
 
-        // ---- History of one token (opened from the token list or the market) ----
         private string _assetSymbol;
         private string _assetChain;
 
@@ -203,7 +205,6 @@ namespace Sillet.App.ViewModels
             }
         }
 
-        // ---- Receipt of one activity ----
         private ActivityItem _receipt;
         private bool _isReceiptOpen;
 
@@ -219,6 +220,49 @@ namespace Sillet.App.ViewModels
             _main.Navigate("send");
             await Task.Delay(450);
             _main.Send.ShowTracked(item.Entry);
+        }
+
+        public RelayCommand SpeedUpCommand { get; }
+        public RelayCommand CancelPaymentCommand { get; }
+        public RelayCommand RetryCommand { get; }
+        private bool _receiptPending;
+        private bool _receiptRetry;
+        public bool ReceiptCanSpeedUp => _receiptPending;
+        public bool ReceiptCanRetry => _receiptRetry;
+
+        private async void CheckReplaceable(ActivityItem item)
+        {
+            _receiptPending = false;
+            _receiptRetry = false;
+            Raise(nameof(ReceiptCanSpeedUp), nameof(ReceiptCanRetry));
+            if (item == null || item.IsIncoming || item.Swap != null || string.IsNullOrEmpty(item.Entry.TxId)) return;
+            var chain = _main.Wallet.Chains.FirstOrDefault(c => c.Id == item.Entry.ChainId);
+            if (chain == null) return;
+            var stage = await TxStatus.StageOfAsync(chain, item.Entry.TxId);
+            if (_receipt != item) return;
+            _receiptPending = stage == TxStage.Pending && chain.SupportsReplacement;
+            _receiptRetry = (stage == TxStage.Failed || stage == TxStage.Unknown) && DateTime.UtcNow - item.Entry.TimeUtc > TimeSpan.FromMinutes(10);
+            Raise(nameof(ReceiptCanSpeedUp), nameof(ReceiptCanRetry));
+        }
+
+        private async void Replace(bool cancel)
+        {
+            var item = _receipt;
+            if (item == null || _main.Send == null) return;
+            IsReceiptOpen = false;
+            _main.Navigate("send");
+            await Task.Delay(450);
+            _main.Send.ShowReplacement(item.Entry, cancel);
+        }
+
+        private async void Retry()
+        {
+            var item = _receipt;
+            if (item == null || _main.Send == null) return;
+            IsReceiptOpen = false;
+            _main.Navigate("send");
+            await Task.Delay(450);
+            _main.Send.PrefillRetry(item.Entry);
         }
 
         public RelayCommand CloseReceiptCommand { get; }
@@ -287,9 +331,9 @@ namespace Sillet.App.ViewModels
             Raise(nameof(ReceiptItem), nameof(ReceiptIncoming), nameof(ReceiptGlyph), nameof(ReceiptKindText), nameof(ReceiptAmountText), nameof(ReceiptStatusText),
                   nameof(ReceiptNetworkText), nameof(ReceiptDateText), nameof(ReceiptHasExplorer), nameof(ReceiptCanTrack), nameof(SelectedReceiptLanguage));
             IsReceiptOpen = true;
+            CheckReplaceable(item);
         }
 
-        // ---- Language of the generated PDF ----
         private string _receiptLanguage = "en";
         public ObservableCollection<LanguageChoice> ReceiptLanguages { get; } = new ObservableCollection<LanguageChoice>();
         public RelayCommand SetReceiptLanguageCommand => new RelayCommand(p => { var code = p as string; if (code != null) ReceiptLanguage = code; });

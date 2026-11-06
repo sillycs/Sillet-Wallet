@@ -4,6 +4,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Sillet.Net;
@@ -12,16 +13,13 @@ namespace Sillet.App.Services
 {
     public static class AppInfo
     {
-        /// <summary>Release of the Windows, Linux and command line builds. build.ps1 publishes this one.</summary>
-        public const string Version = "1.1.3";
+        public const string Version = "1.1.4";
         public const string DownloadUrl = "https://raton.fun/wallet/download";
         public const string DesktopVersionUrl = "https://raton.fun/wallet/version.json";
         public const string AndroidVersionUrl = "https://raton.fun/wallet/version-android.json";
 
-        /// <summary>The version this build compares against. Android sets its own, so it can be updated without a new desktop release.</summary>
         public static string CurrentVersion { get; set; } = Version;
 
-        /// <summary>Where the newest version is announced. Android reads its own file.</summary>
         public static string VersionUrl { get; set; } = DesktopVersionUrl;
     }
 
@@ -33,7 +31,12 @@ namespace Sillet.App.Services
             Url = url;
             ExeUrl = exeUrl;
             Sha256 = sha256;
+            Notes = "";
         }
+
+        public string Notes { get; set; }
+        public string Signature { get; set; }
+        public bool Verified { get; set; }
 
         public string Version { get; }
         public string Url { get; }
@@ -50,29 +53,25 @@ namespace Sillet.App.Services
         }
 
         public UpdateInfo Update { get; }
-        /// <summary>True when the desktop app took over: it closes, downloads and replaces itself, so no notification is needed.</summary>
         public bool Handled { get; }
     }
 
     public static class UpdateService
     {
-        /// <summary>Raised on Windows when auto update is on and a new version was found. The app shows the download window and restarts itself.</summary>
         public static event Action<UpdateInfo> AutoUpdateRequested;
 
         private static int _autoStarted;
 
-        /// <summary>Checks for a newer version. On Windows with auto update on it hands the version to the app, which installs it. Returns null when up to date or offline.</summary>
         public static async Task<UpdateResult> RunAsync(AppSettings settings, CancellationToken ct = default(CancellationToken))
         {
             var update = await CheckAsync(ct);
             if (update == null) return null;
             var handler = AutoUpdateRequested;
-            var auto = settings.AutoUpdate && handler != null && CanSelfUpdate && !string.IsNullOrEmpty(update.ExeUrl) && !string.IsNullOrEmpty(update.Sha256);
+            var auto = settings.AutoUpdate && handler != null && CanSelfUpdate && update.Verified && !string.IsNullOrEmpty(update.ExeUrl) && !string.IsNullOrEmpty(update.Sha256);
             if (auto && System.Threading.Interlocked.CompareExchange(ref _autoStarted, 1, 0) == 0) handler(update);
             return new UpdateResult(update, auto);
         }
 
-        /// <summary>Called by the app when an automatic update was cancelled, so the next check can offer it again.</summary>
         public static void AutoUpdateFinished()
         {
             System.Threading.Interlocked.Exchange(ref _autoStarted, 0);
@@ -99,7 +98,12 @@ namespace Sillet.App.Services
                 var exeUrl = root.TryGet("exe", out e) && e.IsString && IsTrustedUrl(e.AsString()) ? e.AsString() : null;
                 var hash = root.TryGet("sha256", out h) && h.IsString ? h.AsString().Trim().ToLowerInvariant() : null;
                 if (hash != null && (hash.Length != 64 || hash.Trim("0123456789abcdef".ToCharArray()).Length != 0)) hash = null;
-                return new UpdateInfo(version, url, exeUrl, hash);
+                JsonValue n, s;
+                var notes = root.TryGet("notes", out n) && n.IsString ? n.AsString() : "";
+                if (notes.Length > 1500) notes = notes.Substring(0, 1500);
+                var signature = root.TryGet("sig", out s) && s.IsString ? s.AsString().Trim() : null;
+                var verified = exeUrl != null && hash != null && (UpdateKey.IsConfigured ? UpdateKey.Verify(version, hash, notes, signature) : true);
+                return new UpdateInfo(version, url, verified ? exeUrl : null, verified ? hash : null) { Notes = verified ? notes : "", Signature = verified ? signature : null, Verified = verified };
             }
             catch (Exception e) when (e is FormatException || e is InvalidOperationException || e is System.Collections.Generic.KeyNotFoundException)
             {
@@ -116,7 +120,6 @@ namespace Sillet.App.Services
 
         private const long MaxExeBytes = 250L * 1024 * 1024;
 
-        /// <summary>The running Sillet.exe, or null when this is not a plain Windows exe we can swap.</summary>
         private static string CurrentExe()
         {
             try
@@ -133,10 +136,8 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>True when this is a plain Windows Sillet.exe. The swap itself runs elevated, so a protected folder is fine.</summary>
         public static bool CanSelfUpdate { get { return CurrentExe() != null; } }
 
-        /// <summary>Removes leftovers of a previous update. Call once at startup.</summary>
         public static void CleanupOld()
         {
             try
@@ -155,10 +156,10 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>Downloads the new exe to a temp folder and checks it against the published SHA256. Returns the file, or null when anything fails.</summary>
         public static async Task<string> DownloadAsync(UpdateInfo update, Action<double> progress, CancellationToken ct = default(CancellationToken))
         {
-            if (update == null || string.IsNullOrEmpty(update.ExeUrl) || string.IsNullOrEmpty(update.Sha256)) return null;
+            if (update == null || !update.Verified || string.IsNullOrEmpty(update.ExeUrl) || string.IsNullOrEmpty(update.Sha256)) return null;
+            if (!UpdateKey.Verify(update.Version, update.Sha256, update.Notes, update.Signature)) return null;
             string tmp = null;
             try
             {
@@ -201,45 +202,42 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>
-        /// Asks Windows for admin rights (UAC) and starts a small script that stops Sillet, puts the new exe where the old one was and opens it.
-        /// Returns false when the prompt was declined or could not be shown, in which case nothing was changed and the app should keep running.
-        /// </summary>
-        public static bool StartReplace(string newExe)
+        private static bool IsWritableFolder(string folder)
         {
-            var exe = CurrentExe();
-            if (exe == null || string.IsNullOrEmpty(newExe) || !File.Exists(newExe)) return false;
             try
             {
-                var script = Path.Combine(Path.GetDirectoryName(newExe), "Sillet-update.cmd");
+                var probe = Path.Combine(folder, ".sillet-write-test-" + Guid.NewGuid().ToString("N"));
+                using (File.Create(probe, 1, FileOptions.DeleteOnClose)) { }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public static bool NeedsAdmin
+        {
+            get
+            {
+                var exe = CurrentExe();
+                return exe == null || !IsWritableFolder(Path.GetDirectoryName(exe));
+            }
+        }
+
+        public static bool StartReplace(UpdateInfo update, string newExe)
+        {
+            var exe = CurrentExe();
+            if (exe == null || update == null || !update.Verified || string.IsNullOrEmpty(newExe) || !File.Exists(newExe)) return false;
+            try
+            {
                 var pid = Process.GetCurrentProcess().Id;
-                var lines = new[]
+                var args = string.Join(" ", new[]
                 {
-                    "@echo off",
-                    "set \"TARGET=" + exe + "\"",
-                    "set \"NEWEXE=" + newExe + "\"",
-                    "taskkill /F /PID " + pid + " >nul 2>&1",
-                    "set /a TRIES=0",
-                    ":retry",
-                    "ping -n 2 127.0.0.1 >nul",
-                    "copy /Y \"%NEWEXE%\" \"%TARGET%\" >nul 2>&1",
-                    "if not errorlevel 1 goto done",
-                    "set /a TRIES+=1",
-                    "if %TRIES% LSS 30 goto retry",
-                    "goto end",
-                    ":done",
-                    "del \"%NEWEXE%\" >nul 2>&1",
-                    "start \"\" explorer.exe \"%TARGET%\"",
-                    ":end",
-                    "(goto) 2>nul & del \"%~f0\""
-                };
-                File.WriteAllText(script, string.Join("\r\n", lines) + "\r\n");
-                var info = new ProcessStartInfo("cmd.exe", "/c \"\"" + script + "\" " + pid + "\"")
-                {
-                    Verb = "runas",
-                    UseShellExecute = true,
-                    WindowStyle = ProcessWindowStyle.Hidden
-                };
+                    "--apply-update", Quote(newExe), Quote(update.Version), update.Sha256, Quote(update.Notes ?? ""), update.Signature, pid.ToString()
+                });
+                var info = new ProcessStartInfo(exe, args) { UseShellExecute = true, WindowStyle = ProcessWindowStyle.Hidden };
+                if (NeedsAdmin) info.Verb = "runas";
                 Process.Start(info);
                 return true;
             }
@@ -253,7 +251,57 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>Removes the downloaded file after a cancelled update.</summary>
+        private static string Quote(string value)
+        {
+            return "\"" + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(value)) + "\"";
+        }
+
+        private static string Unquote(string value)
+        {
+            return System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(value));
+        }
+
+        public static bool ApplyFromArguments(string[] args)
+        {
+            if (args == null || args.Length < 8 || args[0] != "--apply-update") return false;
+            try
+            {
+                var newExe = Unquote(args[1]);
+                var version = Unquote(args[2]);
+                var sha = args[3];
+                var notes = Unquote(args[4]);
+                var signature = args[5];
+                int pid = int.Parse(args[6]);
+                var target = CurrentExe();
+                if (target == null || !UpdateKey.Verify(version, sha, notes, signature) || !File.Exists(newExe)) return true;
+                try
+                {
+                    var parent = Process.GetProcessById(pid);
+                    if (!parent.WaitForExit(20000)) parent.Kill();
+                }
+                catch (ArgumentException)
+                {
+                }
+                var bytes = File.ReadAllBytes(newExe);
+                if (bytes.Length < 100 * 1024 || bytes[0] != 'M' || bytes[1] != 'Z') return true;
+                string actual;
+                using (var hasher = SHA256.Create()) actual = Sillet.Encoding.Hex.Encode(hasher.ComputeHash(bytes));
+                if (!string.Equals(actual, sha, StringComparison.Ordinal)) return true;
+                var staged = target + ".new";
+                File.WriteAllBytes(staged, bytes);
+                var old = target + ".old";
+                if (File.Exists(old)) File.Delete(old);
+                File.Move(target, old);
+                File.Move(staged, target);
+                try { File.Delete(newExe); } catch (IOException) { }
+                Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException || e is FormatException || e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
+            {
+            }
+            return true;
+        }
+
         public static void DiscardDownload(string path)
         {
             Discard(path);
@@ -287,11 +335,11 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>The path Sillet should relaunch from after an update.</summary>
         public static string RestartPath { get { return CurrentExe(); } }
 
         public static async Task<UpdateInfo> CheckAsync(CancellationToken ct = default(CancellationToken))
         {
+            if (!AppSettings.UpdateChecksAllowed) return null;
             try
             {
                 ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;

@@ -13,7 +13,6 @@ namespace Sillet.Net
         private static string _proxyUrl;
         private static HttpClient _client;
 
-        /// <summary>socks5://host:port (for example Tor on 127.0.0.1:9050) or http://host:port. Empty means a direct connection.</summary>
         public static string ProxyUrl
         {
             get { return _proxyUrl; }
@@ -47,7 +46,6 @@ namespace Sillet.Net
             }
         }
 
-        /// <summary>A handler that follows the proxy setting. Use it for every HttpClient the app creates.</summary>
         public static HttpMessageHandler NewHandler()
         {
             var handler = new HttpClientHandler();

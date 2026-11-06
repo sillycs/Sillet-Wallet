@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/q_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="horizontal" android:padding="12dp" android:gravity="center_vertical" android:background="@drawable/widget_bg">
+    <FrameLayout android:id="@+id/q_box" android:layout_width="wrap_content" android:layout_height="match_parent" android:padding="5dp" android:background="@drawable/widget_white">
+        <ImageView android:id="@+id/q_img" android:layout_width="wrap_content" android:layout_height="match_parent" android:adjustViewBounds="true" android:scaleType="fitCenter" android:contentDescription="QR" />
+    </FrameLayout>
+    <LinearLayout android:id="@+id/q_text" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginLeft="12dp">
+        <TextView android:id="@+id/q_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold" android:maxLines="1" android:text="" />
+        <TextView android:id="@+id/q_addr" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:textColor="#FF9CA3AF" android:textSize="11sp" android:maxLines="3" android:text="" />
+        <TextView android:id="@+id/q_next" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:textColor="#FF9CA3AF" android:textSize="11sp" android:text="" />
+    </LinearLayout>
+</LinearLayout>

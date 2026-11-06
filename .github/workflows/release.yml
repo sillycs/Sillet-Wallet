@@ -1,0 +1,83 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to release (for example v1.1.5)
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: Tests
+        run: dotnet run --project tests/Sillet.Tests -c Release
+      - name: Windows app
+        run: |
+          dotnet build src/Sillet.App -c Release
+          New-Item -ItemType Directory -Force dist | Out-Null
+          Copy-Item src/Sillet.App/bin/Release/net472/Sillet.exe dist/Sillet.exe
+      - name: Windows command line
+        run: |
+          dotnet publish src/Sillet.Cli -c Release -f net8.0 -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -o cli-win
+          Copy-Item cli-win/sillet-cli.exe dist/Sillet-CLI.exe
+      - name: Linux app and command line
+        run: |
+          dotnet publish src/Sillet.Desktop -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o linux-app
+          dotnet publish src/Sillet.Cli -c Release -f net8.0 -r linux-x64 --self-contained true -p:PublishSingleFile=true -o linux-cli
+          New-Item -ItemType Directory -Force linux-stage/Sillet | Out-Null
+          Copy-Item linux-app/Sillet.Desktop linux-stage/Sillet/Sillet
+          Copy-Item linux-cli/sillet-cli linux-stage/Sillet/sillet-cli
+          Copy-Item src/Sillet.App/Assets/silleticon.png linux-stage/Sillet/sillet.png
+          Copy-Item linux/sillet.desktop, linux/uninstall.sh linux-stage/Sillet/
+          Copy-Item linux/install-bin.sh linux-stage/Sillet/install.sh
+          foreach ($f in "install.sh","uninstall.sh","sillet.desktop") {
+            $path = "linux-stage/Sillet/$f"
+            $t = [IO.File]::ReadAllText($path).Replace("`r`n","`n")
+            [IO.File]::WriteAllText($path, $t, (New-Object Text.UTF8Encoding $false))
+          }
+          tar -czf dist/Sillet-Linux-x64.tar.gz -C linux-stage Sillet
+      - name: Android APK (stable signing key)
+        if: ${{ env.HAS_KEYSTORE == 'true' }}
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          [IO.File]::WriteAllBytes("$PWD/sillet.keystore", [Convert]::FromBase64String($env:KEYSTORE_B64))
+          dotnet workload install android
+          dotnet publish src/Sillet.Android -c Release -f net9.0-android -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$PWD/sillet.keystore" -p:AndroidSigningStorePass="env:KEYSTORE_PASSWORD" -p:AndroidSigningKeyAlias="$env:KEY_ALIAS" -p:AndroidSigningKeyPass="env:KEYSTORE_PASSWORD"
+          Copy-Item (Get-ChildItem src/Sillet.Android/bin/Release/net9.0-android/publish/*-Signed.apk | Select-Object -First 1).FullName dist/Sillet.apk
+          Remove-Item sillet.keystore
+      - name: Checksums
+        run: |
+          cd dist
+          Get-ChildItem -File | Where-Object { $_.Name -ne "SHA256SUMS.txt" } | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$hash  $($_.Name)"
+          } | Set-Content -Encoding ascii SHA256SUMS.txt
+          Get-Content SHA256SUMS.txt
+      - name: Build provenance attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-path: dist/*
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
+          tag_name: ${{ inputs.tag }}

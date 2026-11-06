@@ -274,7 +274,6 @@ namespace Sillet.Droid
                 if (modes != null && modes.Contains(Camera.Parameters.FocusModeContinuousPicture)) parameters.FocusMode = Camera.Parameters.FocusModeContinuousPicture;
                 try
                 {
-                    // A QR on a screen is bright: a little less exposure keeps its white from washing out
                     if (parameters.MinExposureCompensation < 0) parameters.ExposureCompensation = parameters.MinExposureCompensation / 3;
                 }
                 catch (Java.Lang.Exception)
@@ -305,7 +304,6 @@ namespace Sillet.Droid
 
         private static Camera.Size BestSize(IList<Camera.Size> sizes)
         {
-            // Full HD: a QR shown on a screen is small in the frame and needs the extra detail
             var target = 1920 * 1080;
             return sizes.OrderBy(s => Math.Abs(s.Width * s.Height - target)).First();
         }
@@ -389,7 +387,6 @@ namespace Sillet.Droid
                     if (attempt == 0) source = new ZXing.PlanarYUVLuminanceSource(data, width, height, 0, 0, width, height, false);
                     else
                     {
-                        // The middle of the frame, where the finder is: less background noise for the decoder
                         var side = (int)(Math.Min(width, height) * 0.75);
                         source = new ZXing.PlanarYUVLuminanceSource(data, width, height, (width - side) / 2, (height - side) / 2, side, side, false);
                     }
@@ -406,7 +403,6 @@ namespace Sillet.Droid
             });
         }
 
-        /// <summary>A plain histogram binarizer: it copes better with screens, glare and moiré than the default one.</summary>
         private static string DecodeFlat(ZXing.LuminanceSource source)
         {
             var hints = new Dictionary<ZXing.DecodeHintType, object> { { ZXing.DecodeHintType.TRY_HARDER, true } };

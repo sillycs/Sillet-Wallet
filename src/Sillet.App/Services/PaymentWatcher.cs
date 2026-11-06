@@ -8,11 +8,6 @@ using Sillet.Storage;
 
 namespace Sillet.App.Services
 {
-    /// <summary>
-    /// Looks for incoming payments even while the wallet is locked or the window is hidden.
-    /// It only needs the public addresses saved for each wallet, never a key. The balance
-    /// bookkeeping is the same NotificationStore the app uses, so a payment is announced once.
-    /// </summary>
     public sealed class PaymentWatcher
     {
         public static readonly PaymentWatcher Instance = new PaymentWatcher();
@@ -27,7 +22,6 @@ namespace Sillet.App.Services
         private MarketService _market;
         private AlertStore _alerts;
 
-        /// <summary>News, Bitcoin moves and price alerts are checked this often while nobody has the app open.</summary>
         public static TimeSpan ExtrasInterval = TimeSpan.FromMinutes(5);
 
         public static TimeSpan Interval = TimeSpan.FromSeconds(45);
@@ -60,7 +54,6 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>The foreground app just checked balances itself, so the watcher can skip a round.</summary>
         public void NoteAppPoll()
         {
             _lastAppPollUtc = DateTime.UtcNow;
@@ -105,15 +98,10 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>
-        /// The same notifications the open app produces (news, Bitcoin moves, price alerts) but for when the app is closed or
-        /// locked. They need no key, only public feeds, and they go to the system notification area like payments do.
-        /// </summary>
         private DateTime _lastUpdateUtc = DateTime.MinValue;
         private static readonly TimeSpan UpdateInterval = TimeSpan.FromHours(6);
         private static readonly TimeSpan AutoUpdateInterval = TimeSpan.FromMinutes(20);
 
-        /// <summary>While Sillet sits in the tray: look for a new version now and then, hand it to the app on Windows, and say so otherwise.</summary>
         private async Task PollUpdateAsync(AppSettings settings, CancellationToken ct)
         {
             if (DateTime.UtcNow - _lastUpdateUtc < (settings.AutoUpdate && UpdateService.CanSelfUpdate ? AutoUpdateInterval : UpdateInterval)) return;
@@ -162,20 +150,11 @@ namespace Sillet.App.Services
                     _market = _market ?? new MarketService();
                     var coins = await _market.GetMarketsAsync(settings.Currency, false, ct);
                     if (_market.IsStale || coins == null) return;
-                    var btc = coins.FirstOrDefault(c => c.Id == "bitcoin");
-                    if (settings.NotifyBitcoin && btc != null)
+                    PriceMoves.Check(Notifications, coins, settings, (kind, title, message) =>
                     {
-                        var change = Notifications.DetectBitcoinMove(btc.Price, settings.Currency, settings.BitcoinMovePercent);
-                        if (change.HasValue)
-                        {
-                            var up = change.Value >= 0;
-                            var title = up ? Loc.T("Bitcoin is up") : Loc.T("Bitcoin is down");
-                            var message = Loc.F("Bitcoin moved {0}% to {1}", (up ? "+" : "\u2212") + Math.Abs(change.Value).ToString("0.0", Formatters.Display), Formatters.Fiat(btc.Price, settings.Currency));
-                            var kind = up ? "price_up" : "price_down";
-                            Notifications.Add(kind, title, message, "market", DateTime.UtcNow);
-                            if (settings.PushNotifications && notifier != null) notifier(title, message, kind);
-                        }
-                    }
+                        Notifications.Add(kind, title, message, "market", DateTime.UtcNow);
+                        if (settings.PushNotifications && notifier != null) notifier(title, message, kind);
+                    });
                     _alerts = _alerts ?? new AlertStore();
                     foreach (var alert in _alerts.Check(coins, settings.Currency))
                     {

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Sillet.Core;
 using Sillet.Crypto;
 using Sillet.Encoding;
+using Sillet.Hardware;
 using Sillet.Net;
 
 namespace Sillet.Chains.Solana
@@ -244,7 +245,9 @@ namespace Sillet.Chains.Solana
             var latest = await _rpc.CallAsync("getLatestBlockhash", new object[] { new { commitment = "finalized" } }, ct);
             var blockhash = latest["value"]["blockhash"].AsString();
             var message = SolanaTransaction.CompileMessage(me, instructions, Base58.Bitcoin.Decode(blockhash));
-            var signed = SolanaTransaction.Sign(message, Key);
+            SignedSolanaTransaction signed = null;
+            if (!IsWatchOnly) signed = SolanaTransaction.Sign(message, Key);
+            else if (!CanSignOnDevice) throw new WalletException("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
             notes.Add("Confirm within a minute; after that it expires");
 
             var transfer = new PreparedTransfer
@@ -255,15 +258,54 @@ namespace Sillet.Chains.Solana
                 Amount = Units.FromRaw(sendRaw, asset.Decimals),
                 Fee = Units.FromRaw(fee, 9),
                 FeeAsset = Native,
-                TxId = Base58.Bitcoin.Encode(signed.Signature),
-                Payload = Convert.ToBase64String(signed.Transaction),
+                TxId = signed == null ? null : Base58.Bitcoin.Encode(signed.Signature),
+                Payload = signed != null ? (object)Convert.ToBase64String(signed.Transaction) : message,
             };
+            if (signed == null) transfer.Notes.Add("Confirm the payment on your Ledger");
             transfer.Notes.AddRange(notes);
             return transfer;
         }
 
+        public override bool SupportsDeviceSigning { get { return true; } }
+
+        private async Task<SignedSolanaTransaction> SignOnLedgerAsync(byte[] message, CancellationToken ct)
+        {
+            try
+            {
+                using (var device = await OpenLedgerAsync())
+                {
+                    string path = null;
+                    foreach (var candidate in new[] { LedgerSolana.DefaultPath, LedgerSolana.LedgerLivePath })
+                    {
+                        var found = await LedgerSolana.GetAddressAsync(device, candidate, ct);
+                        if (found.Address == Address)
+                        {
+                            path = candidate;
+                            break;
+                        }
+                    }
+                    if (path == null) throw new WalletException("This Ledger has a different Solana address than this wallet");
+                    var signature = await LedgerSolana.SignMessageAsync(device, path, message, ct);
+                    if (!Ed25519Keys.Verify(Base58.Bitcoin.Decode(Address), message, signature))
+                        throw new WalletException("The Ledger signed something different from what Sillet showed. Nothing was sent");
+                    return SolanaTransaction.WithSignature(message, signature);
+                }
+            }
+            catch (LedgerException e)
+            {
+                throw new WalletException(e.Message);
+            }
+        }
+
         protected override async Task<string> BroadcastPayloadAsync(PreparedTransfer transfer, CancellationToken ct)
         {
+            var pending = transfer.Payload as byte[];
+            if (pending != null)
+            {
+                var signedOnDevice = await SignOnLedgerAsync(pending, ct);
+                transfer.TxId = Base58.Bitcoin.Encode(signedOnDevice.Signature);
+                transfer.Payload = Convert.ToBase64String(signedOnDevice.Transaction);
+            }
             try
             {
                 var options = new { encoding = "base64", preflightCommitment = "confirmed" };

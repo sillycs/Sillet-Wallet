@@ -74,7 +74,7 @@ namespace Sillet.App.ViewModels
             FinishCommand = new AsyncCommand(FinishAsync);
             BackCommand = new RelayCommand(Back);
             CancelRestoreCommand = new RelayCommand(() => _main.ShowUnlock());
-            RestoreBackupCommand = new RelayCommand(RestoreBackup);
+            RestoreBackupCommand = new AsyncCommand(RestoreBackupAsync);
             CancelAddCommand = new RelayCommand(() => _main.CancelAddWallet());
             WatchCommand = new RelayCommand(() => _main.StartWatchWallet());
         }
@@ -183,11 +183,11 @@ namespace Sillet.App.ViewModels
         public AsyncCommand FinishCommand { get; }
         public RelayCommand BackCommand { get; }
         public RelayCommand CancelRestoreCommand { get; }
-        public RelayCommand RestoreBackupCommand { get; }
+        public AsyncCommand RestoreBackupCommand { get; }
 
-        private void RestoreBackup()
+        private async Task RestoreBackupAsync()
         {
-            var path = _main.Ui.PickOpenPath("Sillet backup|*.json|All files|*.*");
+            var path = await _main.Ui.PickBackupFileAsync();
             if (path == null) return;
             try
             {
@@ -511,6 +511,7 @@ namespace Sillet.App.ViewModels
             CancelCommand = new RelayCommand(() => _main.CancelAddWallet());
             Sources = _main.Profiles.Items.Where(p => p.HasAddresses).ToList();
             ImportFileCommand = new RelayCommand(ImportFile);
+            ReadLedgerCommand = new AsyncCommand(ReadLedgerAsync);
             PasteCommand = new RelayCommand(p =>
             {
                 var field = p as WatchField;
@@ -523,6 +524,57 @@ namespace Sillet.App.ViewModels
         public IReadOnlyList<Sillet.Storage.Profile> Sources { get; }
         public bool HasSources => Sources.Count > 0;
         public RelayCommand ImportFileCommand { get; }
+        public AsyncCommand ReadLedgerCommand { get; }
+
+        private async Task ReadLedgerAsync()
+        {
+            Error = null;
+            try
+            {
+                var device = await _main.Ui.ConnectLedgerAsync();
+                if (device == null)
+                {
+                    Error = Loc.T("Connecting to Ledger needs a cable on this device");
+                    return;
+                }
+                using (device)
+                {
+                    var ct = System.Threading.CancellationToken.None;
+                    var attempts = new[]
+                    {
+                        new KeyValuePair<string, Func<Task<Sillet.Hardware.LedgerAddress>>>("evm", () => Sillet.Hardware.LedgerEthereum.GetAddressAsync(device, Sillet.Hardware.LedgerEthereum.DefaultPath, ct)),
+                        new KeyValuePair<string, Func<Task<Sillet.Hardware.LedgerAddress>>>("solana", () => Sillet.Hardware.LedgerSolana.GetAddressAsync(device, Sillet.Hardware.LedgerSolana.DefaultPath, ct)),
+                        new KeyValuePair<string, Func<Task<Sillet.Hardware.LedgerAddress>>>("tron", () => Sillet.Hardware.LedgerTron.GetAddressAsync(device, Sillet.Hardware.LedgerTron.DefaultPath, ct)),
+                    };
+                    Sillet.Hardware.LedgerException last = null;
+                    foreach (var attempt in attempts)
+                    {
+                        try
+                        {
+                            var found = await attempt.Value();
+                            var field = Fields.FirstOrDefault(f => f.Group == attempt.Key);
+                            if (field != null) field.Address = found.Address;
+                            _main.ShowToast(Loc.F("{0} address read from your Ledger. Check it matches your device", WalletManager.WatchGroupName(attempt.Key)));
+                            return;
+                        }
+                        catch (Sillet.Hardware.LedgerException e) when (e.AppNotOpen)
+                        {
+                            last = e;
+                        }
+                    }
+                    Error = last != null ? Loc.T("Open the Ethereum, Solana or TRON app on your Ledger and try again") : null;
+                }
+            }
+            catch (Sillet.Hardware.LedgerException e)
+            {
+                Error = Loc.T(e.Message);
+            }
+            catch (WalletException e)
+            {
+                Error = e.Message;
+            }
+        }
+
         private Sillet.Storage.Profile _source;
 
         public Sillet.Storage.Profile Source
@@ -548,7 +600,7 @@ namespace Sillet.App.ViewModels
 
         private void ImportFile()
         {
-            var path = _main.Ui.PickOpenPath("Sillet watch-only file|*.json");
+            var path = _main.Ui.PickOpenPath("Sillet addresses file|*.json");
             if (path == null) return;
             string name;
             Dictionary<string, string> addresses;
@@ -564,7 +616,7 @@ namespace Sillet.App.ViewModels
             }
             if (!Sillet.Storage.WatchFile.TryParse(text, out name, out addresses))
             {
-                Error = Loc.T("That file is not a Sillet watch-only file");
+                Error = Loc.T("That file is not a Sillet addresses file");
                 return;
             }
             Fill(name, addresses);

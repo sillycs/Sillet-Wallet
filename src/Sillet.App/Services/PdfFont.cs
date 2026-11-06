@@ -6,10 +6,6 @@ using System.Text;
 
 namespace Sillet.App.Services
 {
-    /// <summary>
-    /// A TrueType font (Arial on Windows) that can be embedded in the receipt PDF. Only the glyphs the receipt uses are written,
-    /// so the file stays small, and text outside the Latin-1 range (Cyrillic, Greek, accents) prints instead of turning into question marks.
-    /// </summary>
     internal sealed class PdfFont
     {
         private readonly byte[] _data;
@@ -32,7 +28,6 @@ namespace Sillet.App.Services
             _data = data;
         }
 
-        /// <summary>Arial from the Windows fonts folder, or a metric-compatible copy on Linux. Null when none is installed.</summary>
         public static PdfFont[] FindArial()
         {
             var dirs = new List<string>();
@@ -79,7 +74,7 @@ namespace Sillet.App.Services
         {
             if (_data.Length < 12) return false;
             var tag = U32(0);
-            if (tag != 0x00010000 && tag != 0x74727565) return false; // plain TrueType only, not CFF or collections
+            if (tag != 0x00010000 && tag != 0x74727565) return false;
             int count = U16(4);
             for (int i = 0; i < count; i++)
             {
@@ -164,13 +159,11 @@ namespace Sillet.App.Services
             return _cmap.TryGetValue(c, out g) ? g : 0;
         }
 
-        /// <summary>Width of a character in 1/1000 em.</summary>
         public double Width(char c)
         {
             return _advance[Glyph(c)] * 1000.0 / _unitsPerEm;
         }
 
-        /// <summary>The text as the hex string a PDF content stream needs, and remembers the glyphs for the subset.</summary>
         public string Hex(string text)
         {
             var sb = new StringBuilder("<");
@@ -185,7 +178,6 @@ namespace Sillet.App.Services
             return sb.Append('>').ToString();
         }
 
-        /// <summary>Everything the PDF needs for this font as indirect objects. first is the number the Type0 font gets.</summary>
         public List<byte[]> Objects(int first)
         {
             var latin = System.Text.Encoding.GetEncoding("iso-8859-1");

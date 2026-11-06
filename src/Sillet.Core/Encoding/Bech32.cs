@@ -30,6 +30,21 @@ namespace Sillet.Encoding
             return Encode(hrp, data.ToArray(), witnessVersion == 0 ? Bech32Const : Bech32mConst);
         }
 
+        public static string EncodeBytes(string hrp, byte[] data)
+        {
+            return Encode(hrp, ConvertBits(data, 8, 5, true), Bech32Const);
+        }
+
+        public static byte[] DecodeBytes(string hrp, string text)
+        {
+            string gotHrp;
+            byte[] data;
+            uint constant;
+            if (string.IsNullOrEmpty(text) || !Decode(text, out gotHrp, out data, out constant)) return null;
+            if (gotHrp != hrp || constant != Bech32Const) return null;
+            return ConvertBits(data, 5, 8, false);
+        }
+
         public static SegwitAddress DecodeSegwit(string hrp, string address)
         {
             string gotHrp;

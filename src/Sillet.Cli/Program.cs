@@ -12,7 +12,7 @@ namespace Sillet.Cli
 {
     internal static class Program
     {
-        public const string Version = "1.1.3";
+        public const string Version = "1.1.4";
 
         private static async Task<int> Main(string[] args)
         {
@@ -223,7 +223,7 @@ namespace Sillet.Cli
             {
                 Console.WriteLine();
                 Ui.Color(ConsoleColor.Cyan, "  " + (Active == null ? "Wallet" : Active.Name));
-                Ui.Color(ConsoleColor.DarkGray, _wallet.IsWatchOnly ? "  (watch-only)" + Environment.NewLine : Environment.NewLine);
+                Ui.Color(ConsoleColor.DarkGray, _wallet.IsWatchOnly ? "  (hardware wallet)" + Environment.NewLine : Environment.NewLine);
                 Ui.Menu("1", "Portfolio");
                 Ui.Menu("2", "Receive");
                 if (!_wallet.IsWatchOnly) Ui.Menu("3", "Send");

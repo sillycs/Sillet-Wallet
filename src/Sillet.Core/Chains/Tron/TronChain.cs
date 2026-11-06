@@ -8,6 +8,7 @@ using Sillet.Chains.Evm;
 using Sillet.Core;
 using Sillet.Crypto;
 using Sillet.Encoding;
+using Sillet.Hardware;
 using Sillet.Net;
 
 namespace Sillet.Chains.Tron
@@ -304,9 +305,22 @@ namespace Sillet.Chains.Tron
             if (Hex.Encode(hash) != txId || rawDataHex.IndexOf(expectedInHex, StringComparison.OrdinalIgnoreCase) < 0)
                 throw new WalletException("The transaction received from the node failed verification. Send cancelled for safety");
 
-            var signature = SignTxId(hash, Key);
-            tx.Set("signature", JsonValue.NewArray(new[] { JsonValue.FromString(signature) }));
-            tx.Set("visible", JsonValue.FromBool(true));
+            object payload = tx;
+            if (!IsWatchOnly)
+            {
+                var signature = SignTxId(hash, Key);
+                tx.Set("signature", JsonValue.NewArray(new[] { JsonValue.FromString(signature) }));
+                tx.Set("visible", JsonValue.FromBool(true));
+            }
+            else if (!CanSignOnDevice)
+            {
+                throw new WalletException("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
+            }
+            else
+            {
+                tx.Set("visible", JsonValue.FromBool(true));
+                notes.Add("Confirm the payment on your Ledger");
+            }
 
             var transfer = new PreparedTransfer
             {
@@ -317,7 +331,7 @@ namespace Sillet.Chains.Tron
                 Fee = Units.FromRaw(fee, 6),
                 FeeAsset = Native,
                 TxId = txId,
-                Payload = tx,
+                Payload = new TronPending(tx, Hex.Decode(rawDataHex), hash),
             };
             transfer.Notes.AddRange(notes);
             transfer.Notes.Add("Confirm within a minute; after that it expires");
@@ -330,9 +344,55 @@ namespace Sillet.Chains.Tron
             return Hex.Encode(Bytes.Concat(sig.R, sig.S, new[] { (byte)(27 + sig.RecoveryId) }));
         }
 
+        public override bool SupportsDeviceSigning { get { return true; } }
+
+        private sealed class TronPending
+        {
+            public TronPending(JsonValue tx, byte[] raw, byte[] hash)
+            {
+                Tx = tx;
+                Raw = raw;
+                Hash = hash;
+            }
+
+            public JsonValue Tx { get; }
+            public byte[] Raw { get; }
+            public byte[] Hash { get; }
+        }
+
+        public static string AddressFromPublicKey(byte[] uncompressed65)
+        {
+            var hash = Hashes.Keccak256(Bytes.Skip(uncompressed65, 1));
+            return Base58.Bitcoin.EncodeCheck(Bytes.Concat(new byte[] { 0x41 }, Bytes.Skip(hash, 12)));
+        }
+
+        private async Task SignOnLedgerAsync(TronPending pending, CancellationToken ct)
+        {
+            try
+            {
+                using (var device = await OpenLedgerAsync())
+                {
+                    var found = await LedgerTron.GetAddressAsync(device, LedgerTron.DefaultPath, ct);
+                    if (found.Address != Address) throw new WalletException("This Ledger has a different TRON address than this wallet");
+                    var signature = await LedgerTron.SignAsync(device, LedgerTron.DefaultPath, pending.Raw, ct);
+                    var recovered = Secp256k1.Recover(pending.Hash, new Org.BouncyCastle.Math.BigInteger(1, Bytes.Take(signature, 32)),
+                        new Org.BouncyCastle.Math.BigInteger(1, Bytes.Take(Bytes.Skip(signature, 32), 32)), signature[64] - 27);
+                    if (recovered == null || AddressFromPublicKey(recovered) != Address)
+                        throw new WalletException("The Ledger signed something different from what Sillet showed. Nothing was sent");
+                    pending.Tx.Set("signature", JsonValue.NewArray(new[] { JsonValue.FromString(Hex.Encode(signature)) }));
+                }
+            }
+            catch (LedgerException e)
+            {
+                throw new WalletException(e.Message);
+            }
+        }
+
         protected override async Task<string> BroadcastPayloadAsync(PreparedTransfer transfer, CancellationToken ct)
         {
-            var result = await PostAsync("/wallet/broadcasttransaction", (JsonValue)transfer.Payload, ct);
+            var pending = (TronPending)transfer.Payload;
+            if (!pending.Tx.Has("signature")) await SignOnLedgerAsync(pending, ct);
+            var result = await PostAsync("/wallet/broadcasttransaction", pending.Tx, ct);
             JsonValue ok;
             if (result.TryGet("result", out ok) && ok.IsTrue) return transfer.TxId;
             throw new WalletException("The network rejected the transaction: " + DescribeError(result));

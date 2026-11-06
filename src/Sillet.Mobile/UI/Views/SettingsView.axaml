@@ -44,7 +44,7 @@
                                         </Border>
                                     </Button>
                                     <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBox Text="{Binding Name, Mode=TwoWay}" MaxLength="32" FontWeight="SemiBold" Padding="8,4" MinHeight="0" />
                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                             <TextBlock Text="{Binding KindText, Converter={StaticResource Tr}}" Classes="caption" />
                                             <TextBlock Text="{ui:Tr '·  In use'}" FontSize="12" Foreground="{DynamicResource PositiveBrush}" IsVisible="{Binding IsActive}" />
@@ -162,6 +162,13 @@
                             <TextBlock Text="{ui:Tr 'Hides balances'}" Classes="caption" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding HideBalances, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                    </Grid>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+                            <TextBlock Text="{ui:Tr 'Lite mode'}" />
+                            <TextBlock Text="{ui:Tr 'For slower phones, restarts the app'}" Classes="caption" TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" IsChecked="{Binding LiteMode, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
@@ -405,6 +412,17 @@
                 </StackPanel>
             </Border>
 
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0" IsVisible="{Binding IsSeedWallet}">
+                <Path Classes="icon small" Data="{StaticResource IconShield}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                <TextBlock Text="{ui:Tr 'Encrypted backup'}" Classes="section" Margin="0" VerticalAlignment="Center" />
+            </StackPanel>
+            <Border Classes="card" IsVisible="{Binding IsSeedWallet}">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{ui:Tr 'Restore it from the welcome screen'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
+                    <Button Classes="secondary" Content="{ui:Tr 'Encrypted backup'}" Command="{Binding BackupCommand}" HorizontalAlignment="Stretch" />
+                </StackPanel>
+            </Border>
+
             <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
 
                 <Path Classes="icon small" Data="{StaticResource IconBell}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
@@ -431,13 +449,16 @@
                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotifyNews, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
                     </Grid>
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Text="{ui:Tr 'Bitcoin price moves'}" VerticalAlignment="Center" Margin="0,0,12,0" />
+                        <TextBlock Text="{ui:Tr 'Price moves'}" VerticalAlignment="Center" Margin="0,0,12,0" />
                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding NotifyBitcoin, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
                     </Grid>
+                    <Button Classes="ghost" Command="{Binding OpenPricePickerCommand}" IsVisible="{Binding NotifyBitcoin}" HorizontalAlignment="Left" Padding="0" Margin="0,-8,0,0">
+                        <TextBlock Text="{Binding PriceCoinsSummary}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                    </Button>
                     <Grid ColumnDefinitions="*,Auto">
                         <StackPanel Margin="0,0,12,0" VerticalAlignment="Center" Spacing="2">
                             <TextBlock Text="{ui:Tr 'Push notifications'}" />
-                            <TextBlock Text="{ui:Tr 'Everything in the bell also shows in your phone notifications'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
+                            <TextBlock Text="{ui:Tr 'Everything in the bell also shows in your phone'}" Classes="label" FontSize="12" TextWrapping="Wrap" />
                         </StackPanel>
                         <ToggleSwitch Grid.Column="1" IsChecked="{Binding PushNotifications, Mode=TwoWay}"  IsEnabled="{Binding NotificationsOn}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
                     </Grid>
@@ -629,6 +650,19 @@
                         </StackPanel>
                         <TextBox Text="{Binding EndpointsText, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="70" Watermark="ethereum=https://my-node.example" />
                         <TextBlock Text="{ui:Tr 'One per line, like ethereum=https://my-node.example'}" Classes="caption" TextWrapping="Wrap" />
+                        <TextBlock Text="{ui:Tr 'Optional connections'}" Classes="label" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'News from raton.fun'}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding NewsOn, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'Prediction markets from Polymarket'}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding PredictionsOn, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                        </Grid>
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Text="{ui:Tr 'Check for updates on raton.fun'}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,0,12,0" />
+                            <ToggleSwitch Grid.Column="1" IsChecked="{Binding UpdateChecksOn, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                        </Grid>
                         <TextBlock Text="{Binding NetworkMessage}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasNetworkMessage}" />
                         <Grid ColumnDefinitions="*,10,*">
                             <Button Classes="secondary" Command="{Binding UseTorCommand}" HorizontalAlignment="Stretch" FontSize="13">
@@ -704,6 +738,9 @@
             </Button>
 
             <TextBlock Tag="fixed" Text="{Binding Version}" Classes="caption" HorizontalAlignment="Center" Margin="0,14,0,0" Foreground="White" Opacity="0.7" />
+            <Button Tag="fixed" Classes="ghost" Command="{Binding CopyIdCommand}" HorizontalAlignment="Center" Padding="10,4" Margin="0,-6,0,0">
+                <TextBlock Text="{ui:Tr 'Copy Raton ID'}" FontSize="9.5" Foreground="White" Opacity="0.4" />
+            </Button>
             <Button Tag="fixed" Classes="ghost" Command="{Binding ToggleDeveloperCommand}" HorizontalAlignment="Center" Padding="10,4" Margin="0,-6,0,0">
                 <TextBlock Text="{ui:Tr 'Developer mode'}" FontSize="9.5" Foreground="White" Opacity="0.4" />
             </Button>

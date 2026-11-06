@@ -32,11 +32,12 @@ namespace Sillet.App.Services
             RunInBackground = true;
             StartWithSystem = true;
             UpdateNotified = "";
-            AutoUpdate = true;
+            AutoUpdate = false;
             ScreenshotReminder = true;
             NotifyNews = true;
             NotifyBitcoin = true;
             BitcoinMovePercent = 5;
+            PriceCoins = "bitcoin";
             AutoClearClipboard = true;
             BlockScreenCapture = true;
             LargeSendLevel = 2;
@@ -45,7 +46,7 @@ namespace Sillet.App.Services
             DefaultsVersion = CurrentDefaults;
         }
 
-        public const int CurrentDefaults = 5;
+        public const int CurrentDefaults = 6;
 
         public string Currency { get; set; }
         public string Language { get; set; }
@@ -82,11 +83,14 @@ namespace Sillet.App.Services
         public string LastUnlockUtc { get; set; }
         public bool NotificationsOn { get; set; }
         public bool SoundsOn { get; set; }
+        public bool LiteMode { get; set; }
+        public static Func<bool> DefaultLite { get; set; }
         public string LastRunVersion { get; set; }
         public bool NotifyPayments { get; set; }
         public bool NotifyNews { get; set; }
         public bool NotifyBitcoin { get; set; }
         public int BitcoinMovePercent { get; set; }
+        public string PriceCoins { get; set; }
         public bool PushNotifications { get; set; }
         public bool RunInBackground { get; set; }
         public bool PhraseViewed { get; set; }
@@ -96,8 +100,18 @@ namespace Sillet.App.Services
         public string ProxyUrl { get; set; } = "";
         public string CustomEndpoints { get; set; } = "";
 
+        public bool NewsOff { get; set; }
+        public bool PredictionsOff { get; set; }
+        public bool UpdateChecksOff { get; set; }
+        public static bool NewsAllowed { get; private set; } = true;
+        public static bool PredictionsAllowed { get; private set; } = true;
+        public static bool UpdateChecksAllowed { get; private set; } = true;
+
         public void ApplyNetwork()
         {
+            NewsAllowed = !NewsOff;
+            PredictionsAllowed = !PredictionsOff;
+            UpdateChecksAllowed = !UpdateChecksOff;
             Sillet.Net.Http.ProxyUrl = Sillet.Net.Http.ValidateProxy(ProxyUrl) == null ? ProxyUrl : null;
             Sillet.Net.Endpoints.Load(Sillet.Net.Endpoints.Validate(CustomEndpoints) == null ? CustomEndpoints : "");
         }
@@ -135,7 +149,11 @@ namespace Sillet.App.Services
             var settings = new AppSettings();
             try
             {
-                if (!File.Exists(FilePath)) return settings;
+                if (!File.Exists(FilePath))
+                {
+                    if (DefaultLite != null) settings.LiteMode = DefaultLite();
+                    return settings;
+                }
                 var json = JsonValue.Parse(LocalData.ReadText(FilePath));
                 JsonValue value;
                 if (json.TryGet("Currency", out value) && value.IsString && Currencies.IsSupported(value.AsString())) settings.Currency = value.AsString().ToLowerInvariant();
@@ -144,7 +162,11 @@ namespace Sillet.App.Services
                 if (json.TryGet("ShowEmptyAssets", out value)) settings.ShowEmptyAssets = value.IsTrue;
                 if (json.TryGet("RotateReceive", out value)) settings.RotateReceive = value.IsTrue;
                 if (json.TryGet("RotateBannerDismissed", out value)) settings.RotateBannerDismissed = value.IsTrue;
-                if (json.TryGet("Theme", out value) && value.IsString && ThemeCatalog.Find(value.AsString()) != null) settings.Theme = value.AsString();
+                if (json.TryGet("Theme", out value) && value.IsString)
+                {
+                    var themeKey = string.Equals(value.AsString(), "horror", StringComparison.OrdinalIgnoreCase) ? "litecoin" : value.AsString();
+                    if (ThemeCatalog.Find(themeKey) != null) settings.Theme = themeKey;
+                }
                 if (json.TryGet("AutoLockMinutes", out value) && value.IsNumber) settings.AutoLockMinutes = Math.Max(0, Math.Min(240, value.AsInt()));
                 if (json.TryGet("RefreshMinutes", out value) && value.IsNumber) settings.RefreshMinutes = Math.Max(1, Math.Min(60, value.AsInt()));
                 if (json.TryGet("HideSmallBalances", out value)) settings.HideSmallBalances = value.IsTrue;
@@ -168,10 +190,16 @@ namespace Sillet.App.Services
                 if (json.TryGet("LastUnlockUtc", out value) && value.IsString) settings.LastUnlockUtc = value.AsString();
                 if (json.TryGet("NotificationsOn", out value) && value.Kind == JsonKind.Bool) settings.NotificationsOn = value.IsTrue;
                 if (json.TryGet("SoundsOn", out value) && value.Kind == JsonKind.Bool) settings.SoundsOn = value.IsTrue;
+                if (json.TryGet("NewsOff", out value)) settings.NewsOff = value.IsTrue;
+                if (json.TryGet("PredictionsOff", out value)) settings.PredictionsOff = value.IsTrue;
+                if (json.TryGet("UpdateChecksOff", out value)) settings.UpdateChecksOff = value.IsTrue;
+                if (json.TryGet("LiteMode", out value) && value.Kind == JsonKind.Bool) settings.LiteMode = value.IsTrue;
+                else if (DefaultLite != null) settings.LiteMode = DefaultLite();
                 if (json.TryGet("LastRunVersion", out value) && value.IsString) settings.LastRunVersion = value.AsString();
                 if (json.TryGet("NotifyPayments", out value) && value.Kind == JsonKind.Bool) settings.NotifyPayments = value.IsTrue;
                 if (json.TryGet("NotifyNews", out value) && value.Kind == JsonKind.Bool) settings.NotifyNews = value.IsTrue;
                 if (json.TryGet("NotifyBitcoin", out value)) settings.NotifyBitcoin = value.IsTrue;
+                if (json.TryGet("PriceCoins", out value) && value.IsString && value.AsString().Length > 0) settings.PriceCoins = value.AsString();
                 if (json.TryGet("BitcoinMovePercent", out value) && value.IsNumber) settings.BitcoinMovePercent = Math.Max(1, Math.Min(50, value.AsInt()));
                 if (json.TryGet("PushNotifications", out value)) settings.PushNotifications = value.IsTrue;
                 if (json.TryGet("PhraseViewed", out value) && value.Kind == JsonKind.Bool) settings.PhraseViewed = value.IsTrue;
@@ -211,11 +239,11 @@ namespace Sillet.App.Services
                 }
                 if (settings.DefaultsVersion < 5)
                 {
-                    // Bitcoin move alerts used to be off, so nobody ever saw them.
                     settings.NotifyBitcoin = true;
                     settings.NotifyNews = true;
                     if (settings.BitcoinMovePercent <= 0) settings.BitcoinMovePercent = 5;
                 }
+                if (settings.DefaultsVersion < 6) settings.AutoUpdate = false;
                 if (settings.DefaultsVersion < CurrentDefaults)
                 {
                     settings.DefaultsVersion = CurrentDefaults;
@@ -239,9 +267,9 @@ namespace Sillet.App.Services
                     LockOnMinimize = LockOnMinimize, LockOnSystemLock = LockOnSystemLock, BlockScreenCapture = BlockScreenCapture, BlurWhenInactive = BlurWhenInactive,
                     ContactsOnly = ContactsOnly, WarnNewAddress = WarnNewAddress, WarnLookalike = WarnLookalike, LargeSendLevel = LargeSendLevel, SlowDownUnlock = SlowDownUnlock,
                     FailedUnlocks = FailedUnlocks, LastUnlockUtc = LastUnlockUtc ?? "",
-                    SoundsOn = SoundsOn, LastRunVersion = LastRunVersion ?? "",
+                    SoundsOn = SoundsOn, LiteMode = LiteMode, NewsOff = NewsOff, PredictionsOff = PredictionsOff, UpdateChecksOff = UpdateChecksOff, LastRunVersion = LastRunVersion ?? "",
                     NotificationsOn = NotificationsOn, NotifyPayments = NotifyPayments, NotifyNews = NotifyNews, NotifyBitcoin = NotifyBitcoin,
-                    BitcoinMovePercent = BitcoinMovePercent, PushNotifications = PushNotifications, PhraseViewed = PhraseViewed, BackupReminded = BackupReminded, UpdateNotified = UpdateNotified ?? "", AutoUpdate = AutoUpdate, ProxyUrl = ProxyUrl ?? "", CustomEndpoints = CustomEndpoints ?? "", ScreenshotReminder = ScreenshotReminder, RunInBackground = RunInBackground, StartWithSystem = StartWithSystem, NavCollapsed = NavCollapsed,
+                    BitcoinMovePercent = BitcoinMovePercent, PriceCoins = PriceCoins ?? "bitcoin", PushNotifications = PushNotifications, PhraseViewed = PhraseViewed, BackupReminded = BackupReminded, UpdateNotified = UpdateNotified ?? "", AutoUpdate = AutoUpdate, ProxyUrl = ProxyUrl ?? "", CustomEndpoints = CustomEndpoints ?? "", ScreenshotReminder = ScreenshotReminder, RunInBackground = RunInBackground, StartWithSystem = StartWithSystem, NavCollapsed = NavCollapsed,
                     LockVaultToDevice = LockVaultToDevice, HardenProcess = HardenProcess, DefaultsVersion = DefaultsVersion });
                 LocalData.WriteText(FilePath, json);
             }

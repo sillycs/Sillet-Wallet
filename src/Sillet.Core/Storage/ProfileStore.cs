@@ -23,9 +23,9 @@ namespace Sillet.Storage
         public bool IsWatch => Kind == "watch";
         public bool HasAddresses => Watch.Count > 0;
         public string Initial => string.IsNullOrEmpty(Name) ? "?" : Name.Substring(0, 1).ToUpperInvariant();
-        public string PhotoPath => AvatarStore.PathFor(Id);
+        public string PhotoPath => AvatarStore.PathFor(Id) ?? AvatarStore.PathFor("acc_" + Id + "_0");
         public bool HasPhoto => PhotoPath != null;
-        public string KindText => IsWatch ? "Hardware wallet, watch-only" : "Recovery phrase";
+        public string KindText => IsWatch ? "Hardware wallet" : "Recovery phrase";
     }
 
     public sealed class ProfileStore

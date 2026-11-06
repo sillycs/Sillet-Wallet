@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_actions_desc">Send, receive and market shortcuts</string>
+    <string name="widget_market_desc">Live prices for the top coins</string>
+    <string name="widget_qr_desc">Your receive address as a QR code</string>
+</resources>

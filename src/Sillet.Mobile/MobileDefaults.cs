@@ -9,7 +9,6 @@ namespace Sillet.Mobile
         public static void Apply()
         {
             ThemeCatalog.Mobile = OperatingSystem.IsAndroid();
-            // The relaxed phone defaults must not weaken the Linux/desktop build, which shares this app.
             if (!OperatingSystem.IsAndroid() && !OperatingSystem.IsIOS()) return;
             try
             {

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+      - name: Restore
+        run: dotnet restore src/Sillet.Core/Sillet.Core.csproj
+      - name: Unit tests (derivation, addresses, update signatures)
+        run: dotnet run --project tests/Sillet.Tests -c Release
+      - name: Build Windows app and CLI
+        run: |
+          dotnet build src/Sillet.App -c Release
+          dotnet build src/Sillet.Cli -c Release

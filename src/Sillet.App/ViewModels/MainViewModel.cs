@@ -33,10 +33,11 @@ namespace Sillet.App.ViewModels
         {
             Ui = ui;
             Profiles = new ProfileStore();
-            Wallet = new WalletManager(Profiles.VaultPath(Profiles.Active));
+            Wallet = NewWallet(Profiles.VaultPath(Profiles.Active));
             Market = new MarketService();
             Settings = AppSettings.Load();
             Sounds.Enabled = () => Settings.SoundsOn;
+            Performance.LiteSource = () => Settings.LiteMode;
             Lookup.WalletIcon = ThemeCatalog.Get(Settings.Theme).Key == "light" ? "walleticonblack" : "walleticonwhite";
             Settings.ApplyNetwork();
             if (Loc.Enabled) Loc.Instance.Current = Settings.Language;
@@ -107,6 +108,9 @@ namespace Sillet.App.ViewModels
             LockCommand = new RelayCommand(Lock);
             DonateCommand = new RelayCommand(ShowDonate);
             DismissToastCommand = new RelayCommand(() => IsToastVisible = false);
+            ToggleSupportCommand = new RelayCommand(() => IsSupportOpen = !IsSupportOpen);
+            SupportTelegramCommand = new RelayCommand(() => { IsSupportOpen = false; Ui.OpenUrl("https://t.me/sillycs"); });
+            SupportDiscordCommand = new RelayCommand(() => { IsSupportOpen = false; Ui.OpenUrl("https://discord.gg/NBMWgX9Crq"); });
             OpenRatonCommand = new RelayCommand(() => Ui.OpenUrl("https://raton.fun"));
             OpenAlternativeCommand = new RelayCommand(() => Ui.OpenUrl("https://alternative.me/crypto/fear-and-greed-index/"));
             OpenCoinGeckoCommand = new RelayCommand(() => Ui.OpenUrl("https://www.coingecko.com"));
@@ -128,7 +132,23 @@ namespace Sillet.App.ViewModels
         private bool _isProfilesOpen;
 
         public Profile ActiveProfile => Profiles.Active;
+        private WalletManager NewWallet(string vaultPath)
+        {
+            var wallet = new WalletManager(vaultPath);
+            wallet.LedgerConnect = () => Ui.ConnectLedgerAsync();
+            return wallet;
+        }
+
         public IReadOnlyList<Profile> ProfileList => Profiles.Items.ToList();
+
+        public IReadOnlyList<ProfileChoice> ProfileChoices
+        {
+            get
+            {
+                var activeId = ActiveProfile == null ? null : ActiveProfile.Id;
+                return Profiles.Items.Select(p => new ProfileChoice(p, p.Id == activeId ? ActiveProfilePhoto : p.PhotoPath)).ToList();
+            }
+        }
         public bool HasManyProfiles => Profiles.Items.Count > 1;
         public bool IsWatchOnly => Wallet.IsWatchOnly;
         public bool IsAddingWallet => _pendingProfile != null || AuthPage is WatchWalletViewModel;
@@ -141,13 +161,11 @@ namespace Sillet.App.ViewModels
             set { Set(ref _isProfilesOpen, value); }
         }
 
-        /// <summary>Lets the user pick a picture for a wallet. It is kept only on this device.</summary>
         public async Task ChooseProfilePhotoAsync(Profile profile)
         {
             if (profile != null) await ChoosePhotoAsync(profile.Id);
         }
 
-        /// <summary>Picks a picture for any key: a wallet id, or an account key.</summary>
         public async Task ChoosePhotoAsync(string key)
         {
             if (string.IsNullOrEmpty(key)) return;
@@ -178,7 +196,6 @@ namespace Sillet.App.ViewModels
             return "acc_" + (ActiveProfile == null ? "main" : ActiveProfile.Id) + "_" + index;
         }
 
-        /// <summary>The photo of the account in use, or the wallet's photo when the account has none.</summary>
         public string ActiveProfilePhoto
         {
             get
@@ -195,7 +212,7 @@ namespace Sillet.App.ViewModels
             Raise(nameof(ActiveProfilePhoto), nameof(ActiveProfileHasPhoto));
             var changed = PhotosChanged;
             if (changed != null) changed();
-            Raise(nameof(ActiveProfile), nameof(ProfileList), nameof(HasManyProfiles), nameof(IsWatchOnly), nameof(ActiveProfileName),
+            Raise(nameof(ActiveProfile), nameof(ProfileList), nameof(ProfileChoices), nameof(HasManyProfiles), nameof(IsWatchOnly), nameof(ActiveProfileName),
                   nameof(ActiveProfileInitial), nameof(IsAddingWallet));
         }
 
@@ -210,7 +227,7 @@ namespace Sillet.App.ViewModels
         private void UseProfile(Profile profile)
         {
             Profiles.SetActive(profile);
-            Wallet = new WalletManager(Profiles.VaultPath(profile));
+            Wallet = NewWallet(Profiles.VaultPath(profile));
             Passkey = new PasskeyStore(PasskeyStore.PathFor(profile == null ? null : profile.Id));
             Raise(nameof(Wallet), nameof(Passkey));
             RaiseProfiles();
@@ -232,7 +249,7 @@ namespace Sillet.App.ViewModels
             IsProfilesOpen = false;
             if (IsUnlocked) Lock();
             _pendingProfile = Profiles.NewSeed();
-            Wallet = new WalletManager(Profiles.VaultPath(_pendingProfile));
+            Wallet = NewWallet(Profiles.VaultPath(_pendingProfile));
             Passkey = new PasskeyStore(PasskeyStore.PathFor(_pendingProfile.Id));
             Raise(nameof(Wallet), nameof(Passkey));
             ShowOnboarding(false);
@@ -513,14 +530,8 @@ namespace Sillet.App.ViewModels
 
         public void CheckBitcoin()
         {
-            if (!Settings.NotifyBitcoin) return;
-            var btc = MarketCoins.FirstOrDefault(c => c.Id == "bitcoin");
-            if (btc == null || Market.IsStale) return;
-            var change = Notifications.DetectBitcoinMove(btc.Price, Currency, Settings.BitcoinMovePercent);
-            if (!change.HasValue) return;
-            var up = change.Value >= 0;
-            Notify(up ? "price_up" : "price_down", up ? Loc.T("Bitcoin is up") : Loc.T("Bitcoin is down"),
-                Loc.F("Bitcoin moved {0}% to {1}", (up ? "+" : "−") + Math.Abs(change.Value).ToString("0.0", Formatters.Display), Formatters.Fiat(btc.Price, Currency)), "market");
+            if (!Settings.NotifyBitcoin || Market.IsStale) return;
+            PriceMoves.Check(Notifications, MarketCoins, Settings, (kind, title, message) => Notify(kind, title, message, "market"));
         }
         public RelayCommand OpenAlternativeCommand { get; }
         public RelayCommand OpenCoinGeckoCommand { get; }
@@ -579,7 +590,6 @@ namespace Sillet.App.ViewModels
 
         private string _pendingTarget;
 
-        /// <summary>Opens a screen asked for from outside (a tapped system notification). While locked it waits for the unlock.</summary>
         public void OpenTarget(string target)
         {
             if (string.IsNullOrEmpty(target)) return;
@@ -599,7 +609,6 @@ namespace Sillet.App.ViewModels
 
         private bool _historyNav;
 
-        /// <summary>Opens Activity showing only the transfers of one token. chainId null matches the symbol on every network.</summary>
         public void ShowAssetHistory(string symbol, string chainId)
         {
             if (!IsUnlocked || Activity == null || string.IsNullOrEmpty(symbol)) return;
@@ -635,6 +644,17 @@ namespace Sillet.App.ViewModels
             Raise(nameof(SelectedNav));
             CurrentPage = Donate;
         }
+        public RelayCommand ToggleSupportCommand { get; }
+        public RelayCommand SupportTelegramCommand { get; }
+        public RelayCommand SupportDiscordCommand { get; }
+        private bool _isSupportOpen;
+
+        public bool IsSupportOpen
+        {
+            get { return _isSupportOpen; }
+            set { Set(ref _isSupportOpen, value); }
+        }
+
         public RelayCommand OpenRatonCommand { get; }
 
         public void ShowOnboarding(bool restoring)
@@ -782,7 +802,7 @@ namespace Sillet.App.ViewModels
 
         public void NotifyAccountChanged()
         {
-            Raise(nameof(ActiveAccount), nameof(ActiveAccountName), nameof(ActiveProfilePhoto), nameof(ActiveProfileHasPhoto));
+            Raise(nameof(ActiveAccount), nameof(ActiveAccountName), nameof(ActiveProfilePhoto), nameof(ActiveProfileHasPhoto), nameof(ProfileChoices));
         }
 
         public void SwitchAccount(int index)
@@ -792,7 +812,7 @@ namespace Sillet.App.ViewModels
             Accounts.SetActive(index);
             if (_autoRefresh != null) _autoRefresh.Cancel();
             BuildPages();
-            Raise(nameof(ActiveAccount), nameof(ActiveAccountName), nameof(ActiveProfilePhoto), nameof(ActiveProfileHasPhoto));
+            Raise(nameof(ActiveAccount), nameof(ActiveAccountName), nameof(ActiveProfilePhoto), nameof(ActiveProfileHasPhoto), nameof(ProfileChoices));
             _selectedNav = null;
             Navigate("home");
             StartAutoRefresh();
@@ -822,7 +842,6 @@ namespace Sillet.App.ViewModels
                 Loc.T("It is the only way to get your money back if you lose this device. Write it down and keep it offline"), "settings");
         }
 
-        /// <summary>Looks for a newer version. On Windows with auto update on the app takes over and installs it. Returns null when up to date.</summary>
         public async Task<UpdateResult> CheckUpdateAsync(bool announceAlways = false)
         {
             var result = await UpdateService.RunAsync(Settings);
@@ -932,7 +951,7 @@ namespace Sillet.App.ViewModels
                 Settings.Save();
                 Ui.ApplyTheme(theme.Colors);
                 Lookup.WalletIcon = WalletIconName;
-                Raise(nameof(Theme), nameof(LogoName), nameof(WalletIconName));
+                Raise(nameof(Theme), nameof(LogoName), nameof(WalletIconName), nameof(TelegramIconName), nameof(DiscordIconName));
                 RaiseDataChanged();
             }
         }
@@ -941,6 +960,8 @@ namespace Sillet.App.ViewModels
 
         public string LogoName => Theme == "light" ? "silleticonblack" : "silleticon";
         public string WalletIconName => Theme == "light" ? "walleticonblack" : "walleticonwhite";
+        public string TelegramIconName => Theme == "light" ? "telegramblack" : "telegramwhite";
+        public string DiscordIconName => Theme == "light" ? "discordblack" : "discordwhite";
 
         public int AutoLockMinutes
         {
@@ -1050,7 +1071,6 @@ namespace Sillet.App.ViewModels
                 if (handler != null) handler();
                 return;
             }
-            // Several refreshes finish within moments of each other; redraw the pages once for the whole burst.
             if (Interlocked.Exchange(ref _dataPending, 1) == 1) return;
             var ignored = Task.Delay(180).ContinueWith(t => ctx.Post(_ =>
             {
@@ -1264,5 +1284,18 @@ namespace Sillet.App.ViewModels
             while (text.EndsWith(".") && !text.EndsWith("...")) text = text.Substring(0, text.Length - 1).TrimEnd();
             return Loc.T(text);
         }
+    }
+}
+
+namespace Sillet.App.ViewModels
+{
+    public sealed class ProfileChoice
+    {
+        public ProfileChoice(Sillet.Storage.Profile profile, string photoPath) { Profile = profile; PhotoPath = photoPath; }
+        public Sillet.Storage.Profile Profile { get; private set; }
+        public string PhotoPath { get; private set; }
+        public bool HasPhoto { get { return PhotoPath != null; } }
+        public string Name { get { return Profile.Name; } }
+        public string KindText { get { return Profile.KindText; } }
     }
 }

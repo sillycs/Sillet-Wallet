@@ -6,23 +6,21 @@ using System.Text;
 
 namespace Sillet.App.Services
 {
-    /// <summary>What a printed receipt says. Plain strings, already translated and formatted.</summary>
     public sealed class ReceiptDocument
     {
         public string Brand = "Sillet";
-        public string Heading = "";      // "Payment receipt"
-        public string Status = "";       // "Completed"
-        public string Kind = "";         // "Sent" / "Received" / "Swap"
-        public string Amount = "";       // "-0.5 ETH"
-        public string Fiat = "";         // "about $1,200.00"
+        public string Heading = "";
+        public string Status = "";
+        public string Kind = "";
+        public string Amount = "";
+        public string Fiat = "";
         public bool Incoming;
         public string Footer = "";
         public string Generated = "";
         public readonly List<KeyValuePair<string, string>> Rows = new List<KeyValuePair<string, string>>();
-        public readonly List<string> Mono = new List<string>(); // labels whose value is an address / id
+        public readonly List<string> Mono = new List<string>();
     }
 
-    /// <summary>A small, dependency free PDF writer: one A4 page, Arial embedded when the system has it (Helvetica otherwise), laid out like a bank receipt.</summary>
     public static class ReceiptPdf
     {
         private const double W = 595, H = 842, Margin = 48;
@@ -42,7 +40,6 @@ namespace Sillet.App.Services
         private static bool _fontsLooked;
         private static PdfFont[] _fonts;
 
-        /// <summary>Test hook: use these font files (regular, bold) instead of looking for Arial.</summary>
         public static string[] FontFiles;
 
         private static PdfFont[] LoadFonts()
@@ -59,7 +56,6 @@ namespace Sillet.App.Services
                 _fonts = PdfFont.FindArial();
             }
             if (_fonts == null) return null;
-            // Fresh copies per receipt, so the used glyph lists start empty
             return new[] { PdfFont.Load(_fonts[0].Path, "Arial"), PdfFont.Load(_fonts[1].Path, "Arial-Bold") };
         }
 
@@ -183,13 +179,11 @@ namespace Sillet.App.Services
         private static byte[] BuildPage(ReceiptDocument doc)
         {
             var c = new Canvas();
-            // Watermark in the bottom right corner, drawn first so the text stays on top of it
             c.Rect(W - Margin - 150, H - 200, 36, 36, 0.93, 0.92, 0.99);
             c.Text("S", W - Margin - 150 + 11.5, H - 200 + 26, 22, "F2", 1, 1, 1);
             c.Text("Sillet", W - Margin - 106, H - 200 + 27, 28, "F2", 0.90, 0.90, 0.95);
             c.Text("raton.fun/wallet", W - Margin - 106, H - 200 + 42, 9, "F1", 0.80, 0.80, 0.88);
 
-            // Header band
             c.Rect(0, 0, W, 150, 0.06, 0.08, 0.16);
             c.Rect(Margin, 40, 30, 30, 0.38, 0.32, 0.96);
             c.Text("S", Margin + 9.5, 61, 20, "F2", 1, 1, 1);
@@ -198,7 +192,6 @@ namespace Sillet.App.Services
             var kindWidth = Measure(doc.Kind, 11, true);
             c.Text(doc.Kind, W - Margin - kindWidth, 61, 11, "F2", 0.70, 0.74, 0.85);
 
-            // Amount card
             var green = doc.Incoming;
             double ar = green ? 0.10 : 0.07, ag = green ? 0.62 : 0.09, ab = green ? 0.38 : 0.16;
             c.Rect(Margin - 8, 168, W - 2 * Margin + 16, 118, 0.96, 0.97, 0.99);
@@ -213,7 +206,6 @@ namespace Sillet.App.Services
             c.Rect(pillX, 256, pillW, 20, green ? 0.86 : 0.88, green ? 0.96 : 0.93, green ? 0.90 : 0.99);
             c.Text(pill, pillX + 14, 270, 10, "F2", green ? 0.07 : 0.20, green ? 0.45 : 0.30, green ? 0.27 : 0.75);
 
-            // Detail rows
             double y = 322;
             const double labelW = 120;
             double valueX = Margin + labelW + 12;
@@ -238,7 +230,6 @@ namespace Sillet.App.Services
                 c.Line(Margin, W - Margin, y - 5, 0.90, 0.92, 0.95);
             }
 
-            // Footer
             c.Line(Margin, W - Margin, H - 76, 0.85, 0.87, 0.92, 0.8);
             foreach (var pair in new[] { new KeyValuePair<string, double>(doc.Footer, H - 58), new KeyValuePair<string, double>(doc.Generated, H - 42) })
             {
@@ -256,7 +247,6 @@ namespace Sillet.App.Services
             var body = latin.GetBytes(content);
             var objects = new List<byte[]>();
             Func<string, byte[]> text = s => latin.GetBytes(s);
-            // 1 catalog, 2 pages, 3 page, 4 Courier, 5 content, then the two Arial fonts (5 objects each) or the built in Helvetica pair
             var embedded = _regular != null && _bold != null;
             string f1, f2;
             if (embedded) { f1 = "6 0 R"; f2 = "11 0 R"; } else { f1 = "6 0 R"; f2 = "7 0 R"; }

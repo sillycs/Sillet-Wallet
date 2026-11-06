@@ -24,7 +24,6 @@ namespace Sillet.App.Services
         public decimal PerUsd { get; internal set; }
         public bool NoCents { get; }
         public string Countries { get; }
-        /// <summary>True when CoinGecko prices coins in this currency itself; otherwise we convert from US dollars.</summary>
         public bool Direct { get; }
         public string Label => Code.ToUpperInvariant();
         public string Display => Label + "  ·  " + Name;
@@ -166,7 +165,6 @@ namespace Sillet.App.Services
             new CurrencyInfo("xpf", "₣", "CFP franc", 110m, true, "French Polynesia, New Caledonia", false)
         };
 
-        /// <summary>Replaces the built-in approximate rates with fresh ones (units per US dollar).</summary>
         public static void SetRates(IDictionary<string, decimal> rates)
         {
             foreach (var c in All)
@@ -242,7 +240,6 @@ namespace Sillet.App.Services
             return "usd";
         }
 
-        /// <summary>Currencies matching the query. Without a query, the user's own and the US dollar come first.</summary>
         public static List<CurrencyInfo> Search(string query, string localCode)
         {
             if (!string.IsNullOrWhiteSpace(query)) return All.Where(c => c.Matches(query)).OrderBy(c => c.Code == query.Trim().ToLowerInvariant() ? 0 : 1).ToList();

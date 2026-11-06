@@ -19,7 +19,8 @@ namespace Sillet.App.ViewModels
         public ReceiveViewModel(MainViewModel main)
         {
             _main = main;
-            Coins = new ObservableCollection<CoinGroup>(Lookup.GroupByCoin(main.AllAssets));
+            _allCoins = Lookup.GroupByCoin(main.AllAssets).ToList();
+            Coins = new ObservableCollection<CoinGroup>(_allCoins);
             main.DataChanged += () => Raise(nameof(BalanceText), nameof(Address), nameof(ShowRotateBanner));
             CopyCommand = new RelayCommand(Copy);
             DismissRotateBannerCommand = new RelayCommand(() =>
@@ -42,7 +43,31 @@ namespace Sillet.App.ViewModels
             SelectedCoin = Coins.FirstOrDefault();
         }
 
+        private readonly List<CoinGroup> _allCoins;
+        private string _coinQuery = "";
+
         public ObservableCollection<CoinGroup> Coins { get; }
+
+        public string CoinQuery
+        {
+            get { return _coinQuery; }
+            set
+            {
+                if (!Set(ref _coinQuery, value ?? "")) return;
+                var q = _coinQuery.Trim();
+                var found = q.Length == 0 ? _allCoins : _allCoins.Where(c =>
+                    c.Symbol.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                    (c.Name ?? "").IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0).ToList();
+                var keep = SelectedCoin;
+                Coins.Clear();
+                foreach (var c in found) Coins.Add(c);
+                Raise(nameof(HasCoinResults));
+                if (keep != null && found.Contains(keep)) SelectedCoin = keep;
+                else if (found.Count > 0) SelectedCoin = found[0];
+            }
+        }
+
+        public bool HasCoinResults => Coins.Count > 0;
 
         public CoinGroup SelectedCoin
         {
@@ -183,6 +208,11 @@ namespace Sillet.App.ViewModels
             };
             AddAccountCommand = new RelayCommand(AddAccount);
             ToggleDeveloperCommand = new RelayCommand(() => IsDeveloperOpen = !IsDeveloperOpen);
+            CopyIdCommand = new RelayCommand(() =>
+            {
+                _main.Ui.CopyToClipboard(Sillet.Storage.RatonId.Get());
+                _main.ShowToast(Loc.T("ID copied"));
+            });
             DevFakeSentCommand = new RelayCommand(DevFakeSent);
             DevFakeReceivedCommand = new AsyncCommand(DevFakeReceivedAsync);
             DevNotificationsCommand = new RelayCommand(DevNotifications);
@@ -544,12 +574,12 @@ namespace Sillet.App.ViewModels
         internal void ExportWatch(Sillet.Storage.Profile profile)
         {
             if (profile == null || !profile.HasAddresses) return;
-            var path = _main.Ui.PickSavePath("sillet-" + Safe(profile.Name) + "-addresses.json", "Sillet watch-only file|*.json");
+            var path = _main.Ui.PickSavePath("sillet-" + Safe(profile.Name) + "-addresses.json", "Sillet addresses file|*.json");
             if (path == null) return;
             try
             {
                 System.IO.File.WriteAllText(path, Sillet.Storage.WatchFile.Serialize(profile.Name, profile.Watch));
-                _main.ShowToast(Loc.F("Addresses of {0} saved. Open them with Watch a hardware wallet", profile.Name));
+                _main.ShowToast(Loc.F("Addresses of {0} saved. Open them with Add a hardware wallet", profile.Name));
             }
             catch (System.Exception e) when (e is System.IO.IOException || e is System.UnauthorizedAccessException)
             {
@@ -574,11 +604,21 @@ namespace Sillet.App.ViewModels
 
         private void Backup()
         {
-            var path = _main.Ui.PickSavePath("sillet-backup-" + System.DateTime.Now.ToString("yyyy-MM-dd") + ".json", "Sillet backup|*.json");
+            var fileName = "sillet-backup-" + System.DateTime.Now.ToString("yyyy-MM-dd") + ".json";
+            var path = _main.Ui.SharesFiles
+                ? System.IO.Path.Combine(System.IO.Path.GetTempPath(), fileName)
+                : _main.Ui.PickSavePath(fileName, "Sillet backup|*.json");
             if (path == null) return;
             try
             {
                 _main.Wallet.ExportBackup(path);
+                if (_main.Ui.SharesFiles)
+                {
+                    var bytes = System.IO.File.ReadAllBytes(path);
+                    System.IO.File.Delete(path);
+                    _main.Ui.SaveFile(fileName, "Sillet backup|*.json", bytes);
+                    return;
+                }
                 _main.ShowToast(Loc.T("Encrypted backup saved. It opens with your current password"));
             }
             catch (WalletException e)
@@ -655,6 +695,37 @@ namespace Sillet.App.ViewModels
 
         public RelayCommand TestPushCommand { get; }
 
+        public bool LiteMode
+        {
+            get { return Flag(s => s.LiteMode); }
+            set
+            {
+                if (value == Flag(s => s.LiteMode)) return;
+                Save(s => s.LiteMode = value, nameof(LiteMode));
+                Performance.Notify();
+                var restart = Performance.Restart;
+                if (restart != null) System.Threading.Tasks.Task.Delay(450).ContinueWith(t => restart());
+            }
+        }
+
+        public bool NewsOn
+        {
+            get { return !Flag(s => s.NewsOff); }
+            set { Save(s => s.NewsOff = !value, nameof(NewsOn)); _main.Settings.ApplyNetwork(); }
+        }
+
+        public bool PredictionsOn
+        {
+            get { return !Flag(s => s.PredictionsOff); }
+            set { Save(s => s.PredictionsOff = !value, nameof(PredictionsOn)); _main.Settings.ApplyNetwork(); }
+        }
+
+        public bool UpdateChecksOn
+        {
+            get { return !Flag(s => s.UpdateChecksOff); }
+            set { Save(s => s.UpdateChecksOff = !value, nameof(UpdateChecksOn)); _main.Settings.ApplyNetwork(); }
+        }
+
         public bool SoundsOn
         {
             get { return Flag(s => s.SoundsOn); }
@@ -688,10 +759,79 @@ namespace Sillet.App.ViewModels
             get { return Flag(s => s.NotifyBitcoin); }
             set
             {
-                if (value && !_main.Settings.NotifyBitcoin) _main.Notifications.ResetBitcoin();
+                var turnedOn = value && !_main.Settings.NotifyBitcoin;
+                if (turnedOn) _main.Notifications.ResetPrices();
                 Save(s => s.NotifyBitcoin = value, nameof(NotifyBitcoin));
-                if (value) _main.CheckBitcoin();
+                if (turnedOn) OpenPricePicker();
+                else if (value) _main.CheckBitcoin();
             }
+        }
+
+        private bool _isPricePickerOpen;
+        private List<PriceCoinRow> _priceRows = new List<PriceCoinRow>();
+        private RelayCommand _openPricePickerCommand, _savePricePickerCommand, _closePricePickerCommand;
+
+        public bool IsPricePickerOpen
+        {
+            get { return _isPricePickerOpen; }
+            set { Set(ref _isPricePickerOpen, value); }
+        }
+
+        public IReadOnlyList<PriceCoinRow> PriceCoinRows { get { return _priceRows; } }
+
+        public string PriceCoinsSummary
+        {
+            get
+            {
+                var ids = PriceMoves.Parse(_main.Settings.PriceCoins);
+                var coins = _main.MarketCoins ?? new MarketCoin[0];
+                var names = ids.Select(id => coins.FirstOrDefault(c => c.Id == id)).Select((c, i) => c == null ? ids[i] : c.Symbol.ToUpperInvariant()).ToList();
+                return names.Count == 0 ? "" : string.Join(", ", names.Take(4)) + (names.Count > 4 ? " +" + (names.Count - 4) : "");
+            }
+        }
+
+        public RelayCommand OpenPricePickerCommand
+        {
+            get { return _openPricePickerCommand ?? (_openPricePickerCommand = new RelayCommand(OpenPricePicker)); }
+        }
+
+        public RelayCommand ClosePricePickerCommand
+        {
+            get { return _closePricePickerCommand ?? (_closePricePickerCommand = new RelayCommand(() => IsPricePickerOpen = false)); }
+        }
+
+        public RelayCommand SavePricePickerCommand
+        {
+            get
+            {
+                return _savePricePickerCommand ?? (_savePricePickerCommand = new RelayCommand(() =>
+                {
+                    var chosen = _priceRows.Where(r => r.Selected).Select(r => r.Id).ToList();
+                    IsPricePickerOpen = false;
+                    if (chosen.Count == 0)
+                    {
+                        Save(s => s.NotifyBitcoin = false, nameof(NotifyBitcoin));
+                        return;
+                    }
+                    var joined = PriceMoves.Join(chosen);
+                    if (joined != _main.Settings.PriceCoins) _main.Notifications.ResetPrices();
+                    Save(s => s.PriceCoins = joined, nameof(PriceCoinsSummary));
+                    _main.ShowToast(Loc.F("Watching {0}", PriceCoinsSummary));
+                    _main.CheckBitcoin();
+                }));
+            }
+        }
+
+        public void OpenPricePicker()
+        {
+            var chosen = PriceMoves.Parse(_main.Settings.PriceCoins);
+            var coins = (_main.MarketCoins ?? new MarketCoin[0]).Take(40).ToList();
+            var rows = coins.Select(c => new PriceCoinRow(c.Id, c.Symbol.ToUpperInvariant(), c.Name, chosen.Contains(c.Id))).ToList();
+            foreach (var id in chosen)
+                if (!rows.Any(r => r.Id == id)) rows.Insert(0, new PriceCoinRow(id, id.ToUpperInvariant(), id, true));
+            _priceRows = rows;
+            Raise(nameof(PriceCoinRows));
+            IsPricePickerOpen = true;
         }
 
         public bool BitcoinMove3
@@ -987,7 +1127,6 @@ namespace Sillet.App.ViewModels
             get { return Flag(s => s.AutoClearClipboard); }
             set { Save(s => s.AutoClearClipboard = value, nameof(AutoClearClipboard)); }
         }
-
 
         public bool HideSmallBalances
         {
@@ -1380,11 +1519,11 @@ namespace Sillet.App.ViewModels
         public RelayCommand OpenRatonCommand => _main.OpenRatonCommand;
         public string Version => "release " + AppInfo.CurrentVersion;
 
-        // ---- Developer mode: made-up payments, receipts and notifications. Nothing here signs, sends or touches a real network ----
         private const string TestMark = "[test] ";
         private bool _isDeveloperOpen;
         private string _devStatus = "";
         public RelayCommand ToggleDeveloperCommand { get; }
+        public RelayCommand CopyIdCommand { get; }
         public RelayCommand DevFakeSentCommand { get; }
         public AsyncCommand DevFakeReceivedCommand { get; }
         public RelayCommand DevNotificationsCommand { get; }
@@ -1517,7 +1656,6 @@ namespace Sillet.App.ViewModels
             }
         }
 
-        /// <summary>Only Windows builds that can write next to Sillet.exe can replace themselves.</summary>
         private bool? _canAutoUpdate;
         public bool CanAutoUpdate => (_canAutoUpdate ?? (_canAutoUpdate = UpdateService.CanSelfUpdate)).Value;
         public bool ShowCheckUpdate => !CanAutoUpdate;
@@ -1594,6 +1732,30 @@ namespace Sillet.App.ViewModels
             {
                 DeleteError = MainViewModel.Clean(e.Message);
             }
+        }
+    }
+
+    public sealed class PriceCoinRow : ObservableObject
+    {
+        private bool _selected;
+
+        public PriceCoinRow(string id, string symbol, string name, bool selected)
+        {
+            Id = id;
+            Symbol = symbol;
+            Name = name;
+            _selected = selected;
+        }
+
+        public string Id { get; private set; }
+        public string Symbol { get; private set; }
+        public string Name { get; private set; }
+        public string Initial { get { return Symbol.Length > 0 ? Symbol.Substring(0, 1) : "?"; } }
+
+        public bool Selected
+        {
+            get { return _selected; }
+            set { Set(ref _selected, value); }
         }
     }
 

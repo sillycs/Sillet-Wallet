@@ -24,16 +24,22 @@ namespace Sillet.App.Services
     {
         public static readonly Loc Instance = new Loc();
 
+        static Loc()
+        {
+            LocPt.Apply();
+        }
+
         public static readonly LanguageOption[] Languages =
         {
             new LanguageOption("en", "English"),
             new LanguageOption("es", "Español"),
             new LanguageOption("ru", "Русский"),
             new LanguageOption("zh", "中文"),
-            new LanguageOption("fr", "Français")
+            new LanguageOption("fr", "Français"),
+            new LanguageOption("pt", "Português")
         };
 
-        private static readonly string[] Codes = { "es", "ru", "zh", "fr" };
+        private static readonly string[] Codes = { "es", "ru", "zh", "fr", "pt" };
         private static List<string> _prefixes;
         public static readonly Dictionary<string, string> Overrides = new Dictionary<string, string>();
         private string _current = "en";
@@ -74,6 +80,7 @@ namespace Sillet.App.Services
                     case "ru": return new CultureInfo("ru-RU");
                     case "zh": return new CultureInfo("zh-CN");
                     case "fr": return new CultureInfo("fr-FR");
+                    case "pt": return new CultureInfo("pt-BR");
                     default: return new CultureInfo("en-US");
                 }
             }
@@ -83,7 +90,7 @@ namespace Sillet.App.Services
         {
             if (string.IsNullOrEmpty(code)) return "en";
             code = code.Trim().ToLowerInvariant();
-            return code == "es" || code == "ru" || code == "zh" || code == "fr" ? code : "en";
+            return code == "es" || code == "ru" || code == "zh" || code == "fr" || code == "pt" ? code : "en";
         }
 
         public static string T(string text)
@@ -117,7 +124,6 @@ namespace Sillet.App.Services
             return text;
         }
 
-        /// <summary>Runs <paramref name="build"/> as if the app were set to another language, without touching the UI.</summary>
         public static TResult With<TResult>(string code, Func<TResult> build)
         {
             var language = Normalize(code);

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
@@ -19,12 +20,29 @@ namespace Sillet.Droid
     {
         private CaptureCallback _capture;
         private bool _active;
-        private int _nextNotification = 100;
         private TaskCompletionSource<string> _scanTask;
 
         protected override AppBuilder CustomizeAppBuilder(AppBuilder builder)
         {
-            return base.CustomizeAppBuilder(builder).WithInterFont();
+            return base.CustomizeAppBuilder(builder).WithInterFont()
+                .With(new AndroidPlatformOptions { RenderingMode = new[] { AndroidRenderingMode.Egl, AndroidRenderingMode.Software } });
+        }
+
+        private void RestartApp()
+        {
+            try
+            {
+                var launch = PackageManager.GetLaunchIntentForPackage(PackageName);
+                launch.AddFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
+                var pending = PendingIntent.GetActivity(this, 4242, launch, PendingIntentFlags.Immutable | PendingIntentFlags.CancelCurrent);
+                var alarms = (AlarmManager)GetSystemService(AlarmService);
+                alarms.Set(AlarmType.RtcWakeup, Java.Lang.JavaSystem.CurrentTimeMillis() + 400, pending);
+                FinishAffinity();
+                Android.OS.Process.KillProcess(Android.OS.Process.MyPid());
+            }
+            catch (Java.Lang.Exception)
+            {
+            }
         }
 
         protected override void OnNewIntent(Intent intent)
@@ -52,6 +70,19 @@ namespace Sillet.Droid
         protected override void OnCreate(Bundle savedInstanceState)
         {
             UpdateChannel.Apply(this);
+            Performance.Restart = RestartApp;
+            AppSettings.DefaultLite = () =>
+            {
+                try
+                {
+                    var manager = (ActivityManager)GetSystemService(ActivityService);
+                    return manager.IsLowRamDevice || manager.MemoryClass <= 192 || Java.Lang.Runtime.GetRuntime().AvailableProcessors() <= 4 || (int)Build.VERSION.SdkInt <= 28;
+                }
+                catch (Java.Lang.Exception)
+                {
+                    return false;
+                }
+            };
             ReadTarget(Intent);
             MobilePlatform.SetSecure = on => RunOnUiThread(() =>
             {
@@ -60,6 +91,9 @@ namespace Sillet.Droid
             });
             MobilePlatform.ShareText = (title, text) => RunOnUiThread(() => ShareText(title, text));
             MobilePlatform.ShareImage = (title, fileName, png) => RunOnUiThread(() => ShareImage(title, fileName, png));
+            MobilePlatform.SaveImage = (fileName, png) => RunOnUiThread(() => SaveImage(fileName, png));
+            MobilePlatform.OpenBrowser = url => RunOnUiThread(() => StartActivity(new Intent(this, typeof(BrowserActivity)).PutExtra("url", url)));
+            MobilePlatform.ConnectLedger = ConnectLedgerAsync;
             MobilePlatform.ShareFile = (title, fileName, data, mime) => RunOnUiThread(() => ShareFile(title, fileName, data, mime));
             MobilePlatform.IsActive = () => _active;
             MobilePlatform.GetSafeArea = ReadSafeArea;
@@ -90,10 +124,35 @@ namespace Sillet.Droid
                 });
                 return source.Task;
             };
+            var pool = new Android.Media.SoundPool.Builder()
+                .SetMaxStreams(4)
+                .SetAudioAttributes(new Android.Media.AudioAttributes.Builder().SetUsage(Android.Media.AudioUsageKind.AssistanceSonification).SetContentType(Android.Media.AudioContentType.Sonification).Build())
+                .Build();
+            var poolIds = new System.Collections.Concurrent.ConcurrentDictionary<string, int>();
+            var poolReady = new System.Collections.Concurrent.ConcurrentDictionary<int, bool>();
+            pool.LoadComplete += (s, e) => { if (e.Status == 0) poolReady[e.SampleId] = true; };
+            MobilePlatform.PreloadSound = (name, bytes) =>
+            {
+                try
+                {
+                    var path = System.IO.Path.Combine(CacheDir.AbsolutePath, "snd-" + name + ".mp3");
+                    if (!System.IO.File.Exists(path)) System.IO.File.WriteAllBytes(path, bytes);
+                    poolIds.GetOrAdd(name, n => pool.Load(path, 1));
+                }
+                catch (System.Exception)
+                {
+                }
+            };
             MobilePlatform.PlaySound = (name, bytes) => RunOnUiThread(() =>
             {
                 try
                 {
+                    int id;
+                    if (poolIds.TryGetValue(name, out id) && poolReady.ContainsKey(id))
+                    {
+                        pool.Play(id, 1f, 1f, 1, 0, 1f);
+                        return;
+                    }
                     var path = System.IO.Path.Combine(CacheDir.AbsolutePath, "snd-" + name + ".mp3");
                     if (!System.IO.File.Exists(path)) System.IO.File.WriteAllBytes(path, bytes);
                     var player = new Android.Media.MediaPlayer();
@@ -116,9 +175,31 @@ namespace Sillet.Droid
             if (AppSettings.Load().RunInBackground) WatcherService.Begin(this);
         }
 
+        private TaskCompletionSource<bool> _bluetoothPermission;
+
+        private async Task<Sillet.Hardware.ILedgerTransport> ConnectLedgerAsync()
+        {
+            var usb = await LedgerUsb.OpenAsync(this);
+            if (usb != null) return usb;
+            if (!await EnsureBluetoothPermissionAsync()) return null;
+            return await LedgerBle.OpenAsync(this);
+        }
+
+        private Task<bool> EnsureBluetoothPermissionAsync()
+        {
+            if (!OperatingSystem.IsAndroidVersionAtLeast(31)) return Task.FromResult(true);
+            if (CheckSelfPermission(Android.Manifest.Permission.BluetoothConnect) == Permission.Granted && CheckSelfPermission(Android.Manifest.Permission.BluetoothScan) == Permission.Granted)
+                return Task.FromResult(true);
+            _bluetoothPermission = new TaskCompletionSource<bool>();
+            RunOnUiThread(() => RequestPermissions(new[] { Android.Manifest.Permission.BluetoothConnect, Android.Manifest.Permission.BluetoothScan }, 31));
+            return _bluetoothPermission.Task;
+        }
+
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
         {
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            if (requestCode == 31 && _bluetoothPermission != null)
+                _bluetoothPermission.TrySetResult(grantResults != null && grantResults.Length > 0 && grantResults.All(g => g == Permission.Granted));
             if (requestCode == 7 && grantResults != null && grantResults.Length > 0 && grantResults[0] == Permission.Granted)
             {
                 MobilePlatform.RaiseNotificationsAllowed();
@@ -135,8 +216,6 @@ namespace Sillet.Droid
             if (source != null) source.TrySetResult(resultCode == Result.Ok && data != null ? data.GetStringExtra("text") : null);
         }
 
-        /// <summary>Many phones keep apps at 60 Hz even when the screen can do 90 or 120, which makes scrolling feel slow. Ask for the fastest mode at the same resolution.</summary>
-        // 60 Hz on purpose: the interface cannot always draw a frame in the 8 ms that 120 Hz leaves, and a steady 60 feels smoother than 120 that stutters.
         private const float TargetRefreshRate = 60f;
 
         private void AskForSteadyDisplayMode()
@@ -289,6 +368,28 @@ namespace Sillet.Droid
                 StartActivity(Intent.CreateChooser(intent, title));
             }
             catch (Java.Lang.Exception e)
+            {
+                Toast.MakeText(this, e.Message, ToastLength.Long).Show();
+            }
+        }
+
+        private void SaveImage(string fileName, byte[] png)
+        {
+            try
+            {
+                var values = new ContentValues();
+                values.Put("_display_name", fileName);
+                values.Put("mime_type", "image/png");
+                if (OperatingSystem.IsAndroidVersionAtLeast(29)) values.Put("relative_path", "Pictures/Sillet");
+                var uri = ContentResolver.Insert(Android.Provider.MediaStore.Images.Media.ExternalContentUri, values);
+                if (uri == null) throw new System.IO.IOException("no gallery");
+                using (var stream = ContentResolver.OpenOutputStream(uri))
+                {
+                    stream.Write(png, 0, png.Length);
+                }
+                Toast.MakeText(this, Loc.T("Saved to your gallery"), ToastLength.Short).Show();
+            }
+            catch (Exception e) when (e is Java.Lang.Exception || e is System.IO.IOException || e is UnauthorizedAccessException)
             {
                 Toast.MakeText(this, e.Message, ToastLength.Long).Show();
             }

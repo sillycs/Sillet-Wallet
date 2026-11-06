@@ -183,7 +183,7 @@
                     <TextBlock Text="{ui:Tr 'Tap Receive to get your addresses'}" Classes="label" TextWrapping="Wrap" TextAlignment="Center" />
                 </StackPanel>
             </Border>
-            <ItemsControl ItemsSource="{Binding Assets}">
+            <ItemsControl ItemsSource="{Binding VisibleAssets}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Button Classes="row" Margin="0,0,0,8" Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
@@ -213,6 +213,8 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
+            <Button Classes="link" HorizontalAlignment="Center" Content="{Binding CoinsToggleText}" Command="{Binding ToggleCoinsCommand}"
+                    IsVisible="{Binding HasMoreCoins}" Margin="0,2,0,24" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -20,7 +20,7 @@
                 <Button Style="{StaticResource Button.Outline}" Command="{Binding WatchCommand}" Padding="18,12" Margin="0,8,0,0">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="13" VerticalAlignment="Center" />
-                        <TextBlock Text="{c:Tr 'Watch a hardware wallet'}" Margin="9,0,0,0" />
+                        <TextBlock Text="{c:Tr 'Add a hardware wallet'}" Margin="9,0,0,0" />
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource Button.Link}" Content="{c:Tr 'Restore from a backup file'}" Command="{Binding RestoreBackupCommand}"

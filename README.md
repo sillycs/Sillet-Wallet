@@ -1,8 +1,8 @@
 # Sillet
 
-A wallet for Windows, Android and Linux with 16 networks and 42 assets, all from one 12-word phrase. Your keys never leave your device
+A wallet for Windows, Android and Linux with 21 networks, all from one 12-word phrase. Your keys never leave your device
 
-Made by the Raton team - [SillyCS](https://t.me/sillyisafed)
+Made by the Raton team → [raton.fun](https://raton.fun)
 
 ## Networks
 
@@ -24,6 +24,11 @@ Made by the Raton team - [SillyCS](https://t.me/sillyisafed)
 | Linea | ETH | |
 | Blast | ETH | |
 | Gnosis | xDAI | |
+| Bitcoin Cash | BCH | |
+| XRP Ledger | XRP | |
+| TON | TON | |
+| Sui | SUI | |
+| Cosmos Hub | ATOM | |
 
 Standard derivation paths, so your phrase gives the same addresses in Trust Wallet, Exodus (Bitcoin, EVM, TRON) and Phantom (Solana). You can also add your own tokens by contract address
 
@@ -40,6 +45,14 @@ src\Sillet.App\bin\Release\net472\Sillet.exe
 
 There's a console version too in `src/Sillet.Cli`
 
+Run the tests (derivation vectors, addresses, update signatures):
+
+```
+dotnet run --project tests/Sillet.Tests -c Release
+```
+
+See [SECURITY.md](SECURITY.md), [docs/ENDPOINTS.md](docs/ENDPOINTS.md) and [docs/RELEASING.md](docs/RELEASING.md) for the security policy, every server the app contacts and how releases are signed
+
 ## What's in it
 
 - Send with a live status: Pending → Confirmed → Sent. Open any sent payment in Activity and hit the eye to follow it again
@@ -51,7 +64,7 @@ There's a console version too in `src/Sillet.Cli`
 - Rotating receive addresses for Bitcoin, Litecoin and Dogecoin
 - Notifications and a few little sounds (you can turn them off)
 - Tor or SOCKS5 proxy, and your own nodes
-- Five themes and five languages: English, Español, Русский, 中文, Français
+- Five themes and six languages: English, Español, Русский, 中文, Français, Português
 - Developer mode, hidden at the bottom of Settings under the version, to play with fake payments without moving anything
 
 ## Staying safe
@@ -98,10 +111,9 @@ src/Sillet.Mobile    shared Avalonia UI
 src/Sillet.Android   Android app
 src/Sillet.Desktop   Avalonia desktop window
 ```
+
 Adding an EVM network is one small class, check `LineaChain` for an example and register it in `WalletManager`
 
 ## Credits
 
 Prices and icons from [CoinGecko](https://www.coingecko.com), fear and greed index from [alternative.me](https://alternative.me/crypto/fear-and-greed-index/), font is [Inter](https://rsms.me/inter/)
-![Promo](/silletpromo.png)
-

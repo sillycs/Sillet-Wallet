@@ -133,6 +133,40 @@ namespace Sillet.Chains.Utxo
             return new SignedUtxoTransaction(raw, TxIdOf(raw));
         }
 
+        public static SignedUtxoTransaction SignBchP2pkh(IList<Utxo> inputs, IList<TxOutput> outputs, Func<Utxo, byte[]> keyFor,
+            uint version = 1, uint sequence = 0xFFFFFFFF, uint lockTime = 0)
+        {
+            const uint ForkSighash = 0x41;
+            var prevouts = new Writer();
+            var sequences = new Writer();
+            foreach (var input in inputs)
+            {
+                prevouts.Outpoint(input);
+                sequences.U32(sequence);
+            }
+            var outs = new Writer();
+            foreach (var o in outputs) outs.Output(o);
+            var hashPrevouts = Hashes.Sha256d(prevouts.ToArray());
+            var hashSequence = Hashes.Sha256d(sequences.ToArray());
+            var hashOutputs = Hashes.Sha256d(outs.ToArray());
+
+            var scriptSigs = new byte[inputs.Count][];
+            for (int i = 0; i < inputs.Count; i++)
+            {
+                var privateKey = keyFor(inputs[i]);
+                var pubKey = Secp256k1.PublicKey(privateKey, true);
+                var scriptCode = P2pkhScript(Hashes.Hash160(pubKey));
+                var pre = new Writer();
+                pre.U32(version).Raw(hashPrevouts).Raw(hashSequence).Outpoint(inputs[i])
+                   .VarBytes(scriptCode).I64(inputs[i].Value).U32(sequence).Raw(hashOutputs).U32(lockTime).U32(ForkSighash);
+                var sig = Secp256k1.Sign(Hashes.Sha256d(pre.ToArray()), privateKey);
+                var der = Bytes.Concat(sig.ToDer(), new[] { (byte)ForkSighash });
+                scriptSigs[i] = Bytes.Concat(new[] { (byte)der.Length }, der, new[] { (byte)pubKey.Length }, pubKey);
+            }
+            var raw = Serialize(inputs, outputs, version, sequence, lockTime, j => scriptSigs[j], null);
+            return new SignedUtxoTransaction(raw, TxIdOf(raw));
+        }
+
         private static byte[] Serialize(IList<Utxo> inputs, IList<TxOutput> outputs, uint version, uint sequence,
             uint lockTime, Func<int, byte[]> scriptSig, List<byte[][]> witnesses)
         {

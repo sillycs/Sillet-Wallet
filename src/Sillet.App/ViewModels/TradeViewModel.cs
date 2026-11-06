@@ -297,7 +297,7 @@ namespace Sillet.App.ViewModels
             if (from == null || to == null || quote == null || amount <= 0) return;
             if (_main.Wallet.IsWatchOnly)
             {
-                _quoteError = Loc.T("This is a watch-only wallet. Swap from your hardware wallet app");
+                _quoteError = Loc.T("This wallet can't sign swaps here yet. Swap from your hardware wallet app");
                 RaiseQuote();
                 return;
             }
@@ -317,7 +317,6 @@ namespace Sillet.App.ViewModels
                 var prepared = await from.Chain.PrepareTransferAsync(from.Asset, order.DepositAddress, amount, useMax);
                 if (useMax && prepared.Amount > 0 && prepared.Amount != amount)
                 {
-                    // Max leaves room for the network fee, so the order is made again for the amount that really leaves the wallet
                     amount = prepared.Amount;
                     order = await _main.Swap.CreateAsync(from.Symbol, fromNet, to.Symbol, toNet, amount, to.Chain.ReceiveAddress, from.Chain.Address);
                     if (!from.Chain.IsValidAddress(order.DepositAddress))
@@ -328,6 +327,8 @@ namespace Sillet.App.ViewModels
                 var message = Loc.F("Send {0} on {1} and receive about {2} on {3}. Network fee {4}. Exchanged by {5}",
                               Formatters.Crypto(prepared.Amount) + " " + from.Symbol, from.Network,
                               Formatters.Crypto(order.AmountTo > 0 ? order.AmountTo : quote.ToAmount) + " " + to.Symbol, to.Network, fee, SwapService.Provider);
+                message += "\n\n" + Loc.F("Deposit address: {0}", order.DepositAddress) + "\n" + Loc.F("Order: {0}", order.Id) + "\n" +
+                           Loc.F("{0} is a third party. It holds your funds until the swap is done, and Sillet cannot reverse it. Terms: {1}", SwapService.Provider, SwapService.TermsUrl);
                 if (!await _main.ConfirmAsync(Loc.T("Confirm swap"), message, Loc.T("Swap")))
                     return;
                 var result = await from.Chain.BroadcastAsync(prepared);

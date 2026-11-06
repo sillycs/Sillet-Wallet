@@ -5,7 +5,6 @@ using Sillet.Core;
 
 namespace Sillet.App.Services
 {
-    /// <summary>Words for where a payment stands, and the quick lookup the app and the background watcher share.</summary>
     public static class TxStatus
     {
         public static string Sent(TxStage stage)
@@ -41,7 +40,6 @@ namespace Sillet.App.Services
             }
         }
 
-        /// <summary>The second line of a payment notification: status and, when known, who sent it.</summary>
         public static string ReceivedLine(TxStage stage, string from)
         {
             var line = Loc.F("Status: {0}", Received(stage));

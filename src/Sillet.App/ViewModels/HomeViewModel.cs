@@ -24,6 +24,13 @@ namespace Sillet.App.ViewModels
             _homeCoin = HomeCoins.FirstOrDefault(c => c.Symbol == main.Settings.HomeCoin) ?? HomeCoins.FirstOrDefault();
             Slices = new ObservableCollection<SliceItem>();
             Overview = new ObservableCollection<StatItem>();
+            VisibleAssets = new ObservableCollection<AssetItem>();
+            Movers = new ObservableCollection<MoverItem>();
+            ToggleCoinsCommand = new RelayCommand(() =>
+            {
+                CoinsExpanded = !CoinsExpanded;
+                SyncVisibleAssets();
+            });
             TotalText = "";
             ChangeText = "";
             IsUp = true;
@@ -32,7 +39,6 @@ namespace Sillet.App.ViewModels
 
             RefreshCommand = new AsyncCommand(main.RefreshAllAsync);
             ToggleHideCommand = new RelayCommand(() => main.HideBalances = !main.HideBalances);
-            // Opens the searchable currency picker (the same one as Settings) instead of only flipping between USD and the local currency.
             ToggleCurrencyCommand = new RelayCommand(() => { if (main.SettingsPage != null) main.SettingsPage.ToggleCurrencyPickerCommand.Execute(null); });
             ToggleEmptyCommand = new RelayCommand(() =>
             {
@@ -73,7 +79,6 @@ namespace Sillet.App.ViewModels
         }
 
         public ObservableCollection<NewsItem> VisibleNews { get; }
-        /// <summary>Stops the automatic rotation until the next one is chosen, for someone reading a long post.</summary>
         public void PauseNews()
         {
             _newsTick++;
@@ -135,7 +140,6 @@ namespace Sillet.App.ViewModels
             IsNewsLoading = true;
             try
             {
-                // Show what is already known right away, then replace it only if the download is different.
                 if (_news.Count == 0)
                 {
                     var known = _main.News.GetCached();
@@ -169,6 +173,66 @@ namespace Sillet.App.ViewModels
         public ObservableCollection<AssetItem> Assets { get; }
         public ObservableCollection<SliceItem> Slices { get; }
         public ObservableCollection<StatItem> Overview { get; }
+
+        private static int CoinPage => Performance.Lite ? 8 : 16;
+        private bool _coinsExpanded;
+
+        public ObservableCollection<AssetItem> VisibleAssets { get; }
+        public RelayCommand ToggleCoinsCommand { get; }
+        public string CoinsCountText => Loc.F("{0} coins", Assets.Count);
+        public bool HasMoreCoins => Assets.Count > CoinPage;
+        public string CoinsToggleText => CoinsExpanded ? Loc.T("Show less") : Loc.T("Show more");
+
+        public bool CoinsExpanded
+        {
+            get { return _coinsExpanded; }
+            private set
+            {
+                if (Set(ref _coinsExpanded, value)) Raise(nameof(CoinsToggleText));
+            }
+        }
+
+        private void SyncVisibleAssets()
+        {
+            var wanted = (CoinsExpanded ? Assets : Assets.Take(CoinPage)).ToList();
+            if (!wanted.SequenceEqual(VisibleAssets))
+            {
+                VisibleAssets.Clear();
+                foreach (var a in wanted) VisibleAssets.Add(a);
+            }
+            Raise(nameof(HasMoreCoins), nameof(CoinsToggleText), nameof(CoinsCountText));
+        }
+
+        public ObservableCollection<MoverItem> Movers { get; }
+        public bool HasMovers => Movers.Count > 0;
+
+        private void RebuildMovers()
+        {
+            var coins = (_main.MarketCoins ?? new MarketCoin[0]).Where(c => c.Change24h.HasValue && c.Price > 0 && (c.Rank == null || c.Rank <= 100)).ToList();
+            var wanted = new List<MarketCoin>();
+            wanted.AddRange(coins.OrderByDescending(c => c.Change24h.Value).Take(3));
+            wanted.AddRange(coins.OrderBy(c => c.Change24h.Value).Where(c => !wanted.Contains(c)).Take(3));
+            var current = Movers.Select(m => m.Id + m.PriceText + m.ChangeText).ToList();
+            var items = wanted.Select(c => new MoverItem(c, _main.Currency)).ToList();
+            if (current.SequenceEqual(items.Select(m => m.Id + m.PriceText + m.ChangeText))) return;
+            Movers.Clear();
+            foreach (var m in items)
+            {
+                Movers.Add(m);
+                if (m.IconPath == null)
+                {
+                    var item = m;
+                    var ignored = LoadMoverIconAsync(item);
+                }
+            }
+            Raise(nameof(HasMovers));
+        }
+
+        private static async Task LoadMoverIconAsync(MoverItem item)
+        {
+            var path = await IconCache.GetAsync(item.Id, item.Coin.ImageUrl);
+            if (path != null) item.IconPath = path;
+        }
         public bool HasOverview => Overview.Count > 0;
 
         public double TotalValue { get; private set; }
@@ -185,6 +249,8 @@ namespace Sillet.App.ViewModels
         public SettingsViewModel CurrencyPicker => _main.SettingsPage;
         public string CurrencyToggleText => Loc.T("Change currency");
         public bool IsRefreshing => _main.IsRefreshing;
+        public static bool AlwaysShowAll { get; set; }
+
         public bool ShowEmptyAssets => _main.Settings.ShowEmptyAssets;
         public string ToggleEmptyText => ShowEmptyAssets ? Loc.T("With balance only") : Loc.T("Show all");
 
@@ -355,7 +421,7 @@ namespace Sillet.App.ViewModels
             var currency = _main.Currency;
             var all = _main.AllAssets;
             var ordered = all
-                .Where(a => ShowEmptyAssets || (a.HasBalance && !IsSmall(a)))
+                .Where(a => AlwaysShowAll || ShowEmptyAssets || (a.HasBalance && !IsSmall(a)))
                 .OrderByDescending(a => a.FiatValue).ThenByDescending(a => a.HasBalance).ToList();
 
             if (!ordered.SequenceEqual(Assets))
@@ -363,6 +429,8 @@ namespace Sillet.App.ViewModels
                 Assets.Clear();
                 foreach (var a in ordered) Assets.Add(a);
             }
+            SyncVisibleAssets();
+            RebuildMovers();
 
             decimal total = all.Sum(a => a.FiatValue);
             decimal previous = all.Sum(a => PreviousValue(a));

@@ -1,6 +1,45 @@
+# Build output
 bin/
 obj/
+dist/
+publish/
+linux-stage/
+cli-win/
+linux-app/
+linux-cli/
+*.apk
+*.aab
+*.idsig
+*.zip
+*.tar.gz
+*.nupkg
+
+# IDE and editor
 .vs/
+.idea/
+.vscode/
 *.user
-# Nunca subir la bóveda con la frase cifrada
+*.suo
+*.DotSettings.user
+*.swp
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+*.log
+*.tmp
+*.bak
+TestResults/
+
+# Wallet data: never commit
 vault.json
+*.vault
+
+# Keys and secrets: never commit
+*.keystore
+*.jks
+*.pfx
+*.key
+*.pem
+release-key*
+.env

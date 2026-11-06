@@ -82,6 +82,13 @@ namespace Sillet.Core
             _custom.RemoveAll(a => a.IsCustom && string.Equals(a.Contract, asset.Contract, StringComparison.OrdinalIgnoreCase));
         }
 
+        public virtual bool SupportsReplacement { get { return false; } }
+
+        public virtual Task<PreparedTransfer> PrepareReplacementAsync(string txId, bool cancel, Asset asset, decimal amount, CancellationToken ct = default(CancellationToken))
+        {
+            throw new WalletException("This network does not support speeding up a transaction");
+        }
+
         public virtual bool SupportsFeeSpeed
         {
             get { return false; }
@@ -115,6 +122,20 @@ namespace Sillet.Core
             get { return _address != null && _privateKey == null; }
         }
 
+        public Func<Task<Sillet.Hardware.ILedgerTransport>> LedgerConnect { get; set; }
+
+        public virtual bool SupportsDeviceSigning { get { return false; } }
+
+        public bool CanSignOnDevice { get { return SupportsDeviceSigning && IsWatchOnly && LedgerConnect != null; } }
+
+        protected async Task<Sillet.Hardware.ILedgerTransport> OpenLedgerAsync()
+        {
+            var connect = LedgerConnect;
+            var device = connect == null ? null : await connect();
+            if (device == null) throw new WalletException("Connect your Ledger with a cable and try again");
+            return device;
+        }
+
         public void LoadWatch(string address)
         {
             Unload();
@@ -126,7 +147,7 @@ namespace Sillet.Core
         {
             get
             {
-                if (IsWatchOnly) throw new WalletException("This is a watch-only wallet. Send from your hardware wallet app");
+                if (IsWatchOnly) throw new WalletException("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
                 if (_privateKey == null) throw new WalletException("The wallet is locked");
                 return _privateKey;
             }

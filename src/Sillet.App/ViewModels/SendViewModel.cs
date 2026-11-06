@@ -28,7 +28,6 @@ namespace Sillet.App.ViewModels
         public bool Mono { get; }
         public bool Strong { get; }
         public string Icon { get; }
-        /// <summary>Shows an eye on the row. Pressing it follows the payment on the Send page.</summary>
         public bool Trackable { get; set; }
     }
 
@@ -154,7 +153,6 @@ namespace Sillet.App.ViewModels
         public string ResultFiatText => _fake ? _fakeFiat : ReviewFiatText;
         public bool HasResultFiat => ResultFiatText.Length > 0;
 
-        // ---- Where the payment stands: pending, confirmed, then sent for good ----
         private TxStage _stage = TxStage.Pending;
         private CancellationTokenSource _track;
         private bool _fake;
@@ -217,8 +215,56 @@ namespace Sillet.App.ViewModels
         }
 
         private string _trackedUrl;
+        private HistoryEntry _replacing;
 
-        /// <summary>Shows the Sent screen for a payment that already left, as if it were still here, and follows its status on the network.</summary>
+        private AssetItem AssetFor(HistoryEntry e)
+        {
+            return _main.AllAssets.FirstOrDefault(a => a.Chain.Id == e.ChainId && string.Equals(a.Asset.Symbol, e.Symbol, StringComparison.OrdinalIgnoreCase))
+                ?? _main.AllAssets.FirstOrDefault(a => a.Chain.Id == e.ChainId && a.Asset.IsNative);
+        }
+
+        public async void ShowReplacement(HistoryEntry e, bool cancel)
+        {
+            var asset = AssetFor(e);
+            if (asset == null || string.IsNullOrEmpty(e.TxId)) return;
+            Reset();
+            SelectedAsset = Assets.FirstOrDefault(a => a == asset) ?? asset;
+            IsBusy = true;
+            try
+            {
+                var prepared = await asset.Chain.PrepareReplacementAsync(e.TxId, cancel, asset.Asset, e.Amount);
+                _prepared = prepared;
+                _replacing = e;
+                Notes.Clear();
+                foreach (var n in prepared.Notes) Notes.Add(Loc.T(n));
+                AddressCheck = "";
+                RequiresAddressCheck = false;
+                Raise(nameof(ReviewAmountText), nameof(ReviewFiatText), nameof(ReviewToText), nameof(ReviewHistoryNote), nameof(ReviewIsNewAddress), nameof(ReviewNetworkText),
+                      nameof(ReviewFeeText), nameof(ReviewTotalText), nameof(HasReviewTotal), nameof(ReviewYouPayText));
+                Step = 1;
+            }
+            catch (Exception ex) when (IsNetworkError(ex))
+            {
+                Error = MainViewModel.Friendly(ex);
+                _main.ShowToast(Error, true);
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        public void PrefillRetry(HistoryEntry e)
+        {
+            var asset = AssetFor(e);
+            if (asset == null) return;
+            Reset();
+            SelectedAsset = Assets.FirstOrDefault(a => a == asset) ?? asset;
+            ToAddress = e.To;
+            _amountInFiat = false;
+            AmountText = e.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
         public void ShowTracked(HistoryEntry e)
         {
             Reset();
@@ -254,7 +300,6 @@ namespace Sillet.App.ViewModels
 
         private async void FollowAsync(IChain chain, string txId, string amountText, string network)
         {
-            // The current status first, so the screen is right as soon as it opens. Then it keeps watching until the payment is final
             var cts = new CancellationTokenSource();
             StopTracking();
             _track = cts;
@@ -271,7 +316,6 @@ namespace Sillet.App.ViewModels
             if (!cts.IsCancellationRequested) TrackAsync(chain, txId, amountText, network, false);
         }
 
-        /// <summary>Developer mode: shows the Sent screen for a made-up payment and walks it through pending, confirmed and sent. Nothing is signed or broadcast.</summary>
         public void ShowFakeSent(string symbol, decimal amount, string network, string from, string to, string txId, decimal fee)
         {
             Reset();
@@ -418,17 +462,14 @@ namespace Sillet.App.ViewModels
 
         public bool UseMax => _useMax;
 
-        // ---- Typing the amount in crypto or in the chosen currency ----
         private bool _amountInFiat;
 
         public bool AmountInFiat => _amountInFiat && CanToggleAmountMode;
         public bool CanToggleAmountMode => SelectedAsset != null && SelectedAsset.Price > 0;
         public RelayCommand ToggleAmountModeCommand { get; private set; }
 
-        /// <summary>The unit of the number being typed: the coin, or the currency picked in Settings.</summary>
         public string AmountUnit => SelectedAsset == null ? "" : AmountInFiat ? _main.Currency : SelectedAsset.Symbol;
 
-        /// <summary>The other unit, shown on the switch so it is clear what a tap will change to.</summary>
         public string OtherUnit => SelectedAsset == null ? "" : AmountInFiat ? SelectedAsset.Symbol : _main.Currency;
 
         private static string FiatText(decimal value)
@@ -449,7 +490,6 @@ namespace Sillet.App.ViewModels
             ReviewCommand.Refresh();
         }
 
-        /// <summary>The amount in the coin, whichever unit is being typed.</summary>
         private decimal CryptoAmount
         {
             get
@@ -467,7 +507,6 @@ namespace Sillet.App.ViewModels
             get { return CryptoAmount; }
         }
 
-        /// <summary>Under the amount: what it comes to in the other unit.</summary>
         public string FiatEquivalentText
         {
             get
@@ -556,7 +595,6 @@ namespace Sillet.App.ViewModels
 
         public bool HasReviewTotal => ReviewTotalText.Length > 0;
 
-        /// <summary>What leaves the wallet: amount plus fee, or "amount + fee" when the fee is paid in another coin.</summary>
         public string ReviewYouPayText
         {
             get
@@ -810,9 +848,9 @@ namespace Sillet.App.ViewModels
         {
             if (SelectedAsset == null) return;
             Error = null;
-            if (_main.Wallet.IsWatchOnly)
+            if (_main.Wallet.IsWatchOnly && !_main.Wallet.CanSignOnDevice(SelectedAsset.Chain))
             {
-                Error = Loc.T("This is a watch-only wallet. Send from your hardware wallet app");
+                Error = Loc.T("This network can't be signed with your hardware wallet here yet. Send from your hardware wallet app");
                 return;
             }
             if (_main.Settings.ContactsOnly && _main.Contacts.Find(SelectedAsset.Chain.Id, ToAddress) == null)
@@ -835,6 +873,14 @@ namespace Sillet.App.ViewModels
                 if (_main.Settings.WarnNewAddress && IsNewAddress(_prepared.To))
                     Notes.Add(Loc.T("First time sending to this address. Check every character before you confirm"));
                 foreach (var n in _prepared.Notes) Notes.Add(n);
+                var feeNative = _main.AllAssets.FirstOrDefault(a => a.Chain == _prepared.Chain && a.Asset.IsNative);
+                if (feeNative != null && feeNative.Price > 0 && SelectedAsset.Price > 0 && _prepared.Amount > 0)
+                {
+                    var feeFiat = _prepared.Fee * feeNative.Price;
+                    var amountFiat = _prepared.Amount * SelectedAsset.Price;
+                    if (feeFiat > amountFiat * 0.05m && feeFiat >= 0.5m && !Notes.Contains(Loc.T("The fee is more than 10% of the amount")))
+                        Notes.Add(Loc.F("The network fee is high: about {0}, which is {1}% of what you send", Formatters.Fiat(feeFiat, _main.Currency), Math.Min(999, (int)Math.Round(feeFiat / amountFiat * 100))));
+                }
                 AddressCheck = "";
                 RequiresAddressCheck = SelectedAsset.Price > 0 && IsLargeSend(_prepared.Amount * SelectedAsset.Price);
                 Raise(nameof(ReviewAmountText), nameof(ReviewFiatText), nameof(ReviewToText), nameof(ReviewHistoryNote), nameof(ReviewIsNewAddress), nameof(ReviewNetworkText),
@@ -889,10 +935,18 @@ namespace Sillet.App.ViewModels
                     return;
                 }
             }
+            if (_main.Wallet.IsWatchOnly) _main.ShowToast(Loc.T("Confirm the payment on your Ledger"));
             try
             {
                 _result = await SelectedAsset.Chain.BroadcastAsync(_prepared);
                 _main.RecordSent(_prepared, _result);
+                if (_replacing != null)
+                {
+                    var old = _replacing.TxId;
+                    _replacing = null;
+                    _main.History.RemoveWhere(x => string.Equals(x.TxId, old, StringComparison.OrdinalIgnoreCase) && !x.Incoming);
+                    if (_main.Activity != null) _main.Activity.Reload();
+                }
                 _stage = TxStage.Pending;
                 BuildReceipt(DateTime.UtcNow);
                 Raise(nameof(Stage), nameof(IsStageFailed), nameof(IsStageFinal), nameof(StageTitle), nameof(StageHint),
@@ -919,7 +973,6 @@ namespace Sillet.App.ViewModels
             if (_main.IsUnlocked) await _main.RefreshBalancesAsync();
         }
 
-        /// <summary>Addresses on this network that you chose yourself: contacts, earlier sends and your own. Incoming senders are left out on purpose, a lookalike is exactly what shows up there.</summary>
         private IEnumerable<string> KnownRecipients(IChain chain)
         {
             foreach (var c in _main.Contacts.Items)
@@ -940,6 +993,7 @@ namespace Sillet.App.ViewModels
         {
             StopTracking();
             _fake = false;
+            _replacing = null;
             _stage = TxStage.Pending;
             Raise(nameof(ResultAmountText), nameof(ResultFiatText), nameof(HasResultFiat), nameof(Stage), nameof(IsStageFailed), nameof(IsStageFinal), nameof(StageTitle), nameof(StageHint),
                   nameof(S1Active), nameof(S1Done), nameof(S2Active), nameof(S2Done), nameof(S3Active), nameof(S3Done));

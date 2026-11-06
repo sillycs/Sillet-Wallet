@@ -6,7 +6,6 @@ using Sillet.App.Services;
 
 namespace Sillet.Desktop
 {
-    /// <summary>Desktop notifications and "start with the computer" for Linux (and macOS/Windows when this build is used there).</summary>
     internal static class DesktopNotifier
     {
         public static void Show(string title, string message, string kind)

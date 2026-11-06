@@ -145,7 +145,6 @@ namespace Sillet.Mobile.UI
         {
             var values = Values;
             if (values == null || values.Length < 2) return;
-            // The sampled line and the brushes are kept between draws: a list of coins redraws these while it scrolls.
             if (!ReferenceEquals(values, _sampledFor))
             {
                 var step = Math.Max(1, values.Length / 48);

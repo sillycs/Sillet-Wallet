@@ -67,15 +67,6 @@ namespace Sillet.App.Services
                 "#EAECEF", "#0B0E11", "#FFFFFF",
             }, new[] { "#FCD535", "#F0B90B", "#B8890A", "#EAECEF", "#848E9C", "#2B3139" }),
 
-            Build("horror", "Horror", new[]
-            {
-                "#000000", "#0A0909", "#130F10", "#1E0D10", "#1A0F11", "#5C171D",
-                "#F3E9E9", "#9C8789", "#5F4C4E",
-                "#D3121E", "#F02633", "#2B090C", "#FFFFFF",
-                "#3DD68C", "#0B1F15", "#FF3B45", "#2E080B", "#E2B464", "#1F190D",
-                "#D3121E", "#FFFFFF", "#FF2B36",
-            }, new[] { "#F02633", "#B10E18", "#7A0A11", "#F3E9E9", "#9C8789", "#3A1418" }),
-
             Build("raton", "Raton", new[]
             {
                 "#141217", "#1C1A21", "#25222C", "#2F2B38", "#2A2632", "#5A4878",
@@ -84,6 +75,14 @@ namespace Sillet.App.Services
                 "#3DD68C", "#0E2419", "#F2555A", "#2C1115", "#E2B464", "#1F190D",
                 "#F2EEF8", "#141217", "#FFFFFF",
             }, new[] { "#9C74E3", "#6D45AA", "#4D3180", "#F2EEF8", "#A69EB4", "#3A3247" }),
+            Build("litecoin", "Litecoin", new[]
+            {
+                "#0A0E15", "#111722", "#18202D", "#212B3B", "#1B2432", "#33445E",
+                "#EEF2F8", "#8E9BB0", "#5B677A",
+                "#345D9D", "#4A74B8", "#16233A", "#FFFFFF",
+                "#3DD68C", "#0E2419", "#F2555A", "#2A1114", "#E2B464", "#1F190D",
+                "#EEF2F8", "#0A0E15", "#FFFFFF",
+            }, new[] { "#BFBBBB", "#345D9D", "#4A74B8", "#EEF2F8", "#8E9BB0", "#212B3B" }),
             Build("telegram", "Telegram", new[]
             {
                 "#0E1621", "#17212B", "#1F2B38", "#2B3A4B", "#202D3B", "#34475B",
@@ -103,7 +102,6 @@ namespace Sillet.App.Services
 
         public static ThemeDefinition Find(string key)
         {
-            // Themes that were replaced keep working for people who had picked them
             if (string.Equals(key, "midnight", StringComparison.OrdinalIgnoreCase)) key = "binance";
             if (string.Equals(key, "aurora", StringComparison.OrdinalIgnoreCase)) key = "telegram";
             return All.FirstOrDefault(t => string.Equals(t.Key, key, StringComparison.OrdinalIgnoreCase));

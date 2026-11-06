@@ -77,6 +77,7 @@ namespace Sillet.Mobile
             foreach (var pair in Renames) Loc.Overrides[pair.Key] = pair.Value;
             foreach (var pair in Extra)
                 if (!LocTable.Rows.ContainsKey(pair.Key)) LocTable.Rows[pair.Key] = pair.Value;
+            LocPt.Apply();
         }
     }
 }

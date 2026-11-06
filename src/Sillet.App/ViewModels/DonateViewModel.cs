@@ -126,7 +126,7 @@ namespace Sillet.App.ViewModels
         public bool HasAmountHint => AmountHint.Length > 0;
         public string BalanceText => _selected == null || _selected.Asset == null ? "" : Loc.T("You have ") + _selected.Asset.BalanceText;
         public bool IsWatchOnly => _main.Wallet.IsWatchOnly;
-        public string SendHint => IsWatchOnly ? Loc.T("This wallet is watch-only. Scan the QR with your hardware wallet app") : "";
+        public string SendHint => IsWatchOnly ? Loc.T("Scan the QR with your hardware wallet app") : "";
 
         public DonateOption Selected
         {

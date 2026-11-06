@@ -247,6 +247,61 @@
                         </ItemsControl>
                     </StackPanel>
                 </Border>
+
+                <Border Style="{StaticResource Card}" Margin="0,16,0,0" c:Anim.Enter="True" c:Anim.Delay="360">
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="{c:Tr 'Predictions'}" Style="{StaticResource Text.Subtitle}" />
+                            <Button Style="{StaticResource Button.Link}" Content="{c:Tr 'Refresh now'}" FontSize="12" HorizontalAlignment="Right" Command="{Binding RefreshPredictionsCommand}" />
+                        </Grid>
+                        <TextBlock Text="{c:Tr 'What people are betting on. Odds come from Polymarket, not financial advice'}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding PredictionsError}" Style="{StaticResource Text.Label}" Margin="0,12,0,0" Visibility="{Binding HasPredictionsError, Converter={StaticResource BoolToVis}}" />
+                        <Border Style="{StaticResource SegmentHost}" HorizontalAlignment="Left" Margin="0,12,0,0">
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Style="{StaticResource Segment}" GroupName="PredCat" Content="{c:Tr 'Trending'}" IsChecked="{Binding IsTrending, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="PredCat" Content="{c:Tr 'New'}" IsChecked="{Binding IsNewest, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="PredCat" Content="{c:Tr 'Sports'}" IsChecked="{Binding IsSports, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="PredCat" Content="{c:Tr 'Crypto'}" IsChecked="{Binding IsCrypto, Mode=TwoWay}" />
+                                <RadioButton Style="{StaticResource Segment}" GroupName="PredCat" Content="{c:Tr 'Politics'}" IsChecked="{Binding IsPolitics, Mode=TwoWay}" />
+                            </StackPanel>
+                        </Border>
+                        <ItemsControl ItemsSource="{Binding Predictions}" Focusable="False" Margin="0,8,0,0">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="0,12" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource BorderSubtleBrush}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" TextWrapping="Wrap" FontSize="13.5" FontWeight="SemiBold" />
+                                            <ItemsControl ItemsSource="{Binding Rows}" Focusable="False" Margin="0,8,0,0">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <Grid Margin="0,4">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition />
+                                                                <ColumnDefinition Width="48" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <TextBlock Text="{Binding Label}" FontSize="13" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                                            <TextBlock Grid.Column="1" Text="{Binding PercentText}" FontSize="12.5" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                            <Button Grid.Column="2" Style="{StaticResource Button.Secondary}" Content="{c:Tr 'Yes'}" Margin="10,0,0,0" Padding="14,4" FontSize="12.5"
+                                                                    Foreground="{DynamicResource PositiveBrush}" Command="{Binding OpenCommand}" ToolTip="{c:Tr 'Open on Polymarket'}" />
+                                                            <Button Grid.Column="3" Style="{StaticResource Button.Secondary}" Content="{c:Tr 'No'}" Margin="6,0,0,0" Padding="14,4" FontSize="12.5"
+                                                                    Foreground="{DynamicResource NegativeBrush}" Command="{Binding OpenCommand}" ToolTip="{c:Tr 'Open on Polymarket'}" />
+                                                        </Grid>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <Grid Margin="0,6,0,0">
+                                                <TextBlock Text="{Binding MoreText}" Style="{StaticResource Text.Label}" FontSize="11.5" Visibility="{Binding HasMore, Converter={StaticResource BoolToVis}}" HorizontalAlignment="Left" />
+                                                <TextBlock Text="{Binding VolumeText}" Style="{StaticResource Text.Label}" FontSize="11.5" HorizontalAlignment="Right" />
+                                            </Grid>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>

@@ -13,9 +13,16 @@
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">
-                            <Border Width="22" Height="22" CornerRadius="7" Background="{DynamicResource SurfacePressedBrush}">
-                                <TextBlock Text="{Binding Initial}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Border>
+                            <Grid Width="22" Height="22">
+                                <Border CornerRadius="11" Background="{DynamicResource SurfacePressedBrush}">
+                                    <TextBlock Text="{Binding Initial}" FontSize="11" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <Border CornerRadius="11" Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{Binding PhotoPath}" Stretch="UniformToFill" />
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
                             <TextBlock Text="{Binding Name}" Margin="10,0,0,0" VerticalAlignment="Center" />
                             <TextBlock Text="{Binding KindText}" Style="{StaticResource Text.Label}" FontSize="11.5" Margin="8,0,0,0" VerticalAlignment="Center" />
                         </StackPanel>
@@ -26,7 +33,7 @@
 
         <StackPanel Margin="0,8,0,0" c:Anim.Enter="True" c:Anim.Delay="100" Visibility="{Binding IsWatch, Converter={StaticResource BoolToVis}}">
             <TextBlock Text="{Binding ProfileName}" Style="{StaticResource Text.Subtitle}" HorizontalAlignment="Center" />
-            <TextBlock Text="{c:Tr 'Watch-only. Balances and receive addresses, no keys on this computer'}" Style="{StaticResource Text.Label}" FontSize="12"
+            <TextBlock Text="{c:Tr 'Hardware wallet. Your keys stay on the device and it signs each payment'}" Style="{StaticResource Text.Label}" FontSize="12"
                        HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" Margin="0,4,0,0" />
             <Button Style="{StaticResource Button.Primary}" Content="{c:Tr 'Open'}" Command="{Binding OpenWatchCommand}" Margin="0,16,0,0" Padding="18,12" />
             <TextBlock Text="{Binding Error}" Foreground="{DynamicResource NegativeBrush}" FontSize="12" Margin="2,8,0,0"

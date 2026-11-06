@@ -156,7 +156,11 @@ namespace Sillet.Chains.Evm
 
         public byte[] Sign(byte[] privateKey)
         {
-            var sig = Secp256k1.Sign(Hashes.Keccak256(SigningPayload()), privateKey);
+            return WithSignature(Secp256k1.Sign(Hashes.Keccak256(SigningPayload()), privateKey));
+        }
+
+        public byte[] WithSignature(EcdsaSignature sig)
+        {
             var r = Rlp.EncodeInt(BigInts.FromUnsignedBigEndian(sig.R));
             var s = Rlp.EncodeInt(BigInts.FromUnsignedBigEndian(sig.S));
             var fields = CommonFields();

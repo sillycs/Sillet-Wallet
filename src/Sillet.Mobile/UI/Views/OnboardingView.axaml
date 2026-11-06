@@ -11,7 +11,8 @@
                            TextAlignment="Center" TextWrapping="Wrap" Margin="0,0,0,24" />
                 <Button Classes="primary" Content="{ui:Tr 'Create wallet'}" Command="{Binding CreateCommand}" HorizontalAlignment="Stretch" />
                 <Button Classes="secondary" Content="{ui:Tr 'Import recovery phrase'}" Command="{Binding ImportCommand}" HorizontalAlignment="Stretch" />
-                <Button Classes="secondary" Content="{ui:Tr 'Watch a hardware wallet'}" Command="{Binding WatchCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="secondary" Content="{ui:Tr 'Add a hardware wallet'}" Command="{Binding WatchCommand}" HorizontalAlignment="Stretch" />
+                <Button Classes="link" Content="{ui:Tr 'Restore from a backup file'}" Command="{Binding RestoreBackupCommand}" HorizontalAlignment="Center" />
                 <Button Classes="link" Content="{ui:Tr 'Back to my wallets'}" Command="{Binding CancelAddCommand}" HorizontalAlignment="Center"
                         IsVisible="{Binding CanCancelAdd}" />
             </StackPanel>

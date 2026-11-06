@@ -169,6 +169,11 @@ namespace Sillet.Chains.Solana
             return new SignedSolanaTransaction(Bytes.Concat(CompactU16(1), signature, message), signature);
         }
 
+        public static SignedSolanaTransaction WithSignature(byte[] message, byte[] signature)
+        {
+            return new SignedSolanaTransaction(Bytes.Concat(CompactU16(1), signature, message), signature);
+        }
+
         private static byte[] CompactU16(int value)
         {
             var result = new List<byte>();

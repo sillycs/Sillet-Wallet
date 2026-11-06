@@ -8,7 +8,6 @@ namespace Sillet.App.ViewModels
 {
     internal static class Lookup
     {
-        /// <summary>The wallet picture that fits the theme: white on dark themes, black on the light one.</summary>
         public static string WalletIcon = "walleticonwhite";
 
         public static string CoinId(string symbol)
@@ -37,9 +36,13 @@ namespace Sillet.App.ViewModels
             { "TRUMP", "Official Trump" },
             { "LINK", "Chainlink" },
             { "XRP", "XRP" },
+            { "BCH", "Bitcoin Cash" },
+            { "TON", "Toncoin" },
+            { "SUI", "Sui" },
+            { "ATOM", "Cosmos" },
         };
 
-        public static readonly string[] CoinOrder = { "BTC", "ETH", "USDT", "USDC", "SOL", "BNB", "TRX", "LTC", "DOGE", "POL", "AVAX", "KAIA", "xDAI", "WLD", "FDUSD", "TRUMP", "LINK" };
+        public static readonly string[] CoinOrder = { "BTC", "ETH", "LTC", "USDT", "USDC", "SOL", "BNB", "TRX", "DOGE", "POL", "AVAX", "KAIA", "xDAI", "WLD", "FDUSD", "TRUMP", "LINK", "XRP", "BCH", "TON", "SUI", "ATOM" };
 
         public static string CoinName(string symbol)
         {
@@ -204,6 +207,33 @@ namespace Sillet.App.ViewModels
         }
     }
 
+    public sealed class MoverItem : ObservableObject
+    {
+        private string _iconPath;
+
+        public MoverItem(MarketCoin coin, string currency)
+        {
+            Coin = coin;
+            _iconPath = IconCache.TryGet(coin.Id);
+            PriceText = Formatters.Fiat(coin.Price, currency);
+        }
+
+        public MarketCoin Coin { get; }
+        public string Id => Coin.Id;
+        public string Symbol => Coin.Symbol;
+        public string Name => Coin.Name;
+        public string Initial => Lookup.Initial(Symbol);
+        public string PriceText { get; }
+        public string ChangeText => Formatters.Percent(Coin.Change24h);
+        public bool IsUp => (Coin.Change24h ?? 0) >= 0;
+
+        public string IconPath
+        {
+            get { return _iconPath; }
+            set { Set(ref _iconPath, value); }
+        }
+    }
+
     public sealed class NavItem : System.ComponentModel.INotifyPropertyChanged
     {
         private readonly string _title;
@@ -226,7 +256,6 @@ namespace Sillet.App.ViewModels
         public string Title => Loc.T(_title);
     }
 
-    /// <summary>One small fact on the home page: a label, a value and, optionally, whether it is good or bad news.</summary>
     public sealed class StatItem : IEquatable<StatItem>
     {
         public StatItem(string label, string value, string tone = "")

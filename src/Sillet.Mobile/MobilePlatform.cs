@@ -7,8 +7,13 @@ namespace Sillet.Mobile
     {
         public static Action<bool> SetSecure { get; set; }
         public static Action<string, byte[]> PlaySound { get; set; }
+
+        public static Action<string, byte[]> PreloadSound { get; set; }
         public static Action<string, string> ShareText { get; set; }
         public static Action<string, string, byte[]> ShareImage { get; set; }
+        public static Action<string, byte[]> SaveImage { get; set; }
+        public static Action<string> OpenBrowser { get; set; }
+        public static Func<System.Threading.Tasks.Task<Sillet.Hardware.ILedgerTransport>> ConnectLedger { get; set; }
         public static Action<string, string, byte[], string> ShareFile { get; set; }
         public static Action<string, string, string> Notify { get; set; }
         public static Action<bool> SetBackground { get; set; }
@@ -28,14 +33,12 @@ namespace Sillet.Mobile
         public static event Action<string> OpenTargetRequested;
         public static string PendingTarget { get; set; }
 
-        /// <summary>Android reads the update notice from its own file and compares with its own version number.</summary>
         public static void ConfigureUpdates(string version)
         {
             if (!string.IsNullOrEmpty(version)) AppInfo.CurrentVersion = version;
             AppInfo.VersionUrl = AppInfo.AndroidVersionUrl;
         }
 
-        /// <summary>A tapped notification asked for a screen. Kept until a view picks it up.</summary>
         public static void RequestTarget(string target)
         {
             if (string.IsNullOrEmpty(target)) return;

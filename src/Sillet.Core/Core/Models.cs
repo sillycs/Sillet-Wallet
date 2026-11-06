@@ -11,7 +11,6 @@ namespace Sillet.Core
         Fast,
     }
 
-    /// <summary>Where a sent transaction stands: waiting in the pool, in a block, or buried deep enough to count as final.</summary>
     public enum TxStage
     {
         Unknown,

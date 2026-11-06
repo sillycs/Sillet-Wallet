@@ -199,7 +199,9 @@ namespace Sillet.Chains.Utxo
                 : Base58.Bitcoin.EncodeCheck(Bytes.Concat(new[] { P2pkhVersion }, hash));
         }
 
-        public byte[] ScriptFor(string address)
+        protected virtual bool UsesForkId { get { return false; } }
+
+        public virtual byte[] ScriptFor(string address)
         {
             address = address.Trim();
             if (Bech32Hrp != null && address.StartsWith(Bech32Hrp + "1", StringComparison.OrdinalIgnoreCase))
@@ -344,7 +346,9 @@ namespace Sillet.Chains.Utxo
 
             var signed = AddressType == UtxoAddressType.P2WPKH
                 ? UtxoTransactionBuilder.SignP2wpkh(selected, outputs, u => u.Key ?? Key, TxVersion, Sequence)
-                : UtxoTransactionBuilder.SignP2pkh(selected, outputs, u => u.Key ?? Key, TxVersion, Sequence);
+                : UsesForkId
+                    ? UtxoTransactionBuilder.SignBchP2pkh(selected, outputs, u => u.Key ?? Key, TxVersion, Sequence)
+                    : UtxoTransactionBuilder.SignP2pkh(selected, outputs, u => u.Key ?? Key, TxVersion, Sequence);
 
             long paidFee = total - outputs.Sum(o => o.Value);
             var transfer = new PreparedTransfer
@@ -361,6 +365,106 @@ namespace Sillet.Chains.Utxo
             if (selected.Any(u => !u.Confirmed)) transfer.Notes.Add("Uses unconfirmed funds; it may take longer");
             if (HasChangeKeys && outputs.Count > 1) transfer.Notes.Add("The change goes to a new address of your wallet");
             if (paidFee * 10 > amountRaw) transfer.Notes.Add("The fee is more than 10% of the amount");
+            return transfer;
+        }
+
+        public override bool SupportsReplacement
+        {
+            get { return Sequence == 0xFFFFFFFD && !IsWatchOnly; }
+        }
+
+        public override async Task<PreparedTransfer> PrepareReplacementAsync(string txId, bool cancel, Asset asset, decimal amount, CancellationToken ct = default(CancellationToken))
+        {
+            if (!SupportsReplacement) throw new WalletException("This network does not support speeding up a transaction");
+            var detail = await Provider.GetTxDetailAsync(txId, ct);
+            if (detail == null) throw new WalletException("The network no longer has this transaction. Send it again instead");
+            if (detail.Confirmed) throw new WalletException("This transaction is already confirmed");
+
+            var keys = new Dictionary<string, byte[]>();
+            byte[] freshScript;
+            if (HasChangeKeys)
+            {
+                var scan = await ScanAsync(ct);
+                foreach (var a in scan.UsedReceive.Concat(scan.UsedChange)) keys[a.Address] = a.Key;
+                if (scan.NextChange == null) throw new WalletException("Too many used change addresses. Move your funds to a new account");
+                freshScript = ScriptFor(scan.NextChange.Address);
+            }
+            else
+            {
+                keys[Address] = Key;
+                freshScript = ScriptFor(Address);
+            }
+
+            var inputs = new List<Utxo>();
+            foreach (var vin in detail.Inputs)
+            {
+                byte[] key;
+                if (!keys.TryGetValue(vin.Address ?? "", out key)) throw new WalletException("This transaction was not created by this wallet, so it can't be sped up here");
+                inputs.Add(new Utxo(vin.TxId, vin.Vout, vin.Value) { Key = key });
+            }
+            long totalIn = inputs.Sum(u => u.Value);
+            long oldFee = totalIn - detail.Outputs.Sum(o => o.Value);
+            var rate = Math.Max(await Provider.GetFeeRateAsync(FeeSpeed.Fast, ct), MinFeeRate);
+
+            var outputs = new List<TxOutput>();
+            long newFee;
+            var notes = new List<string>();
+            if (cancel)
+            {
+                var size = EstimateSize(inputs.Count, new[] { freshScript });
+                newFee = Math.Max((long)Math.Ceiling(size * rate), Math.Max(oldFee + (long)Math.Ceiling(size) + 1, (long)Math.Ceiling(oldFee * 1.2m)));
+                if (totalIn - newFee < DustLimit) throw new WalletException("There is not enough in this transaction to cover a higher fee");
+                outputs.Add(new TxOutput(totalIn - newFee, freshScript));
+                notes.Add("This cancels the payment: the funds go back to your own wallet");
+            }
+            else
+            {
+                var scripts = detail.Outputs.Select(o => o.Script).ToArray();
+                var size = EstimateSize(inputs.Count, scripts);
+                newFee = Math.Max((long)Math.Ceiling(size * rate), Math.Max(oldFee + (long)Math.Ceiling(size) + 1, (long)Math.Ceiling(oldFee * 1.2m)));
+                long extra = newFee - oldFee;
+                var rows = detail.Outputs.Select(o => new KeyValuePair<TxDetailOutput, bool>(o, keys.ContainsKey(o.Address ?? ""))).ToList();
+                var change = rows.LastOrDefault(r => r.Value);
+                if (change.Key != null)
+                {
+                    long left = change.Key.Value - extra;
+                    foreach (var r in rows)
+                    {
+                        if (r.Key == change.Key)
+                        {
+                            if (left >= DustLimit) outputs.Add(new TxOutput(left, r.Key.Script));
+                            else newFee = totalIn - detail.Outputs.Where(o => o != change.Key).Sum(o => o.Value);
+                        }
+                        else outputs.Add(new TxOutput(r.Key.Value, r.Key.Script));
+                    }
+                }
+                else
+                {
+                    var biggest = rows.OrderByDescending(r => r.Key.Value).First();
+                    long left = biggest.Key.Value - extra;
+                    if (left < DustLimit) throw new WalletException("There is not enough in this transaction to cover a higher fee");
+                    foreach (var r in rows) outputs.Add(new TxOutput(r.Key == biggest.Key ? left : r.Key.Value, r.Key.Script));
+                    notes.Add("The extra fee comes out of the amount, so the recipient gets a little less");
+                }
+            }
+
+            var signed = AddressType == UtxoAddressType.P2WPKH
+                ? UtxoTransactionBuilder.SignP2wpkh(inputs, outputs, u => u.Key ?? Key, TxVersion, Sequence)
+                : UtxoTransactionBuilder.SignP2pkh(inputs, outputs, u => u.Key ?? Key, TxVersion, Sequence);
+            long paidFee = totalIn - outputs.Sum(o => o.Value);
+            var transfer = new PreparedTransfer
+            {
+                Chain = this,
+                Asset = cancel ? Native : (asset ?? Native),
+                To = cancel ? Address : detail.Outputs.Where(o => !keys.ContainsKey(o.Address ?? "")).Select(o => o.Address).FirstOrDefault() ?? Address,
+                Amount = cancel ? Units.FromRaw(outputs[0].Value, Native.Decimals) : amount,
+                Fee = Units.FromRaw(paidFee, Native.Decimals),
+                FeeAsset = Native,
+                TxId = signed.TxId,
+                Payload = Hex.Encode(signed.Raw),
+            };
+            transfer.Notes.Add("Replaces the pending transaction with the same payment and a higher fee");
+            transfer.Notes.AddRange(notes);
             return transfer;
         }
 

@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Sillet.Chains.Cosmos;
 using Sillet.Chains.Evm;
 using Sillet.Chains.Solana;
+using Sillet.Chains.Sui;
+using Sillet.Chains.Ton;
 using Sillet.Chains.Tron;
 using Sillet.Chains.Utxo;
+using Sillet.Chains.Xrp;
 using Sillet.Core;
 using Sillet.Crypto;
 using Sillet.Storage;
@@ -33,13 +37,13 @@ namespace Sillet
     {
         private readonly List<ChainBase> _chains;
         private readonly string _vaultPath;
-        private string _mnemonic;
-        private string _passphrase = "";
+        private byte[] _seed;
+        private bool _hasPassphrase;
         private int _account;
         private const char PassphraseSeparator = '\u001F';
         private bool _watchOnly;
 
-        public static readonly string[] WatchGroups = { "bitcoin", "evm", "solana", "tron", "litecoin", "dogecoin" };
+        public static readonly string[] WatchGroups = { "bitcoin", "evm", "solana", "tron", "litecoin", "dogecoin", "bitcoincash", "xrp", "ton", "sui", "cosmos" };
 
         public WalletManager(string vaultPath = null)
         {
@@ -62,6 +66,11 @@ namespace Sillet
                 new LineaChain(),
                 new BlastChain(),
                 new GnosisChain(),
+                new BitcoinCashChain(),
+                new XrpChain(),
+                new TonChain(),
+                new SuiChain(),
+                new CosmosChain(),
             };
         }
 
@@ -73,6 +82,14 @@ namespace Sillet
         public bool IsWatchOnly
         {
             get { return _watchOnly; }
+        }
+
+        public Func<Task<Sillet.Hardware.ILedgerTransport>> LedgerConnect { get; set; }
+
+        public bool CanSignOnDevice(IChain chain)
+        {
+            var own = chain as ChainBase;
+            return _watchOnly && own != null && LedgerConnect != null && own.SupportsDeviceSigning;
         }
 
         public static string WatchGroupOf(IChain chain)
@@ -101,6 +118,11 @@ namespace Sillet
                 case "tron": return "TRON";
                 case "litecoin": return "Litecoin";
                 case "dogecoin": return "Dogecoin";
+                case "bitcoincash": return "Bitcoin Cash";
+                case "xrp": return "XRP Ledger";
+                case "ton": return "TON";
+                case "sui": return "Sui";
+                case "cosmos": return "Cosmos Hub";
                 default: return group;
             }
         }
@@ -120,6 +142,8 @@ namespace Sillet
                 var group = chain is EvmChain ? "evm" : chain.Id;
                 string address;
                 if (groups.TryGetValue(group, out address) && !string.IsNullOrWhiteSpace(address)) chain.LoadWatch(address);
+                var own = chain as ChainBase;
+                if (own != null) own.LedgerConnect = () => LedgerConnect == null ? Task.FromResult<Sillet.Hardware.ILedgerTransport>(null) : LedgerConnect();
             }
             if (!_chains.Any(c => c.HasAddress)) throw new WalletException("Add at least one address");
             _watchOnly = true;
@@ -132,7 +156,7 @@ namespace Sillet
 
         public bool IsUnlocked
         {
-            get { return _mnemonic != null || _watchOnly; }
+            get { return _seed != null || _watchOnly; }
         }
 
         public static string GenerateMnemonic(int words = 12)
@@ -149,7 +173,7 @@ namespace Sillet
 
         public bool HasPassphrase
         {
-            get { return !string.IsNullOrEmpty(_passphrase); }
+            get { return _hasPassphrase; }
         }
 
         public static string Pack(string mnemonic, string passphrase)
@@ -178,7 +202,7 @@ namespace Sillet
         {
             if (account < 0 || account >= MaxAccounts) throw new WalletException("Accounts go from 0 to " + (MaxAccounts - 1));
             if (_watchOnly) return;
-            if (_mnemonic == null) throw new WalletException("The wallet is locked");
+            if (_seed == null) throw new WalletException("The wallet is locked");
             _account = account;
             DeriveAll();
         }
@@ -199,8 +223,9 @@ namespace Sillet
         public void Lock()
         {
             foreach (var chain in _chains) chain.Unload();
-            _mnemonic = null;
-            _passphrase = "";
+            if (_seed != null) Array.Clear(_seed, 0, _seed.Length);
+            _seed = null;
+            _hasPassphrase = false;
             _watchOnly = false;
         }
 
@@ -310,8 +335,8 @@ namespace Sillet
             Lock();
             string mnemonic, passphrase;
             Unpack(blob, out mnemonic, out passphrase);
-            _mnemonic = mnemonic;
-            _passphrase = passphrase;
+            _seed = Bip39.ToSeed(mnemonic, passphrase);
+            _hasPassphrase = !string.IsNullOrEmpty(passphrase);
             _account = account;
             try
             {
@@ -326,18 +351,10 @@ namespace Sillet
 
         private void DeriveAll()
         {
-            var seed = Bip39.ToSeed(_mnemonic, _passphrase);
-            try
+            foreach (var chain in _chains)
             {
-                foreach (var chain in _chains)
-                {
-                    chain.Account = _account;
-                    chain.Load(seed);
-                }
-            }
-            finally
-            {
-                Array.Clear(seed, 0, seed.Length);
+                chain.Account = _account;
+                chain.Load(_seed);
             }
         }
     }

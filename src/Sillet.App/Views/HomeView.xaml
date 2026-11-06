@@ -115,11 +115,11 @@
                                                                     <ColumnDefinition />
                                                                     <ColumnDefinition Width="Auto" />
                                                                 </Grid.ColumnDefinitions>
-                                                                <Border Width="36" Height="36" CornerRadius="18" Background="{DynamicResource SurfacePressedBrush}">
+                                                                <Border Width="42" Height="28" CornerRadius="3" Background="{DynamicResource SurfacePressedBrush}" VerticalAlignment="Center">
                                                                     <Grid>
-                                                                        <Border CornerRadius="18" Visibility="{Binding HasFlag, Converter={StaticResource BoolToVis}}">
+                                                                        <Border CornerRadius="3" Visibility="{Binding HasFlag, Converter={StaticResource BoolToVis}}">
                                                                             <Border.Background>
-                                                                                <ImageBrush ImageSource="{Binding FlagPath}" Stretch="UniformToFill" />
+                                                                                <ImageBrush ImageSource="{Binding FlagPath}" Stretch="Fill" />
                                                                             </Border.Background>
                                                                         </Border>
                                                                         <TextBlock Text="{Binding FlagEmoji}" FontFamily="Segoe UI Emoji" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -167,14 +167,52 @@
                 </Button>
             </StackPanel>
 
-            <Grid Margin="0,28,0,0">
+            <Grid Margin="0,28,0,8">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="18" />
-                    <ColumnDefinition Width="300" />
+                    <ColumnDefinition Width="330" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                <Border Style="{StaticResource Card}" Padding="22,18,22,14" c:Anim.Enter="True" c:Anim.Delay="100">
+                <ItemsControl Grid.Row="0" Grid.ColumnSpan="3" ItemsSource="{Binding Overview}" Focusable="False" Visibility="{Binding HasOverview, Converter={StaticResource BoolToVis}}"
+                              c:Anim.Enter="True" c:Anim.Delay="80">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Margin="0,0,12,0">
+                                <TextBlock Text="{Binding Label}" Style="{StaticResource Text.Label}" FontSize="11.5" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Value}" FontSize="14" FontWeight="SemiBold" Margin="0,3,0,0" TextTrimming="CharacterEllipsis">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsUp}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsDown}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="3" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="26,20,26,16" c:Anim.Enter="True" c:Anim.Delay="100">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -227,11 +265,6 @@
                                                 <TextBlock Text="{Binding Date}" FontSize="12" Foreground="{DynamicResource TextTertiaryBrush}"
                                                            Visibility="{Binding HasDate, Converter={StaticResource BoolToVis}}" />
                                             </StackPanel>
-                                            <Border Grid.Column="2" Style="{StaticResource Chip.Static}">
-                                                <TextBlock FontSize="11" Foreground="{DynamicResource TextTertiaryBrush}">
-                                                    <Run Text="#" /><Run Text="{Binding Id, Mode=OneWay}" />
-                                                </TextBlock>
-                                            </Border>
                                         </Grid>
                                         <TextBlock Text="{Binding Title}" Style="{StaticResource Text.Subtitle}" FontSize="15" Margin="0,12,0,0"
                                                    TextTrimming="CharacterEllipsis" Visibility="{Binding HasTitle, Converter={StaticResource BoolToVis}}" />
@@ -277,49 +310,60 @@
                     </Grid>
                 </Border>
 
-                <Border Grid.Column="2" Style="{StaticResource Card}" Padding="22,18" c:Anim.Enter="True" c:Anim.Delay="160">
+            <Border Grid.Row="2" Grid.Column="2" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="22,18,22,14" c:Anim.Enter="True" c:Anim.Delay="140">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="140" />
+                    </Grid.RowDefinitions>
+                    <StackPanel>
+                        <Grid>
+                            <TextBlock Text="{c:Tr 'Portfolio'}" Style="{StaticResource Text.Subtitle}" VerticalAlignment="Center" />
+                            <TextBlock Text="{Binding PortfolioChangeText}" Tag="{Binding PortfolioIsUp}" Style="{StaticResource Text.Change}" FontSize="12.5"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="{Binding PortfolioDaysText}" Style="{StaticResource Text.Label}" FontSize="12" Margin="0,2,0,0"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                    </StackPanel>
+                    <c:LineChart Grid.Row="1" Margin="0,6,0,0" Points="{Binding PortfolioPoints}" Currency="{Binding Currency}"
+                                 LabelBrush="{DynamicResource TextTertiaryBrush}" TooltipBackground="{DynamicResource ToastBrush}"
+                                 TooltipForeground="{DynamicResource OnToastBrush}"
+                                 Visibility="{Binding HasPortfolioHistory, Converter={StaticResource BoolToVis}}">
+                        <c:LineChart.Style>
+                            <Style TargetType="c:LineChart">
+                                <Setter Property="Stroke" Value="{DynamicResource PositiveBrush}" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding PortfolioIsUp}" Value="False">
+                                        <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </c:LineChart.Style>
+                    </c:LineChart>
+                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding HasPortfolioHistory, Converter={StaticResource BoolToVisInverse}}">
+                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource IconFont}" FontSize="20" HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" />
+                        <TextBlock Text="{c:Tr 'Your total is saved once a day'}" Style="{StaticResource Text.Caption}" Margin="0,8,0,0" HorizontalAlignment="Center" />
+                        <TextBlock Text="{c:Tr 'Come back tomorrow to see the chart'}" Style="{StaticResource Text.Label}" FontSize="11.5"
+                                   Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+                <Border Grid.Row="2" Grid.RowSpan="4" Grid.Column="0" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="12,18,12,10" MinHeight="260" c:Anim.Enter="True" c:Anim.Delay="200">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <TextBlock Text="{c:Tr 'Fear and greed'}" Style="{StaticResource Text.Subtitle}" />
-                        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,10,0,0"
-                                    Visibility="{Binding HasFearGreed, Converter={StaticResource BoolToVis}}">
-                            <c:FearGreedGauge Height="88" Width="176" Value="{Binding FearGreedValue}" NeedleBrush="{DynamicResource TextBrush}" />
-                            <TextBlock Text="{Binding FearGreedNumber}" Style="{StaticResource Text.Title}" HorizontalAlignment="Center" Margin="0,8,0,0" />
-                            <TextBlock Text="{Binding FearGreedLabel}" Style="{StaticResource Text.Label}" HorizontalAlignment="Center" />
-                            <Button Style="{StaticResource Button.Link}" Command="{Binding OpenAlternativeCommand}" FontSize="11" HorizontalAlignment="Center"
-                                    Margin="0,8,0,0" ToolTip="{c:Tr 'Source of the index'}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="alternative.me" />
-                                    <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="9" Margin="5,1,0,0" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
-                        <Control Grid.Row="1" Style="{StaticResource Spinner}" Width="18" Height="18"
-                                 Visibility="{Binding HasFearGreed, Converter={StaticResource BoolToVisInverse}}" />
-                    </Grid>
-                </Border>
-            </Grid>
-
-            <Grid Margin="0,18,0,0">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="18" />
-                    <ColumnDefinition Width="300" />
-                </Grid.ColumnDefinitions>
-
-                <Border Style="{StaticResource Card}" Padding="12,18,12,10" MinHeight="260" c:Anim.Enter="True" c:Anim.Delay="200">
-                    <Grid>
-                        <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
                         <Grid Margin="10,0,10,8">
-                            <TextBlock Text="{c:Tr 'Coins'}" Style="{StaticResource Text.Subtitle}" />
-                            <Button Style="{StaticResource Button.Link}" HorizontalAlignment="Right" Content="{Binding ToggleEmptyText}"
-                                    Command="{Binding ToggleEmptyCommand}" />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{c:Tr 'Coins'}" Style="{StaticResource Text.Subtitle}" />
+                                <TextBlock Text="{Binding CoinsCountText}" Style="{StaticResource Text.Label}" FontSize="12" Margin="10,1,0,0"
+                                           Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
+                            </StackPanel>
                         </Grid>
 
                         <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,16"
@@ -340,7 +384,7 @@
                             </Button>
                         </StackPanel>
 
-                        <ItemsControl Grid.Row="1" ItemsSource="{Binding Assets}" Focusable="False" VerticalAlignment="Top">
+                        <ItemsControl Grid.Row="1" ItemsSource="{Binding VisibleAssets}" Focusable="False" VerticalAlignment="Top">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <ContentControl Style="{StaticResource HoverRow}" c:Anim.Stagger="True" c:Anim.Enter="True" c:Anim.Offset="6">
@@ -386,10 +430,13 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
+                        <Button Grid.Row="2" Style="{StaticResource Button.Secondary}" Command="{Binding ToggleCoinsCommand}" Content="{Binding CoinsToggleText}"
+                                HorizontalAlignment="Stretch" Margin="10,10,10,6" Padding="14,9" FontSize="12.5"
+                                Visibility="{Binding HasMoreCoins, Converter={StaticResource BoolToVis}}" />
                     </Grid>
                 </Border>
 
-                <Border Grid.Column="2" Style="{StaticResource Card}" MinHeight="260" c:Anim.Enter="True" c:Anim.Delay="240">
+                <Border Grid.Row="3" Grid.Column="2" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="22,18" c:Anim.Enter="True" c:Anim.Delay="240">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />
@@ -425,48 +472,71 @@
                         </StackPanel>
                     </Grid>
                 </Border>
-            </Grid>
 
-            <Border Style="{StaticResource Card}" Margin="0,18,0,8" Padding="22,18,22,14" c:Anim.Enter="True" c:Anim.Delay="280">
+                <Border Grid.Row="4" Grid.Column="2" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="22,18" c:Anim.Enter="True" c:Anim.Delay="280">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="{c:Tr 'Fear and greed'}" Style="{StaticResource Text.Subtitle}" />
+                        <StackPanel Grid.Row="1" VerticalAlignment="Center" Margin="0,10,0,0"
+                                    Visibility="{Binding HasFearGreed, Converter={StaticResource BoolToVis}}">
+                            <c:FearGreedGauge Height="88" Width="176" Value="{Binding FearGreedValue}" NeedleBrush="{DynamicResource TextBrush}" />
+                            <TextBlock Text="{Binding FearGreedNumber}" Style="{StaticResource Text.Title}" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                            <TextBlock Text="{Binding FearGreedLabel}" Style="{StaticResource Text.Label}" HorizontalAlignment="Center" />
+                            <Button Style="{StaticResource Button.Link}" Command="{Binding OpenAlternativeCommand}" FontSize="11" HorizontalAlignment="Center"
+                                    Margin="0,8,0,0" ToolTip="{c:Tr 'Source of the index'}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="alternative.me" />
+                                    <TextBlock Text="&#xE8A7;" FontFamily="{StaticResource IconFont}" FontSize="9" Margin="5,1,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <Control Grid.Row="1" Style="{StaticResource Spinner}" Width="18" Height="18"
+                                 Visibility="{Binding HasFearGreed, Converter={StaticResource BoolToVisInverse}}" />
+                    </Grid>
+                </Border>
+
+            <Border Grid.Row="5" Grid.Column="2" Style="{StaticResource Card}" Margin="0,18,0,0" Padding="22,18" c:Anim.Enter="True" c:Anim.Delay="320" VerticalAlignment="Top"
+                    Visibility="{Binding HasMovers, Converter={StaticResource BoolToVis}}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
-                        <RowDefinition Height="200" />
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <Grid>
-                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="{c:Tr 'Portfolio'}" Style="{StaticResource Text.Subtitle}" />
-                            <TextBlock Text="{Binding PortfolioDaysText}" Style="{StaticResource Text.Label}" FontSize="12" Margin="10,1,0,0"
-                                       Foreground="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />
-                        </StackPanel>
-                        <TextBlock Text="{Binding PortfolioChangeText}" Tag="{Binding PortfolioIsUp}" Style="{StaticResource Text.Change}" FontSize="12.5"
-                                   HorizontalAlignment="Right" VerticalAlignment="Center" />
-                    </Grid>
-                    <c:LineChart Grid.Row="1" Margin="0,6,0,0" Points="{Binding PortfolioPoints}" Currency="{Binding Currency}"
-                                 LabelBrush="{DynamicResource TextTertiaryBrush}" TooltipBackground="{DynamicResource ToastBrush}"
-                                 TooltipForeground="{DynamicResource OnToastBrush}"
-                                 Visibility="{Binding HasPortfolioHistory, Converter={StaticResource BoolToVis}}">
-                        <c:LineChart.Style>
-                            <Style TargetType="c:LineChart">
-                                <Setter Property="Stroke" Value="{DynamicResource PositiveBrush}" />
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding PortfolioIsUp}" Value="False">
-                                        <Setter Property="Stroke" Value="{DynamicResource NegativeBrush}" />
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </c:LineChart.Style>
-                    </c:LineChart>
-                    <StackPanel Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="{Binding HasPortfolioHistory, Converter={StaticResource BoolToVisInverse}}">
-                        <TextBlock Text="&#xE9D2;" FontFamily="{StaticResource IconFont}" FontSize="20" HorizontalAlignment="Center"
+                        <TextBlock Text="{c:Tr 'Top movers'}" Style="{StaticResource Text.Subtitle}" />
+                        <TextBlock Text="{c:Tr '24h'}" Style="{StaticResource Text.Label}" FontSize="12" HorizontalAlignment="Right" VerticalAlignment="Center"
                                    Foreground="{DynamicResource TextTertiaryBrush}" />
-                        <TextBlock Text="{c:Tr 'Your total is saved once a day'}" Style="{StaticResource Text.Caption}" Margin="0,8,0,0" HorizontalAlignment="Center" />
-                        <TextBlock Text="{c:Tr 'Come back tomorrow to see the chart'}" Style="{StaticResource Text.Label}" FontSize="11.5"
-                                   Foreground="{DynamicResource TextTertiaryBrush}" HorizontalAlignment="Center" Margin="0,4,0,0" />
-                    </StackPanel>
+                    </Grid>
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Movers}" Focusable="False" Margin="0,10,0,0"
+                                  Visibility="{Binding HasMovers, Converter={StaticResource BoolToVis}}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,6">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="64" />
+                                    </Grid.ColumnDefinitions>
+                                    <c:CoinIcon Source="{Binding IconPath}" Initial="{Binding Initial}" Size="24" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Symbol}" FontSize="13" FontWeight="SemiBold" Margin="10,0,0,0" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding PriceText}" Style="{StaticResource Text.Label}" FontSize="12" VerticalAlignment="Center" Margin="8,0,0,0" />
+                                    <TextBlock Grid.Column="3" Text="{Binding ChangeText}" Tag="{Binding IsUp}" Style="{StaticResource Text.Change}" FontSize="12.5"
+                                               HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Control Grid.Row="1" Style="{StaticResource Spinner}" Width="18" Height="18"
+                             Visibility="{Binding HasMovers, Converter={StaticResource BoolToVisInverse}}" />
                 </Grid>
             </Border>
+
+
+            </Grid>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

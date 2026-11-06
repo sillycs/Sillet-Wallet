@@ -73,9 +73,22 @@
                 </Style>
             </Border.Style>
             <DockPanel Margin="14,10,14,16">
-                <Button DockPanel.Dock="Top" Style="{StaticResource Button.Icon}" Content="&#xE700;" Width="36" Height="34" FontSize="15" HorizontalAlignment="Left"
-                        Margin="4,0,0,14" Command="{Binding ToggleNavCommand}" ToolTip="{c:Tr 'Collapse or expand the menu (Ctrl+B)'}"
-                        WindowChrome.IsHitTestVisibleInChrome="True" />
+                <Button DockPanel.Dock="Top" Content="&#xE700;" Width="36" Height="34" FontSize="15"
+                        Command="{Binding ToggleNavCommand}" ToolTip="{c:Tr 'Collapse or expand the menu (Ctrl+B)'}"
+                        WindowChrome.IsHitTestVisibleInChrome="True">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource Button.Icon}">
+                            <Setter Property="HorizontalAlignment" Value="Left" />
+                            <Setter Property="Margin" Value="4,0,0,14" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                    <Setter Property="Margin" Value="0,0,0,14" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                </Button>
                 <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,18">
                     <Grid Width="28" Height="28" VerticalAlignment="Center" Visibility="{Binding IsNavCollapsed, Converter={StaticResource BoolToVis}}">
                         <Image Source="{Binding LogoName, Converter={StaticResource ResourceImage}}" RenderOptions.BitmapScalingMode="HighQuality" Stretch="Uniform" />
@@ -86,13 +99,20 @@
                 </StackPanel>
 
                 <Grid DockPanel.Dock="Top" Margin="0,0,0,16">
-                    <Button x:Name="ProfileButton" Command="{Binding ToggleProfilesCommand}" HorizontalContentAlignment="Stretch" Padding="8,7" FontWeight="Normal"
+                    <Button x:Name="ProfileButton" Command="{Binding ToggleProfilesCommand}" HorizontalContentAlignment="Stretch" FontWeight="Normal"
                             ToolTip="{Binding ActiveProfileName}"
                             IsHitTestVisible="{Binding IsOpen, ElementName=ProfilePopup, Converter={StaticResource InvertBool}}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
                                 <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                 <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                <Setter Property="Padding" Value="8,7" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                        <Setter Property="Padding" Value="0,7" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                    </DataTrigger>
+                                </Style.Triggers>
                             </Style>
                         </Button.Style>
                         <Grid>
@@ -102,6 +122,16 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <Grid Width="32" Height="30">
+                                <Grid.Style>
+                                    <Style TargetType="Grid">
+                                        <Setter Property="Margin" Value="0" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                                <Setter Property="Margin" Value="7,0,0,0" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Grid.Style>
                                 <Grid Width="26" Height="26" HorizontalAlignment="Left" VerticalAlignment="Top">
                                     <TextBlock Text="{Binding ActiveProfileInitial}" FontWeight="Bold" FontSize="13" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                     <Border CornerRadius="13" Visibility="{Binding ActiveProfileHasPhoto, Converter={StaticResource BoolToVis}}">
@@ -117,7 +147,7 @@
                             </Grid>
                             <StackPanel Grid.Column="1" Margin="10,0,6,0" VerticalAlignment="Center" Visibility="{Binding IsNavExpanded, Converter={StaticResource BoolToVis}}">
                                 <TextBlock Text="{Binding ActiveProfileName}" FontSize="12.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{c:Tr 'Watch-only'}" FontSize="10.5" Foreground="{DynamicResource TextTertiaryBrush}"
+                                <TextBlock Text="{c:Tr 'Hardware wallet'}" FontSize="10.5" Foreground="{DynamicResource TextTertiaryBrush}"
                                            Visibility="{Binding IsWatchOnly, Converter={StaticResource BoolToVis}}" />
                             </StackPanel>
                             <TextBlock Grid.Column="2" Text="&#xE70D;" FontFamily="{StaticResource IconFont}" FontSize="9" VerticalAlignment="Center"
@@ -127,7 +157,7 @@
                     <Popup x:Name="ProfilePopup" IsOpen="{Binding IsProfilesOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=ProfileButton}" Placement="Bottom"
                            VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
                         <Border Width="260" Margin="0,0,16,16" c:Anim.Enter="True" c:Anim.Offset="-6" c:Anim.ScaleFrom="0.97" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
-                                BorderThickness="1" CornerRadius="12" Padding="6">
+                                BorderThickness="1" CornerRadius="0" Padding="6">
                             <Border.Effect>
                                 <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.45" Color="Black" />
                             </Border.Effect>
@@ -146,7 +176,7 @@
                                                     </Grid.ColumnDefinitions>
                                                     <Border Width="26" Height="26" CornerRadius="8" Background="{DynamicResource SurfacePressedBrush}">
                                                         <Grid>
-                                                            <Image Width="14" Height="14" Source="{Binding WalletIconName, Converter={StaticResource ResourceImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            <TextBlock Text="{Binding Initial}" FontWeight="Bold" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                             <Border CornerRadius="8" Visibility="{Binding HasPhoto, Converter={StaticResource BoolToVis}}">
                                                                 <Border.Background>
                                                                     <ImageBrush ImageSource="{Binding PhotoPath}" Stretch="UniformToFill" />
@@ -173,7 +203,7 @@
                                 <Button Style="{StaticResource Button.Ghost}" Command="{Binding AddWatchWalletCommand}" HorizontalContentAlignment="Left" Padding="10,8" FontWeight="Normal">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="12" VerticalAlignment="Center" />
-                                        <TextBlock Text="{c:Tr 'Watch a hardware wallet'}" Margin="10,0,0,0" FontSize="12.5" />
+                                        <TextBlock Text="{c:Tr 'Add a hardware wallet'}" Margin="10,0,0,0" FontSize="12.5" />
                                     </StackPanel>
                                 </Button>
                             </StackPanel>
@@ -182,11 +212,17 @@
                 </Grid>
 
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,2">
-                    <Button Command="{Binding DonateCommand}" HorizontalContentAlignment="Left" HorizontalAlignment="Stretch" Padding="12,9" FontWeight="Normal"
+                    <Button Command="{Binding DonateCommand}" HorizontalAlignment="Stretch" FontWeight="Normal"
                             Margin="0,0,0,2" ToolTip="{c:Tr 'Support Sillet'}">
                         <Button.Style>
                             <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                <Setter Property="Padding" Value="12,9" />
                                 <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                        <Setter Property="Padding" Value="0,9" />
+                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding IsDonatePage}" Value="True">
                                         <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
                                         <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
@@ -199,8 +235,20 @@
                             <TextBlock Text="{c:Tr 'Donate'}" Margin="12,0,0,0" Visibility="{Binding IsNavExpanded, Converter={StaticResource BoolToVis}}" />
                         </StackPanel>
                     </Button>
-                    <Button Style="{StaticResource Button.Ghost}" Command="{Binding LockCommand}" HorizontalContentAlignment="Left"
-                            HorizontalAlignment="Stretch" Padding="12,9" FontWeight="Normal" ToolTip="{c:Tr 'Lock'}">
+                    <Button Command="{Binding LockCommand}"
+                            HorizontalAlignment="Stretch" FontWeight="Normal" ToolTip="{c:Tr 'Lock'}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                <Setter Property="Padding" Value="12,9" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                        <Setter Property="Padding" Value="0,9" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE72E;" Style="{StaticResource Text.Icon}" FontSize="14"
                                        Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
@@ -221,6 +269,16 @@
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal" Background="Transparent" ToolTip="{Binding Title}"
                                         ToolTipService.IsEnabled="{Binding DataContext.IsNavCollapsed, RelativeSource={RelativeSource AncestorType=Window}}">
+                                <StackPanel.Style>
+                                    <Style TargetType="StackPanel">
+                                        <Setter Property="HorizontalAlignment" Value="Left" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding DataContext.IsNavCollapsed, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
+                                                <Setter Property="HorizontalAlignment" Value="Center" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </StackPanel.Style>
                                 <TextBlock Text="{Binding Glyph}" Style="{StaticResource Text.Icon}" FontSize="15"
                                            Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
                                 <TextBlock Text="{Binding Title}" Margin="13,0,0,0" FontSize="13.5"
@@ -264,6 +322,50 @@
         </Grid>
 
         <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <Grid Visibility="{Binding IsUnlocked, Converter={StaticResource BoolToVis}}">
+                <Button x:Name="SupportButton" Command="{Binding ToggleSupportCommand}" ToolTip="{c:Tr 'Support'}" WindowChrome.IsHitTestVisibleInChrome="True"
+                        IsHitTestVisible="{Binding IsOpen, ElementName=SupportPopup, Converter={StaticResource InvertBool}}">
+                    <Button.Style>
+                        <Style TargetType="Button" BasedOn="{StaticResource Button.Chrome}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsSupportOpen}" Value="True">
+                                    <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                    <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Button.Style>
+                    <Path Width="15" Height="15" Stretch="Uniform" StrokeThickness="1.1" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                          Data="M3,12 A9,9 0 1 0 21,12 A9,9 0 1 0 3,12 Z M8,12 A4,4 0 1 0 16,12 A4,4 0 1 0 8,12 Z M5.6,5.6 L9.2,9.2 M14.8,14.8 L18.4,18.4 M18.4,5.6 L14.8,9.2 M9.2,14.8 L5.6,18.4" />
+                </Button>
+                <Popup x:Name="SupportPopup" IsOpen="{Binding IsSupportOpen, Mode=TwoWay}" PlacementTarget="{Binding ElementName=SupportButton}" Placement="Bottom"
+                       HorizontalOffset="-290" VerticalOffset="6" StaysOpen="False" AllowsTransparency="True" PopupAnimation="Fade">
+                    <Border Width="320" Margin="0,0,16,16" c:Anim.Enter="True" c:Anim.Offset="-6" c:Anim.ScaleFrom="0.97" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderStrongBrush}"
+                            BorderThickness="1" CornerRadius="0" Padding="6">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="24" ShadowDepth="6" Opacity="0.45" Color="Black" />
+                        </Border.Effect>
+                        <StackPanel>
+                            <TextBlock Text="{c:Tr 'Support'}" Style="{StaticResource Text.Label}" FontSize="11.5" Margin="10,6,0,6" />
+                            <Button Command="{Binding SupportTelegramCommand}" Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left" Padding="10,9" FontWeight="Normal"
+                                    Foreground="{DynamicResource TextBrush}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Width="20" Height="20" Source="{Binding TelegramIconName, Converter={StaticResource ResourceImage}}" />
+                                    <TextBlock Text="{c:Tr 'Contact the developer on Telegram'}" Margin="12,0,0,0" FontSize="12.5" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding SupportDiscordCommand}" Style="{StaticResource Button.Ghost}" HorizontalContentAlignment="Left" Padding="10,9" FontWeight="Normal"
+                                    Foreground="{DynamicResource TextBrush}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image Width="20" Height="20" Source="{Binding DiscordIconName, Converter={StaticResource ResourceImage}}" />
+                                    <TextBlock Text="{c:Tr 'Ask our community or staff'}" Margin="12,0,0,0" FontSize="12.5" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </Popup>
+            </Grid>
             <Grid Visibility="{Binding IsUnlocked, Converter={StaticResource BoolToVis}}">
                 <Button x:Name="BellButton" Command="{Binding ToggleNotificationsCommand}" ToolTip="{c:Tr 'Notifications'}" WindowChrome.IsHitTestVisibleInChrome="True"
                         IsHitTestVisible="{Binding IsOpen, ElementName=BellPopup, Converter={StaticResource InvertBool}}">
@@ -522,6 +624,8 @@
                 <ProgressBar IsIndeterminate="True" Width="64" Height="3" Margin="0,22,0,0" BorderThickness="0"
                              Background="{DynamicResource SurfaceAltBrush}" Foreground="{DynamicResource TextBrush}" />
             </StackPanel>
+            <TextBlock x:Name="SplashStatus" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="0,0,0,34" FontSize="12"
+                       Foreground="{DynamicResource TextTertiaryBrush}" />
         </Grid>
     </Grid>
 </Window>

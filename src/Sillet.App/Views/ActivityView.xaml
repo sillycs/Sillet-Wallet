@@ -316,6 +316,12 @@
                             <ComboBox ItemsSource="{Binding AllLanguages}" SelectedItem="{Binding SelectedReceiptLanguage, Mode=TwoWay}" DisplayMemberPath="Name"
                                       Style="{StaticResource Select}" Width="200" HorizontalAlignment="Right" />
                         </Grid>
+                        <Button Style="{StaticResource Button.Primary}" Command="{Binding SpeedUpCommand}" Padding="16,10" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                Visibility="{Binding ReceiptCanSpeedUp, Converter={StaticResource BoolToVis}}" Content="{c:Tr 'Speed up'}" />
+                        <Button Style="{StaticResource Button.Secondary}" Command="{Binding CancelPaymentCommand}" Padding="16,10" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                Visibility="{Binding ReceiptCanSpeedUp, Converter={StaticResource BoolToVis}}" Content="{c:Tr 'Cancel payment'}" />
+                        <Button Style="{StaticResource Button.Primary}" Command="{Binding RetryCommand}" Padding="16,10" HorizontalAlignment="Stretch" Margin="0,0,0,8"
+                                Visibility="{Binding ReceiptCanRetry, Converter={StaticResource BoolToVis}}" Content="{c:Tr 'Send again'}" />
                         <Button Style="{StaticResource Button.Secondary}" Command="{Binding TrackPaymentCommand}" Padding="16,10" HorizontalAlignment="Stretch" Margin="0,0,0,8"
                                 Visibility="{Binding ReceiptCanTrack, Converter={StaticResource BoolToVis}}">
                             <StackPanel Orientation="Horizontal">

@@ -18,6 +18,11 @@ namespace Sillet.Crypto
             return sig;
         }
 
+        public static bool Verify(byte[] publicKey32, byte[] message, byte[] signature64)
+        {
+            return Ed25519.Verify(signature64, 0, publicKey32, 0, message, 0, message.Length);
+        }
+
         public static bool IsOnCurve(byte[] publicKey32)
         {
             return Ed25519.ValidatePublicKeyPartial(publicKey32, 0);

@@ -18,6 +18,8 @@
                     </Button>
                 </Grid>
             </Border>
+            <TextBox Text="{Binding CoinQuery, Mode=TwoWay}" Watermark="{ui:Tr 'Search coin by name or symbol'}" />
+            <TextBlock Text="{ui:Tr 'No coin found'}" Classes="label" HorizontalAlignment="Center" IsVisible="{Binding !HasCoinResults}" />
             <Grid ColumnDefinitions="*,10,*">
                 <StackPanel Spacing="6">
                     <TextBlock Text="{ui:Tr 'Coin'}" Classes="caption" Margin="4,0,0,0" />

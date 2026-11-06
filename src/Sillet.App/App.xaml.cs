@@ -26,6 +26,12 @@ namespace Sillet.App
         protected override void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
+            if (Sillet.App.Services.UpdateService.ApplyFromArguments(e.Args))
+            {
+                _exiting = true;
+                Shutdown();
+                return;
+            }
             bool first;
             _instanceLock = new System.Threading.Mutex(true, "Sillet.SingleInstance." + Environment.UserName, out first);
             _showSignal = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, "Sillet.ShowWindow." + Environment.UserName);
@@ -43,7 +49,14 @@ namespace Sillet.App
             Sillet.App.Services.UpdateService.AutoUpdateRequested += update => Dispatcher.BeginInvoke(new Action(() => { var ignored = RunAutoUpdateAsync(update); }));
 
             Sillet.App.Services.Loc.Enabled = true;
+            Sillet.App.ViewModels.HomeViewModel.AlwaysShowAll = true;
             Sillet.App.Services.Sounds.Player = name => Dispatcher.BeginInvoke(new Action(() => PlaySound(name)));
+            Sillet.App.Services.Sounds.Preloader = name => SoundFile(name);
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                Sillet.App.Services.Sounds.Preload();
+                Dispatcher.BeginInvoke(new Action(WarmPlayer), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
+            });
             var viewModel = new MainViewModel(this);
             var window = new MainWindow { DataContext = viewModel };
             MainWindow = window;
@@ -124,7 +137,6 @@ namespace Sillet.App
             ExitApp();
         }
 
-        /// <summary>A new version was found with auto update on: the main window goes away, a download window shows, and after admin approval the exe is replaced.</summary>
         private async Task RunAutoUpdateAsync(UpdateInfo update)
         {
             if (_exiting) return;
@@ -191,21 +203,48 @@ namespace Sillet.App
 
         private readonly System.Collections.Generic.List<System.Windows.Media.MediaPlayer> _players = new System.Collections.Generic.List<System.Windows.Media.MediaPlayer>();
 
+        private static readonly object SoundLock = new object();
+
+        private static string SoundFile(string name)
+        {
+            lock (SoundLock)
+            {
+                var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sillet-sounds");
+                var path = System.IO.Path.Combine(folder, name + ".mp3");
+                if (System.IO.File.Exists(path)) return path;
+                using (var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Sillet.sound." + name))
+                {
+                    if (stream == null) return null;
+                    System.IO.Directory.CreateDirectory(folder);
+                    using (var file = System.IO.File.Create(path)) stream.CopyTo(file);
+                }
+                return path;
+            }
+        }
+
+        private void WarmPlayer()
+        {
+            try
+            {
+                var path = SoundFile(Sillet.App.Services.Sounds.Unlocked);
+                if (path == null) return;
+                var player = new System.Windows.Media.MediaPlayer { Volume = 0 };
+                player.MediaEnded += (s, e) => player.Close();
+                player.MediaFailed += (s, e) => player.Close();
+                player.Open(new Uri(path));
+                player.Play();
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         private void PlaySound(string name)
         {
             try
             {
-                var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "Sillet-sounds");
-                var path = System.IO.Path.Combine(folder, name + ".mp3");
-                if (!System.IO.File.Exists(path))
-                {
-                    using (var stream = System.Reflection.Assembly.GetExecutingAssembly().GetManifestResourceStream("Sillet.sound." + name))
-                    {
-                        if (stream == null) return;
-                        System.IO.Directory.CreateDirectory(folder);
-                        using (var file = System.IO.File.Create(path)) stream.CopyTo(file);
-                    }
-                }
+                var path = SoundFile(name);
+                if (path == null) return;
                 var player = new System.Windows.Media.MediaPlayer();
                 player.MediaEnded += (s, e) => { player.Close(); _players.Remove(player); };
                 player.MediaFailed += (s, e) => { player.Close(); _players.Remove(player); };
@@ -215,7 +254,6 @@ namespace Sillet.App
             }
             catch (Exception)
             {
-                // Sounds are a nice extra. If anything goes wrong the app just stays quiet
             }
         }
 
@@ -350,6 +388,8 @@ namespace Sillet.App
             menu.Items.Add(auto);
             menu.Items.Add(new System.Windows.Forms.ToolStripSeparator());
             menu.Items.Add(Sillet.App.Services.Loc.T("Exit"), null, (s, e) => ExitApp());
+            menu.Opening += (s, e) => TrayTheme.Apply(menu);
+            TrayTheme.Apply(menu);
             _tray.ContextMenuStrip = menu;
             _tray.Visible = true;
         }
@@ -470,6 +510,18 @@ namespace Sillet.App
             if (path == null) return false;
             System.IO.File.WriteAllBytes(path, data);
             return true;
+        }
+
+        public bool SharesFiles { get { return false; } }
+
+        public Task<Sillet.Hardware.ILedgerTransport> ConnectLedgerAsync()
+        {
+            return Sillet.App.Services.LedgerHid.OpenAsync();
+        }
+
+        public Task<string> PickBackupFileAsync()
+        {
+            return Task.FromResult(PickOpenPath("Sillet backup|*.json|All files|*.*"));
         }
 
         public string PickOpenPath(string filter)

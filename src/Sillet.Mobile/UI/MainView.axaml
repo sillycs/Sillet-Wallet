@@ -41,7 +41,7 @@
                             </Panel>
                             <StackPanel VerticalAlignment="Center" MaxWidth="170">
                                 <TextBlock Text="{Binding ActiveProfileName}" FontWeight="SemiBold" FontSize="14" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{ui:Tr 'Watch-only'}" Classes="caption" FontSize="11" IsVisible="{Binding IsWatchOnly}" />
+                                <TextBlock Text="{ui:Tr 'Hardware wallet'}" Classes="caption" FontSize="11" IsVisible="{Binding IsWatchOnly}" />
                             </StackPanel>
                             <Path Classes="icon small" Data="{StaticResource IconChevron}" Stroke="{DynamicResource TextSecondaryBrush}" />
                         </StackPanel>
@@ -57,8 +57,8 @@
                                  HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,1,1,0" IsVisible="{Binding HasUnread}" />
                     </Grid>
                 </Button>
-                <Button Grid.Column="3" Classes="ghost" Command="{Binding LockCommand}">
-                    <Path Classes="icon" Data="{StaticResource IconLock}" />
+                <Button Grid.Column="3" Classes="ghost" Click="Support_Click">
+                    <Path Classes="icon" Data="{StaticResource IconLifebuoy}" />
                 </Button>
             </Grid>
 
@@ -84,7 +84,7 @@
 
             <Grid Grid.Row="2">
                 <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderSubtleBrush}" BorderThickness="0,1,0,0"
-                        CornerRadius="24,24,0,0">
+                        CornerRadius="0">
                     <Grid ColumnDefinitions="*,*,84,*,*" Margin="6,4,6,10">
                         <Button Grid.Column="0" Classes="nav" Classes.active="{Binding SelectedNav.Key, Converter={StaticResource Equals}, ConverterParameter=home}"
                                 Command="{Binding NavigateCommand}" CommandParameter="home">
@@ -170,15 +170,15 @@
                     <TextBlock Text="{ui:Tr 'Your wallets'}" Classes="section" Margin="0" VerticalAlignment="Center" />
                 </StackPanel>
                 <ScrollViewer IsScrollChainingEnabled="False" MaxHeight="260">
-                    <ItemsControl ItemsSource="{Binding ProfileList}">
+                    <ItemsControl ItemsSource="{Binding ProfileChoices}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.SwitchProfileCommand}" CommandParameter="{Binding}">
+                                <Button Classes="row" Margin="0,0,0,6" Command="{Binding $parent[ItemsControl].DataContext.SwitchProfileCommand}" CommandParameter="{Binding Profile}">
                                     <Border Classes="soft" Padding="12,10">
                                         <Grid ColumnDefinitions="Auto,*">
                                             <Border Width="34" Height="34" CornerRadius="11" Background="{DynamicResource SurfacePressedBrush}" ClipToBounds="True">
                                                 <Panel>
-                                                    <Image Width="17" Height="17" Source="{Binding WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    <Image Width="17" Height="17" Source="{Binding $parent[ItemsControl].DataContext.WalletIconName, Converter={StaticResource AssetImage}}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                                                     <Image Stretch="UniformToFill" Source="{Binding PhotoPath, Converter={StaticResource FileImage}}" IsVisible="{Binding HasPhoto}" />
                                                 </Panel>
                                             </Border>
@@ -309,36 +309,108 @@
             </StackPanel>
         </Border>
 
+        <Border Classes="scrim" Classes.open="{Binding SettingsPage.IsPricePickerOpen}" Tapped="PriceScrim_Tapped" />
+        <Border Classes="sheet" Classes.open="{Binding SettingsPage.IsPricePickerOpen}">
+            <StackPanel Spacing="10" DataContext="{Binding SettingsPage}">
+                <Border Classes="handle" />
+                <TextBlock Text="{ui:Tr 'Which coins do you want to follow?'}" FontSize="18" FontWeight="Bold" TextWrapping="Wrap" />
+                <UniformGrid Columns="3">
+                    <RadioButton Classes="seg" GroupName="PriceMove" Content="3%" IsChecked="{Binding BitcoinMove3, Mode=TwoWay}" />
+                    <RadioButton Classes="seg" GroupName="PriceMove" Content="5%" IsChecked="{Binding BitcoinMove5, Mode=TwoWay}" />
+                    <RadioButton Classes="seg" GroupName="PriceMove" Content="10%" IsChecked="{Binding BitcoinMove10, Mode=TwoWay}" />
+                </UniformGrid>
+                <ScrollViewer IsScrollChainingEnabled="False" MaxHeight="340">
+                    <ItemsControl ItemsSource="{Binding PriceCoinRows}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid ColumnDefinitions="Auto,*,Auto" Margin="0,6">
+                                    <Border Width="36" Height="36" CornerRadius="18" Background="{DynamicResource SurfacePressedBrush}">
+                                        <TextBlock Text="{Binding Initial}" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                    <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Symbol}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding Name}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <ToggleSwitch Grid.Column="2" IsChecked="{Binding Selected, Mode=TwoWay}" OnContent="" OffContent="" MinWidth="0" VerticalAlignment="Center" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                <Button Classes="primary" Content="{ui:Tr 'Save'}" Command="{Binding SavePricePickerCommand}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="SupportScrim" Classes="scrim" Tapped="SupportScrim_Tapped" />
+        <Border x:Name="SupportSheet" Classes="sheet">
+            <StackPanel Spacing="10">
+                <Border Classes="handle" />
+                <TextBlock Text="{ui:Tr 'Support'}" FontSize="18" FontWeight="Bold" />
+                <Button Classes="row" Click="SupportTelegram_Click">
+                    <Border Classes="soft" Padding="12,12">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Image Width="22" Height="22" Source="{Binding TelegramIconName, Converter={StaticResource AssetImage}}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Margin="14,0,0,0" Text="{ui:Tr 'Contact the developer on Telegram'}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </Button>
+                <Button Classes="row" Click="SupportDiscord_Click">
+                    <Border Classes="soft" Padding="12,12">
+                        <Grid ColumnDefinitions="Auto,*">
+                            <Image Width="22" Height="22" Source="{Binding DiscordIconName, Converter={StaticResource AssetImage}}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Margin="14,0,0,0" Text="{ui:Tr 'Ask our community or staff'}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                        </Grid>
+                    </Border>
+                </Button>
+            </StackPanel>
+        </Border>
+
         <Border x:Name="ShotScrim" Classes="scrim" Tapped="ShotScrim_Tapped" />
         <Border x:Name="ShotSheet" Classes="sheet">
-            <StackPanel Spacing="12">
+            <StackPanel Spacing="14">
                 <Border Classes="handle" />
-                <Border CornerRadius="14" ClipToBounds="True" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}"
+                <Border CornerRadius="18" ClipToBounds="True" HorizontalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}"
                         Background="{DynamicResource SurfaceAltBrush}">
-                    <Image x:Name="ShotPreview" MaxHeight="300" MaxWidth="220" Stretch="Uniform" />
+                    <Image x:Name="ShotPreview" MaxHeight="380" MaxWidth="260" Stretch="Uniform" />
                 </Border>
-                <TextBlock Text="{ui:Tr 'Want to share this screenshot?'}" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
                 <TextBlock Text="{ui:Tr 'Check that it shows nothing private before sending it'}" Classes="label" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" />
-                <Grid ColumnDefinitions="*,10,*" Margin="0,6,0,0">
-                    <Button Classes="secondary" Content="{ui:Tr 'Not now'}" HorizontalAlignment="Stretch" Click="ShotDismiss_Click" />
-                    <Button Grid.Column="2" Classes="primary" HorizontalAlignment="Stretch" Click="ShotShare_Click">
-                        <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-                            <Path Classes="icon small" Data="{StaticResource IconShare}" />
-                            <TextBlock Text="{ui:Tr 'Share'}" VerticalAlignment="Center" />
+                <UniformGrid Columns="3">
+                    <Button Classes="ghost" Click="ShotSave_Click" HorizontalAlignment="Center">
+                        <StackPanel Spacing="6">
+                            <Border Width="56" Height="56" CornerRadius="28" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}">
+                                <Path Classes="icon" Data="{StaticResource IconReceive}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{ui:Tr 'Save'}" FontSize="12" HorizontalAlignment="Center" />
                         </StackPanel>
                     </Button>
-                </Grid>
+                    <Button Classes="ghost" Click="ShotShare_Click" HorizontalAlignment="Center">
+                        <StackPanel Spacing="6">
+                            <Border Width="56" Height="56" CornerRadius="28" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}">
+                                <Path Classes="icon" Data="{StaticResource IconShare}" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{ui:Tr 'Share'}" FontSize="12" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                    <Button Classes="ghost" Click="ShotDismiss_Click" HorizontalAlignment="Center">
+                        <StackPanel Spacing="6">
+                            <Border Width="56" Height="56" CornerRadius="28" BorderThickness="1" BorderBrush="{DynamicResource BorderSubtleBrush}">
+                                <TextBlock Text="✕" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <TextBlock Text="{ui:Tr 'Not now'}" FontSize="12" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Button>
+                </UniformGrid>
             </StackPanel>
         </Border>
 
         <Border Classes="toast" Classes.open="{Binding IsToastVisible}" VerticalAlignment="Bottom" HorizontalAlignment="Center" Margin="16,0,16,104"
-                CornerRadius="14" Padding="16,11" Background="{DynamicResource ToastBrush}" IsHitTestVisible="False" BoxShadow="0 4 12 0 #55000000">
+                CornerRadius="0" Padding="16,11" Background="{DynamicResource ToastBrush}" IsHitTestVisible="False" BoxShadow="0 4 12 0 #55000000">
             <TextBlock Text="{Binding ToastMessage}" Foreground="{DynamicResource OnToastBrush}" TextWrapping="Wrap" MaxWidth="320" FontSize="13" />
         </Border>
 
         <Grid IsVisible="{Binding IsDialogOpen}">
             <Border Background="#C0000000" />
-            <Border Classes="card" Margin="30" MaxWidth="360" VerticalAlignment="Center" Padding="22,26,22,14" CornerRadius="26" BoxShadow="0 8 20 0 #88000000">
+            <Border Classes="card" Margin="30" MaxWidth="360" VerticalAlignment="Center" Padding="22,26,22,14" CornerRadius="0" BoxShadow="0 8 20 0 #88000000">
                 <StackPanel Spacing="10">
                     <Border Width="52" Height="52" CornerRadius="26" HorizontalAlignment="Center" Classes="dialogicon" Classes.danger="{Binding DialogIsDanger}">
                         <Path Classes="icon" Data="{StaticResource IconShield}" />

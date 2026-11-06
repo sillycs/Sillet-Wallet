@@ -5,85 +5,128 @@
     <UserControl.Styles>
         <Style Selector="Control.rise">
             <Setter Property="Opacity" Value="0" />
-            <Setter Property="RenderTransform" Value="translateY(22px)" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
         </Style>
         <Style Selector="Control.rise.in">
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransform" Value="translateY(0px)" />
         </Style>
-        <Style Selector="Control.rise.d1">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.25" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.25" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Control.rise.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:0.15" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
-        <Style Selector="Control.rise.d2">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.35" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.35" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Control.rise.d1.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:0.4" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
-        <Style Selector="Control.rise.d3">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.55" Delay="0:0:0.5" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.55" Delay="0:0:0.5" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Control.rise.d2.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:0.5" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
-        <Style Selector="Control.rise.d4">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.7" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.7" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Control.rise.d3.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:0.65" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
-        <Style Selector="Control.rise.d5">
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.5" Delay="0:0:0.8" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.5" Delay="0:0:0.8" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+        <Style Selector="Control.rise.d4.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:0.85" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
+        </Style>
+        <Style Selector="Control.rise.d5.in">
+            <Style.Animations>
+                <Animation Duration="0:0:0.55" Delay="0:0:1.0" Easing="CubicEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="translateY(24px)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="translateY(0px)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
         <Style Selector="Control.pop">
             <Setter Property="Opacity" Value="0" />
-            <Setter Property="RenderTransform" Value="scale(0.3)" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:0.25" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.65" Easing="BackEaseOut" />
-                </Transitions>
-            </Setter>
         </Style>
         <Style Selector="Control.pop.in">
             <Setter Property="Opacity" Value="1" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
+            <Style.Animations>
+                <Animation Duration="0:0:0.7" Easing="BackEaseOut" FillMode="Both">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="scale(0.3)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="1" />
+                        <Setter Property="RenderTransform" Value="scale(1)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
         <Style Selector="Control.ringpulse">
-            <Setter Property="Opacity" Value="0.7" />
-            <Setter Property="RenderTransform" Value="scale(1)" />
-            <Setter Property="Transitions">
-                <Transitions>
-                    <DoubleTransition Property="Opacity" Duration="0:0:1.1" Delay="0:0:0.3" Easing="CubicEaseOut" />
-                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:1.1" Delay="0:0:0.3" Easing="CubicEaseOut" />
-                </Transitions>
-            </Setter>
+            <Setter Property="Opacity" Value="0" />
         </Style>
         <Style Selector="Control.ringpulse.in">
-            <Setter Property="Opacity" Value="0" />
-            <Setter Property="RenderTransform" Value="scale(1.4)" />
+            <Style.Animations>
+                <Animation Duration="0:0:1.8" Delay="0:0:0.5" IterationCount="Infinite" Easing="CubicEaseOut">
+                    <KeyFrame Cue="0%">
+                        <Setter Property="Opacity" Value="0.8" />
+                        <Setter Property="RenderTransform" Value="scale(1)" />
+                    </KeyFrame>
+                    <KeyFrame Cue="100%">
+                        <Setter Property="Opacity" Value="0" />
+                        <Setter Property="RenderTransform" Value="scale(1.45)" />
+                    </KeyFrame>
+                </Animation>
+            </Style.Animations>
         </Style>
         <Style Selector="Button.ongreen">
             <Setter Property="Padding" Value="16,14" />

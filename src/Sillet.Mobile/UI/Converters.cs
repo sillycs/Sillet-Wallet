@@ -26,7 +26,6 @@ namespace Sillet.Mobile.UI
 
     public sealed class QrConverter : IValueConverter
     {
-        // Drawing a QR takes a moment; the Receive page asks again every time it is shown, so the last few are kept.
         private static readonly Dictionary<string, Bitmap> Cache = new Dictionary<string, Bitmap>();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -73,7 +72,6 @@ namespace Sillet.Mobile.UI
             {
                 if (File.Exists(path))
                 {
-                    // Icons are shown at 38px: decode them small instead of at full size (less memory, faster drawing while scrolling).
                     using (var stream = File.OpenRead(path)) bitmap = Bitmap.DecodeToWidth(stream, 96);
                 }
                 else bitmap = null;

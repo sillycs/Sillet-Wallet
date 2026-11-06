@@ -8,7 +8,7 @@
                     c:Anim.Enter="True" c:Anim.ScaleFrom="0.85">
                 <TextBlock Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="22" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
-            <TextBlock Text="{c:Tr 'Watch a hardware wallet'}" Style="{StaticResource Text.Title}" Margin="0,18,0,0" c:Anim.Enter="True" c:Anim.Delay="60" />
+            <TextBlock Text="{c:Tr 'Add a hardware wallet'}" Style="{StaticResource Text.Title}" Margin="0,18,0,0" c:Anim.Enter="True" c:Anim.Delay="60" />
             <TextBlock Style="{StaticResource Text.Caption}" TextWrapping="Wrap" Margin="0,6,0,20" LineHeight="20" c:Anim.Enter="True" c:Anim.Delay="100"
                        Text="{c:Tr 'Open Ledger Live, Trezor Suite or your device app, go to Receive for each coin and paste the address here. Sillet tracks balances and shows your receive addresses. Your keys stay on the device, so sending is done from its own app'}" />
 
@@ -43,6 +43,7 @@
                 </StackPanel>
             </Border>
 
+            <Button Style="{StaticResource Button.Secondary}" Content="{c:Tr 'Read from Ledger'}" Command="{Binding ReadLedgerCommand}" HorizontalAlignment="Left" Margin="0,0,0,16" />
             <TextBlock Text="{c:Tr 'Name'}" Style="{StaticResource Text.Label}" Margin="0,0,0,8" />
             <TextBox Style="{StaticResource Input}" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Tag="{c:Tr 'Hardware wallet'}" MaxLength="32" />
 
@@ -77,7 +78,7 @@
                     <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Button Style="{StaticResource Button.Secondary}" Content="{c:Tr 'Back'}" Command="{Binding CancelCommand}" Padding="20,12" />
-                <Button Grid.Column="2" Style="{StaticResource Button.Primary}" Content="{c:Tr 'Start watching'}" Command="{Binding SaveCommand}" Padding="18,12" />
+                <Button Grid.Column="2" Style="{StaticResource Button.Primary}" Content="{c:Tr 'Add wallet'}" Command="{Binding SaveCommand}" Padding="18,12" />
             </Grid>
             <TextBlock Text="{c:Tr 'Only public addresses are saved. Always confirm a receive address on the device screen before sharing it'}" Style="{StaticResource Text.Label}"
                        FontSize="11.5" Foreground="{DynamicResource TextTertiaryBrush}" TextWrapping="Wrap" Margin="2,14,0,0" />

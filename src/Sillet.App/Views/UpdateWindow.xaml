@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:c="clr-namespace:Sillet.App.Controls"
-        Title="Sillet" Icon="../Assets/silleticon.ico" Width="420" Height="210" ResizeMode="NoResize"
+        Title="Sillet" Icon="../Assets/silleticon.ico" Width="440" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterScreen" UseLayoutRounding="True" Topmost="True"
         Background="{DynamicResource BgBrush}" Foreground="{DynamicResource TextBrush}"
         FontFamily="{StaticResource UiFont}" FontSize="14">
@@ -11,13 +11,22 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock x:Name="TitleText" Style="{StaticResource Text.Title}" />
+        <StackPanel Orientation="Horizontal">
+            <Image Source="../Assets/silleticon.ico" Width="30" Height="30" Margin="0,0,12,0" RenderOptions.BitmapScalingMode="HighQuality" VerticalAlignment="Center" />
+            <TextBlock x:Name="TitleText" Style="{StaticResource Text.Title}" VerticalAlignment="Center" />
+        </StackPanel>
         <TextBlock x:Name="StatusText" Grid.Row="1" Style="{StaticResource Text.Label}" Margin="0,6,0,0" TextWrapping="Wrap" />
-        <ProgressBar x:Name="Bar" Grid.Row="2" Height="6" Minimum="0" Maximum="1" Margin="0,18,0,0" />
-        <Button x:Name="CloseButton" Grid.Row="4" Style="{StaticResource Button.Secondary}" HorizontalAlignment="Right" Padding="16,6"
-                Visibility="Collapsed" Click="OnClose" />
+        <ScrollViewer x:Name="NotesScroll" Grid.Row="2" MaxHeight="150" VerticalScrollBarVisibility="Auto" Margin="0,12,0,0" Visibility="Collapsed">
+            <TextBlock x:Name="NotesText" Style="{StaticResource Text.Label}" FontSize="12" TextWrapping="Wrap" />
+        </ScrollViewer>
+        <ProgressBar x:Name="Bar" Grid.Row="3" Height="6" Minimum="0" Maximum="1" Margin="0,18,0,0" Visibility="Collapsed" />
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button x:Name="LaterButton" Style="{StaticResource Button.Secondary}" Padding="16,6" Margin="0,0,8,0" Visibility="Collapsed" Click="OnLater" />
+            <Button x:Name="InstallButton" Style="{StaticResource Button.Primary}" Padding="16,6" Visibility="Collapsed" Click="OnInstall" />
+            <Button x:Name="CloseButton" Style="{StaticResource Button.Secondary}" Padding="16,6" Visibility="Collapsed" Click="OnClose" />
+        </StackPanel>
     </Grid>
 </Window>

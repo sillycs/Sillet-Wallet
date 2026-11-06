@@ -1,0 +1,3 @@
+DOTNET_TieredPGO=0
+DOTNET_TC_QuickJitForLoops=1
+MONO_GC_PARAMS=nursery-size=4m

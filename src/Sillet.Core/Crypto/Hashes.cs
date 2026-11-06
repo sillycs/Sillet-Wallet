@@ -34,6 +34,15 @@ namespace Sillet.Crypto
             return Ripemd160(Sha256(data));
         }
 
+        public static byte[] Blake2b(byte[] data, int bits)
+        {
+            var digest = new Blake2bDigest(bits);
+            digest.BlockUpdate(data, 0, data.Length);
+            var output = new byte[bits / 8];
+            digest.DoFinal(output, 0);
+            return output;
+        }
+
         public static byte[] Keccak256(byte[] data)
         {
             var digest = new KeccakDigest(256);

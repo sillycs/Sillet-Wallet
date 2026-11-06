@@ -88,6 +88,11 @@ namespace Sillet.App.Services
             { "linea", new[] { "LINEA" } },
             { "blast", new[] { "BLAST" } },
             { "gnosis", new[] { "XDAI", "GNOSIS" } },
+            { "bitcoincash", new[] { "BCH", "BITCOIN CASH" } },
+            { "xrp", new[] { "XRP", "RIPPLE", "XRP LEDGER" } },
+            { "ton", new[] { "TON", "TONCOIN", "THE OPEN NETWORK" } },
+            { "sui", new[] { "SUI" } },
+            { "cosmos", new[] { "ATOM", "COSMOS", "COSMOS HUB" } },
         };
 
         public static string Match(string chainId, IEnumerable<SwapNetwork> networks)

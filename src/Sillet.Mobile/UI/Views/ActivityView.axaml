@@ -143,6 +143,9 @@
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
+                <Button Classes="primary" Content="{ui:Tr 'Speed up'}" Command="{Binding SpeedUpCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsVisible="{Binding ReceiptCanSpeedUp}" />
+                <Button Classes="secondary" Content="{ui:Tr 'Cancel payment'}" Command="{Binding CancelPaymentCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsVisible="{Binding ReceiptCanSpeedUp}" />
+                <Button Classes="primary" Content="{ui:Tr 'Send again'}" Command="{Binding RetryCommand}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" IsVisible="{Binding ReceiptCanRetry}" />
                 <Button Classes="secondary" Command="{Binding TrackPaymentCommand}" HorizontalAlignment="Stretch" IsVisible="{Binding ReceiptCanTrack}">
                     <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
                         <Path Classes="icon" Data="{StaticResource IconEye}" StrokeThickness="2" />
