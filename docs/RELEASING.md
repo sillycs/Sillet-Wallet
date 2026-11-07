@@ -18,7 +18,8 @@ Releases are built by GitHub Actions and nothing else. The workflow `.github/wor
 ## Each release
 
 1. Bump the version: `UpdateService.cs`, `src/Sillet.Cli/Program.cs`, `Sillet.Cli.csproj` and the Android `ApplicationDisplayVersion` and `ApplicationVersion`. Edit `RELEASE_NOTES.md` (plain ASCII, under 1500 characters, it is shown in the update prompt)
-2. Run `release.ps1`. It pushes the source, pushes the tag, waits for the workflow, checks the attestation of every file, signs `version.json` with the offline key and updates the raton.fun download page with the files the workflow built
+2. Run `release.ps1`. It restores the packages so every `packages.lock.json` is committed. Tags are never moved, deleted or force-pushed: a published version is never rebuilt, a fix is a new version.
+   Run `release.ps1`. It pushes the source, pushes the tag, waits for the workflow, checks the attestation of every file, signs `version.json` with the offline key and updates the raton.fun download page with the files the workflow built
 
 ## Verifying a download
 
