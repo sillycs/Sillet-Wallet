@@ -1,44 +1,31 @@
 # Releasing Sillet
 
+Releases are built by GitHub Actions and nothing else. The workflow `.github/workflows/release.yml` runs when a tag like `v1.1.5` is pushed. It runs the tests, builds every file from that commit, writes `SHA256SUMS.txt`, attaches a build provenance attestation and creates the GitHub Release. Nobody uploads binaries by hand
+
 ## One time setup
 
-1. Create the offline update key (do this on a machine that is not connected to the internet and keep the file offline, never commit it):
-
-   ```
-   dotnet run --project tools/ReleaseSigner -- keygen release-key.key
-   ```
-
-   Paste the public key it prints into `UpdateKey.PublicKeyHex` in `src/Sillet.App/Services/UpdateKey.cs`. Until a key is set the app refuses to self-update and only links to the download page
-
-2. Create the Android signing key once and keep it forever. The same key must sign every release:
+1. Create the offline update key with `keygen.ps1`. It writes the private key to a file (move it to a USB drive and back it up, never commit it) and puts the public key in `UpdateKey.PublicKeyHex`. Commit that change. The workflow refuses to release while the public key is empty
+2. Create the Android signing key once and keep it forever. Every release must be signed with the same key:
 
    ```
    keytool -genkeypair -v -keystore sillet.keystore -alias sillet -keyalg RSA -keysize 4096 -validity 10000
    keytool -list -v -keystore sillet.keystore -alias sillet
    ```
 
-   Publish the SHA-256 certificate fingerprint in the README and in each release. Store the keystore as the GitHub secrets `ANDROID_KEYSTORE_B64`, `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`
-
-3. Run `dotnet restore` once and commit the generated `packages.lock.json` files so dependencies are pinned. Dependabot proposes updates as pull requests
+   Add the repository secrets `ANDROID_KEYSTORE_B64` (base64 of the keystore file), `ANDROID_KEYSTORE_PASSWORD` and `ANDROID_KEY_ALIAS`. Publish the SHA-256 certificate fingerprint. Without the secrets the release has no APK
+3. In the GitHub repository settings, add a tag ruleset for `v*` that blocks deleting and updating tags, and only lets maintainers create them
 
 ## Each release
 
-1. Update the version in `AppInfo.Version`, the Android `ApplicationDisplayVersion` and `version.json`
-2. Run `.\build.ps1 -Release` (needs the GitHub CLI: `gh auth login`). It builds, pushes the source code, creates the GitHub Release with every file and updates the raton.fun download page. The `Release` workflow is a manual backup (Actions tab, Run workflow)
-3. The `Release` workflow builds everything from that commit, runs the tests, writes `SHA256SUMS.txt`, attaches a build provenance attestation and publishes the GitHub Release
-4. Download `Sillet.exe` from the release, then sign it offline:
-
-   ```
-   dotnet run --project tools/ReleaseSigner -- sign release-key.key Sillet.exe 1.1.5 notes.txt
-   ```
-
-   Put the printed `version`, `sha256`, `notes` and `sig` fields, plus `exe` pointing at the same binary, in `version.json` on raton.fun
+1. Bump the version: `UpdateService.cs`, `src/Sillet.Cli/Program.cs`, `Sillet.Cli.csproj` and the Android `ApplicationDisplayVersion` and `ApplicationVersion`. Edit `RELEASE_NOTES.md` (plain ASCII, under 1500 characters, it is shown in the update prompt)
+2. Run `release.ps1`. It pushes the source, pushes the tag, waits for the workflow, checks the attestation of every file, signs `version.json` with the offline key and updates the raton.fun download page with the files the workflow built
 
 ## Verifying a download
 
-- Compare the SHA-256 with `SHA256SUMS.txt` on the GitHub Release (a hash served from the same site as the file proves nothing on its own, so use the release page)
-- `gh attestation verify Sillet.exe --repo <owner>/<repo>` checks that the file was built by the workflow from a tagged commit
-- Android: `apksigner verify --print-certs Sillet.apk` and compare the fingerprint with the published one
+- `gh attestation verify Sillet.exe --repo <owner>/<repo>` proves the file was built by the workflow from a tagged commit
+- Compare the SHA-256 with `SHA256SUMS.txt` on the GitHub Release
+- Android: `apksigner verify --print-certs Sillet.apk` and compare with the published fingerprint
+- The app itself only accepts an update whose `version.json` is signed by the release key and whose file matches the signed SHA-256
 
 ## Reproducing a build
 

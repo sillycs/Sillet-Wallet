@@ -25,6 +25,30 @@ linux-cli/
 .DS_Store
 Thumbs.db
 
+# Debug and diagnostic files
+*.pdb
+*.mdb
+*.dbg
+*.ilk
+*.exp
+*.lib
+*.obj
+*.dmp
+*.trx
+*.binlog
+*.vsidx
+*.rsuser
+*.cache
+*.nupkg.metadata
+Debug/
+debug/
+[Dd]ebug*/
+.vs/
+.fake/
+crash*.txt
+dist-release/
+*.stackdump
+
 # Logs and temp
 *.log
 *.tmp
@@ -43,3 +67,6 @@ vault.json
 *.pem
 release-key*
 .env
+
+# Local helper scripts
+*.ps1

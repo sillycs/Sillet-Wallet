@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Raton team (raton.fun)
 using Org.BouncyCastle.Math.EC.Rfc8032;
 
 namespace Sillet.Crypto

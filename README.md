@@ -117,3 +117,7 @@ Adding an EVM network is one small class, check `LineaChain` for an example and 
 ## Credits
 
 Prices and icons from [CoinGecko](https://www.coingecko.com), fear and greed index from [alternative.me](https://alternative.me/crypto/fear-and-greed-index/), font is [Inter](https://rsms.me/inter/)
+
+## License
+
+Sillet is released under the [MIT License](LICENSE). Third-party components are listed in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)

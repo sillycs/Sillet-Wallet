@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Raton team (raton.fun)
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -44,6 +46,12 @@ namespace ReleaseSigner
             using (var hasher = SHA256.Create())
             using (var stream = File.OpenRead(exe)) sha = Hex.Encode(hasher.ComputeHash(stream));
             var notes = notesFile != null && File.Exists(notesFile) ? File.ReadAllText(notesFile).Trim() : (notesFile ?? "");
+            notes = notes.Replace("\r", "");
+            if (notes.Length > 1500)
+            {
+                Console.Error.WriteLine("Notes are longer than 1500 characters, the app would cut them and the signature would fail");
+                return 1;
+            }
             var signature = Convert.ToBase64String(Ed25519Keys.Sign(seed, UpdateKey.Message(version, sha, notes)));
             var publicKey = Hex.Encode(Ed25519Keys.PublicKey(seed));
             Console.WriteLine("{");

@@ -12,7 +12,8 @@ Key generation and derivation, signing for every network, the encrypted vault, t
 
 ## How updates are protected
 
-- Updates are downloaded over HTTPS from raton.fun and checked against the SHA-256 published in `version.json`. If a release key is set in `UpdateKey.PublicKeyHex`, the app also requires an Ed25519 signature over the version, hash and changelog (optional hardening, see docs/RELEASING.md)
+- Releases are built only by GitHub Actions from a tagged commit and carry a build provenance attestation (`gh attestation verify`)
+- Every Windows update is signed offline with an Ed25519 release key. The public key is compiled into the app (`UpdateKey.PublicKeyHex`) and the app refuses any update without a valid signature over the version, the SHA-256 of the file and the changelog
 - Automatic updates are off by default
 - Updates are never installed silently. The app shows the version and changelog and waits for the user to press Install
 - Administrator permission is requested only when Sillet lives in a protected folder such as Program Files

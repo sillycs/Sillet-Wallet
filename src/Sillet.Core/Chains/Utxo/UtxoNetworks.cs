@@ -1,4 +1,6 @@
-﻿using Sillet.Core;
+﻿// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Raton team (raton.fun)
+using Sillet.Core;
 using Sillet.Crypto;
 using Sillet.Encoding;
 

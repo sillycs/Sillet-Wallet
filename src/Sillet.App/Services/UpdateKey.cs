@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Raton team (raton.fun)
 using System;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,7 +10,7 @@ namespace Sillet.App.Services
 {
     public static class UpdateKey
     {
-        public const string PublicKeyHex = "";
+        public const string PublicKeyHex = "fe3486295d11090c7ec5a77b63472bdc8bf424f8124679d66cc63d33440895bb";
 
         public static bool IsConfigured
         {

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MIT
+// Copyright (c) 2026 Raton team (raton.fun)
 using System;
 using System.Security.Cryptography;
 using Org.BouncyCastle.Asn1.X9;
