@@ -15,7 +15,7 @@ namespace Sillet.App.Services
 {
     public static class AppInfo
     {
-        public const string Version = "1.1.5";
+        public const string Version = "1.1.6";
         public const string DownloadUrl = "https://raton.fun/wallet/download";
         public const string DesktopVersionUrl = "https://raton.fun/wallet/version.json";
         public const string AndroidVersionUrl = "https://raton.fun/wallet/version-android.json";

@@ -9,8 +9,8 @@
     <AssemblyName>Sillet.Android</AssemblyName>
     <ApplicationId>fun.raton.sillet</ApplicationId>
     <ApplicationTitle>Sillet</ApplicationTitle>
-    <ApplicationVersion>7</ApplicationVersion>
-    <ApplicationDisplayVersion>1.1.5</ApplicationDisplayVersion>
+    <ApplicationVersion>8</ApplicationVersion>
+    <ApplicationDisplayVersion>1.1.6</ApplicationDisplayVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
     <RunAOTCompilation>true</RunAOTCompilation>
     <AndroidEnableProfiledAot>true</AndroidEnableProfiledAot>
