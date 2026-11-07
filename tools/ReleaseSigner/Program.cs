@@ -15,6 +15,7 @@ namespace ReleaseSigner
         {
             if (args.Length >= 2 && args[0] == "keygen") return KeyGen(args[1]);
             if (args.Length >= 4 && args[0] == "sign") return Sign(args[1], args[2], args[3], args.Length > 4 ? args[4] : null);
+            if (args.Length >= 2 && args[0] == "pub") { Console.WriteLine(Hex.Encode(Ed25519Keys.PublicKey(Hex.Decode(File.ReadAllText(args[1]).Trim())))); return 0; }
             if (args.Length >= 2 && args[0] == "hash") return Hash(args);
             Console.WriteLine("Sillet release signer");
             Console.WriteLine("  keygen <private-key-file>                         create a new release key (keep the file offline)");
