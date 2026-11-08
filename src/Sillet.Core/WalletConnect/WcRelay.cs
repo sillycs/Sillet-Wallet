@@ -169,7 +169,8 @@ namespace Sillet.WalletConnect
         private async Task<JsonValue> RequestAsync(string method, object parameters, int timeoutMs = 30000)
         {
             var id = NextId().ToString();
-            var tcs = new TaskCompletionSource<JsonValue>();
+            // the answer is handled on another thread, so what the caller does next can never stop the relay from reading
+            var tcs = new TaskCompletionSource<JsonValue>(TaskCreationOptions.RunContinuationsAsynchronously);
             _pending[id] = tcs;
             try
             {

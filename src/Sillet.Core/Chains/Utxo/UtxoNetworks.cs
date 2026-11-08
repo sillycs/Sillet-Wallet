@@ -32,6 +32,7 @@ namespace Sillet.Chains.Utxo
         public override string DerivationPath { get { return "m/84'/2'/" + Account + "'/0/0"; } }
         protected override UtxoAddressType AddressType { get { return UtxoAddressType.P2WPKH; } }
         protected override string Bech32Hrp { get { return "ltc"; } }
+        protected override string MessagePrefix { get { return "Litecoin Signed Message:\n"; } }
         protected override byte P2pkhVersion { get { return 0x30; } }
         protected override byte[] P2shVersions { get { return new byte[] { 0x32, 0x05 }; } }
         protected override string ExplorerBase { get { return "https://litecoinspace.org"; } }
@@ -48,6 +49,7 @@ namespace Sillet.Chains.Utxo
         public override string DerivationPath { get { return "m/44'/3'/" + Account + "'/0/0"; } }
         protected override UtxoAddressType AddressType { get { return UtxoAddressType.P2PKH; } }
         protected override string Bech32Hrp { get { return null; } }
+        protected override string MessagePrefix { get { return "Dogecoin Signed Message:\n"; } }
         protected override byte P2pkhVersion { get { return 0x1e; } }
         protected override byte[] P2shVersions { get { return new byte[] { 0x16 }; } }
         protected override long DustLimit { get { return 1000000; } }

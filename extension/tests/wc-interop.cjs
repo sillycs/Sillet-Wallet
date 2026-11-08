@@ -8,7 +8,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
-const { Transaction, verifyMessage, verifyTypedData } = require('ethers');
+const { Transaction, verifyMessage, verifyTypedData, SigningKey, Signature, sha256, ripemd160 } = require('ethers');
+const { createPublicKey, verify: edVerify } = require('node:crypto');
 const { startRelay } = require('./wc-relay.cjs');
 const { SignClient } = require('@walletconnect/sign-client');
 
@@ -45,6 +46,31 @@ function startRpc() {
     }).listen(RPC_PORT, '127.0.0.1', () => resolve(srv));
   });
 }
+
+
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function b58enc(buf) {
+  let n = BigInt('0x' + (Buffer.from(buf).toString('hex') || '0')), out = '';
+  while (n > 0n) { out = B58[Number(n % 58n)] + out; n /= 58n; }
+  for (const b of buf) { if (b === 0) out = '1' + out; else break; }
+  return out;
+}
+function b58dec(str) {
+  let n = 0n;
+  for (const c of str) n = n * 58n + BigInt(B58.indexOf(c));
+  let hex = n.toString(16); if (hex.length % 2) hex = '0' + hex;
+  const body = n === 0n ? Buffer.alloc(0) : Buffer.from(hex, 'hex');
+  let zeros = 0; for (const c of str) { if (c === '1') zeros++; else break; }
+  return Buffer.concat([Buffer.alloc(zeros), body]);
+}
+function bech32Program(addr) {
+  const CH = 'qpzry9x8gf2tvdw0s3jn54khce6mua7l';
+  const data = [...addr.slice(addr.lastIndexOf('1') + 1, -6)].map((c) => CH.indexOf(c));
+  const words = data.slice(1); let acc = 0, bits = 0; const out = [];
+  for (const w of words) { acc = (acc << 5) | w; bits += 5; while (bits >= 8) { bits -= 8; out.push((acc >> bits) & 255); } }
+  return Buffer.from(out);
+}
+const dsha = (b) => Buffer.from(sha256(sha256(b)).slice(2), 'hex');
 
 // the SDK rejects with a plain object { code, message }
 const rejectsWith = (p, re) => p.then(() => { throw new Error('should have been refused'); }, (e) => assert.match(String(e && e.message), re));
@@ -114,6 +140,106 @@ const rejectsWith = (p, re) => p.then(() => { throw new Error('should have been 
     while (!lines.includes('SESSIONS 0') && Date.now() < end) await new Promise((r) => setTimeout(r, 200));
     assert.ok(lines.includes('SESSIONS 0'));
     ok('when the app disconnects the wallet forgets the session');
+
+    // ---------- Solana and Bitcoin ----------
+    const SOL = 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp';
+    const BTC = 'bip122:000000000019d6689c085ae165831e93';
+    const second = await dapp.connect({
+      optionalNamespaces: {
+        solana: { methods: ['solana_signMessage', 'solana_signTransaction', 'solana_signAndSendTransaction', 'solana_signAllTransactions'], chains: [SOL], events: [] },
+        bip122: { methods: ['getAccountAddresses', 'signMessage', 'sendTransfer', 'signPsbt'], chains: [BTC], events: [] },
+      },
+    });
+    child.stdin.write(second.uri + '\n');
+    const s2 = await Promise.race([second.approval(), new Promise((_, rej) => setTimeout(() => rej(new Error('second session was not approved in time')), 40000))]);
+    assert.ok(s2.namespaces.solana.accounts[0].startsWith(SOL + ':'));
+    assert.ok(s2.namespaces.bip122.accounts[0].startsWith(BTC + ':'));
+    assert.ok(!s2.namespaces.bip122.methods.includes('signPsbt'), 'signPsbt is not offered');
+    assert.ok(lines.some((l) => l.startsWith('DETAIL Solana:')) && lines.some((l) => l.startsWith('DETAIL Bitcoin:')));
+    ok('an app asking for Solana and Bitcoin gets one account for each, and only the methods Sillet supports');
+
+    const solAddr = s2.namespaces.solana.accounts[0].split(':')[2];
+    const pub = b58dec(solAddr);
+    assert.equal(pub.length, 32);
+    const edOk = (message, sig) => edVerify(null, message, createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), pub]), format: 'der', type: 'spki' }), sig);
+    const solReq = (method, params) => dapp.request({ topic: s2.topic, chainId: SOL, request: { method, params } });
+
+    const text = Buffer.from('Sign in to Interop Swap');
+    const ms = await solReq('solana_signMessage', { message: b58enc(text), pubkey: solAddr });
+    assert.ok(edOk(text, b58dec(ms.signature)));
+    ok('solana_signMessage gives a valid signature of the account');
+
+    const other = Buffer.alloc(32, 7), sys = Buffer.alloc(32), lam = Buffer.alloc(8);
+    lam.writeBigUInt64LE(1000000n);
+    const transferData = Buffer.concat([Buffer.from([2, 0, 0, 0]), lam]);
+    const mkTx = (keys, program, header = [1, 0, 1], accounts = [0, 1], data = transferData) => {
+      const message = Buffer.concat([Buffer.from(header), Buffer.from([keys.length]), ...keys, Buffer.alloc(32, 9), Buffer.from([1, program, accounts.length, ...accounts, data.length]), data]);
+      return { message, tx: Buffer.concat([Buffer.from([header[0]]), Buffer.alloc(64 * header[0]), message]) };
+    };
+    const t1 = mkTx([pub, other, sys], 2);
+    const st = await solReq('solana_signTransaction', { transaction: t1.tx.toString('base64') });
+    const signedBytes = Buffer.from(st.transaction, 'base64');
+    assert.equal(signedBytes.length, t1.tx.length);
+    assert.ok(edOk(t1.message, signedBytes.subarray(1, 65)));
+    assert.equal(st.signature, b58enc(signedBytes.subarray(1, 65)));
+    assert.ok(lines.some((l) => l.startsWith('PROMPT tx 0.001 SOL to ' + b58enc(other)) && l.includes('warnings=0')));
+    ok('solana_signTransaction shows "0.001 SOL" and the recipient, signs only that and keeps the transaction intact');
+
+    const t2 = mkTx([pub, other, Buffer.alloc(32, 5)], 2, [1, 0, 1], [0, 1], Buffer.from([1, 2, 3]));
+    await solReq('solana_signTransaction', { transaction: t2.tx.toString('base64') });
+    assert.ok(lines.some((l) => l.startsWith('WARNING Sillet cannot read everything')));
+    ok('a transaction for a program Sillet cannot read carries a warning');
+
+    const t3 = mkTx([other, pub, sys], 2);
+    await rejectsWith(solReq('solana_signTransaction', { transaction: t3.tx.toString('base64') }), /does not ask for your signature/);
+    ok('a transaction that does not need our signature is refused');
+
+    await rejectsWith(solReq('solana_signMessage', { message: b58enc(t1.message), pubkey: solAddr }), /looks like a transaction/);
+    ok('a transaction cannot be signed by hiding it as a "message"');
+
+    const all = await solReq('solana_signAllTransactions', { transactions: [t1.tx.toString('base64'), t2.tx.toString('base64')] });
+    assert.equal(all.transactions.length, 2);
+    assert.ok(edOk(t2.message, Buffer.from(all.transactions[1], 'base64').subarray(1, 65)));
+    ok('solana_signAllTransactions signs every transaction');
+
+    // Bitcoin
+    const btcAddr = s2.namespaces.bip122.accounts[0].split(':')[2];
+    const btcReq = (method, params) => dapp.request({ topic: s2.topic, chainId: BTC, request: { method, params } });
+    assert.match(btcAddr, /^bc1q[0-9a-z]{38}$/);
+    const addresses = await btcReq('getAccountAddresses', { account: btcAddr });
+    assert.equal(addresses[0].address, btcAddr);
+    const pk = Buffer.from(addresses[0].publicKey, 'hex');
+    assert.equal(pk.length, 33);
+    assert.equal(Buffer.from(ripemd160(sha256(pk)).slice(2), 'hex').toString('hex'), bech32Program(btcAddr).toString('hex'));
+    ok('getAccountAddresses returns the address and the key it belongs to');
+
+    const note = 'hello bitcoin';
+    const bs = await btcReq('signMessage', { account: btcAddr, message: note, protocol: 'ecdsa' });
+    assert.equal(bs.address, btcAddr);
+    const raw = Buffer.from(bs.signature, 'base64');
+    assert.equal(raw.length, 65);
+    assert.ok(raw[0] >= 39 && raw[0] <= 42);
+    const prefix = Buffer.from('Bitcoin Signed Message:\n');
+    const digest = dsha(Buffer.concat([Buffer.from([prefix.length]), prefix, Buffer.from([note.length]), Buffer.from(note)]));
+    const signature = Signature.from({ r: '0x' + raw.subarray(1, 33).toString('hex'), s: '0x' + raw.subarray(33).toString('hex'), v: 27 + raw[0] - 39 });
+    const recovered = SigningKey.computePublicKey(SigningKey.recoverPublicKey('0x' + digest.toString('hex'), signature), true);
+    assert.equal(recovered.slice(2), pk.toString('hex'));
+    assert.equal(bs.messageHash, digest.toString('hex'));
+    ok('Bitcoin signMessage recovers to the account key');
+
+    await rejectsWith(btcReq('signMessage', { account: btcAddr, message: note, protocol: 'bip322' }), /classic way/);
+    ok('BIP 322 is refused with a clear reason');
+
+    await rejectsWith(btcReq('getAccountAddresses', { account: 'bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4' }), /different account/);
+    ok('a Bitcoin request for another address is refused');
+
+    const before = lines.filter((l) => l.startsWith('PROMPT tx') && l.includes('Bitcoin')).length;
+    await rejectsWith(btcReq('sendTransfer', { account: btcAddr, recipientAddress: 'not-an-address', amount: '1000' }), /./);
+    assert.equal(lines.filter((l) => l.startsWith('PROMPT tx') && l.includes('Bitcoin')).length, before);
+    ok('a Bitcoin payment to an invalid address is refused before the person is asked');
+
+    await dapp.disconnect({ topic: s2.topic, reason: { code: 6000, message: 'bye' } });
+
     console.log('\nAll interop tests passed');
   } catch (e) {
     console.error('\nFAILED:', e);

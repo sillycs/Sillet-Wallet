@@ -41,6 +41,11 @@ namespace Sillet.WalletConnect
         public List<string> OptionalMethods { get; } = new List<string>();
         public List<string> OptionalEvents { get; } = new List<string>();
         public bool RequiresOtherNamespaces { get; set; }
+        // Solana and Bitcoin style networks, as "solana:..." and "bip122:..."
+        public List<string> OtherRequiredChains { get; } = new List<string>();
+        public List<string> OtherOptionalChains { get; } = new List<string>();
+        public List<string> OtherRequiredMethods { get; } = new List<string>();
+        public List<string> OtherOptionalMethods { get; } = new List<string>();
         internal byte[] ProposerPublicKey { get; set; }
     }
 
@@ -50,6 +55,9 @@ namespace Sillet.WalletConnect
         public List<long> Chains { get; } = new List<long>();
         public List<string> Methods { get; } = new List<string>();
         public List<string> Events { get; } = new List<string>();
+        public List<string> OtherChains { get; } = new List<string>();
+        // The address Sillet gives for each of those networks
+        public Dictionary<string, string> OtherAccounts { get; } = new Dictionary<string, string>();
     }
 
     public sealed class WcSession
@@ -63,6 +71,8 @@ namespace Sillet.WalletConnect
         public List<string> Events { get; } = new List<string>();
         public long Expiry { get; set; }
         public long CreatedAt { get; set; }
+        public List<string> OtherChains { get; } = new List<string>();
+        public Dictionary<string, string> OtherAccounts { get; } = new Dictionary<string, string>();
     }
 
     public sealed class WcRequest
@@ -71,6 +81,8 @@ namespace Sillet.WalletConnect
         public long Id { get; set; }
         public string Method { get; set; }
         public long ChainId { get; set; }
+        // Full network name such as eip155:1 or solana:5eykt...
+        public string Chain { get; set; }
         public JsonValue Params { get; set; }
     }
 
@@ -89,6 +101,14 @@ namespace Sillet.WalletConnect
     public sealed class WalletConnectService : IDisposable
     {
         public static readonly string[] SupportedMethods = { "personal_sign", "eth_signTypedData", "eth_signTypedData_v4", "eth_sendTransaction", "wallet_switchEthereumChain", "wallet_addEthereumChain" };
+        public static readonly string[] SolanaMethods = { "solana_signMessage", "solana_signTransaction", "solana_signAndSendTransaction", "solana_signAllTransactions" };
+        public static readonly string[] BitcoinMethods = { "getAccountAddresses", "sendTransfer", "signMessage" };
+
+        public static bool IsSupportedMethod(string method)
+        {
+            return SupportedMethods.Contains(method) || SolanaMethods.Contains(method) || BitcoinMethods.Contains(method);
+        }
+
         public static readonly string[] SupportedEvents = { "chainChanged", "accountsChanged" };
         private const int SessionDays = 7;
         private const int Ttl = 300;
@@ -179,6 +199,13 @@ namespace Sillet.WalletConnect
                                 foreach (var c in j["chains"].Items) s.Chains.Add(c.AsLong());
                                 foreach (var m in j["methods"].Items) s.Methods.Add(m.AsString());
                                 foreach (var e in j["events"].Items) s.Events.Add(e.AsString());
+                                if (j.Has("others"))
+                                    foreach (var o in j["others"].Items)
+                                    {
+                                        var chain = o["chain"].AsString();
+                                        s.OtherChains.Add(chain);
+                                        s.OtherAccounts[chain] = o["address"].AsString();
+                                    }
                                 if (s.Expiry > now) _sessions[s.Topic] = s;
                             }
                     }
@@ -209,6 +236,7 @@ namespace Sillet.WalletConnect
                         chains = s.Chains,
                         methods = s.Methods,
                         events = s.Events,
+                        others = s.OtherChains.Select(c => new { chain = c, address = s.OtherAccounts[c] }).ToList(),
                     }).ToList();
                 }
                 var dir = Path.GetDirectoryName(_storePath);
@@ -304,6 +332,21 @@ namespace Sillet.WalletConnect
             }
         }
 
+        private static string SpaceOf(string key)
+        {
+            var i = key.IndexOf(':');
+            return i < 0 ? key : key.Substring(0, i);
+        }
+
+        private static void OtherChains(string key, JsonValue ns, List<string> into)
+        {
+            if (key.IndexOf(':') > 0) into.Add(key);
+            JsonValue chains;
+            if (ns == null || !ns.TryGet("chains", out chains) || !chains.IsArray) return;
+            foreach (var c in chains.Items)
+                if (c.IsString) into.Add(c.AsString());
+        }
+
         private static void Strings(JsonValue ns, string key, List<string> into)
         {
             JsonValue list;
@@ -371,8 +414,15 @@ namespace Sillet.WalletConnect
             {
                 foreach (var ns in req.Properties)
                 {
+                    var space = SpaceOf(ns.Key);
+                    if (space == "solana" || space == "bip122")
+                    {
+                        OtherChains(ns.Key, ns.Value, proposal.OtherRequiredChains);
+                        Strings(ns.Value, "methods", proposal.OtherRequiredMethods);
+                        continue;
+                    }
                     // "eip155" or "eip155:1" both mean EVM networks
-                    if (ns.Key != "eip155" && !ns.Key.StartsWith("eip155:", StringComparison.Ordinal)) { proposal.RequiresOtherNamespaces = true; continue; }
+                    if (space != "eip155") { proposal.RequiresOtherNamespaces = true; continue; }
                     Chains(ns.Value, proposal.RequiredChains);
                     if (ns.Key.StartsWith("eip155:", StringComparison.Ordinal)) { long single; if (long.TryParse(ns.Key.Substring(7), out single)) proposal.RequiredChains.Add(single); }
                     Strings(ns.Value, "methods", proposal.RequiredMethods);
@@ -383,7 +433,14 @@ namespace Sillet.WalletConnect
             {
                 foreach (var ns in opt.Properties)
                 {
-                    if (ns.Key != "eip155" && !ns.Key.StartsWith("eip155:", StringComparison.Ordinal)) continue;
+                    var optSpace = SpaceOf(ns.Key);
+                    if (optSpace == "solana" || optSpace == "bip122")
+                    {
+                        OtherChains(ns.Key, ns.Value, proposal.OtherOptionalChains);
+                        Strings(ns.Value, "methods", proposal.OtherOptionalMethods);
+                        continue;
+                    }
+                    if (optSpace != "eip155") continue;
                     Chains(ns.Value, proposal.OptionalChains);
                     if (ns.Key.StartsWith("eip155:", StringComparison.Ordinal)) { long single; if (long.TryParse(ns.Key.Substring(7), out single)) proposal.OptionalChains.Add(single); }
                     Strings(ns.Value, "methods", proposal.OptionalMethods);
@@ -392,7 +449,7 @@ namespace Sillet.WalletConnect
             }
 
             Func<int, string, Task> reject = (code, text) => ReplyAsync(pairingTopic, pairKey, id, null, 1101, ErrorJson(code, text));
-            if (proposal.RequiresOtherNamespaces) { await reject(5100, "Sillet only supports Ethereum style networks through WalletConnect").ConfigureAwait(false); return; }
+            if (proposal.RequiresOtherNamespaces) { await reject(5100, "Sillet does not support one of the networks this app needs").ConfigureAwait(false); return; }
             var handler = OnProposal;
             if (handler == null) { await reject(5000, "User rejected.").ConfigureAwait(false); return; }
 
@@ -401,7 +458,7 @@ namespace Sillet.WalletConnect
             try { approval = await handler(proposal).ConfigureAwait(false); }
             catch (Exception) { approval = null; }
             finally { _askOne.Release(); }
-            if (approval == null || approval.Chains.Count == 0) { await reject(5000, "User rejected.").ConfigureAwait(false); return; }
+            if (approval == null || (approval.Chains.Count == 0 && approval.OtherChains.Count == 0)) { await reject(5000, "User rejected.").ConfigureAwait(false); return; }
 
             // Keys for this session: ours and the app's agree on a secret only the two of us know
             byte[] priv, pub;
@@ -409,11 +466,19 @@ namespace Sillet.WalletConnect
             var symKey = WcCrypto.SharedKey(priv, proposal.ProposerPublicKey);
             var sessionTopic = WcCrypto.TopicOf(symKey);
             var expiry = DateTimeOffset.UtcNow.AddDays(SessionDays).ToUnixTimeSeconds();
-            var accounts = approval.Chains.Select(c => "eip155:" + c + ":" + approval.Account).ToList();
-            var namespaces = new Dictionary<string, object>
+            var namespaces = new Dictionary<string, object>();
+            if (approval.Chains.Count > 0)
             {
-                { "eip155", new { chains = approval.Chains.Select(c => "eip155:" + c).ToList(), accounts = accounts, methods = approval.Methods, events = approval.Events } },
-            };
+                var accounts = approval.Chains.Select(c => "eip155:" + c + ":" + approval.Account).ToList();
+                namespaces["eip155"] = new { chains = approval.Chains.Select(c => "eip155:" + c).ToList(), accounts = accounts, methods = approval.Methods.Where(m => SupportedMethods.Contains(m)).ToList(), events = approval.Events };
+            }
+            foreach (var space in new[] { "solana", "bip122" })
+            {
+                var chains = approval.OtherChains.Where(c => c.StartsWith(space + ":", StringComparison.Ordinal)).ToList();
+                if (chains.Count == 0) continue;
+                var methods = space == "solana" ? SolanaMethods : BitcoinMethods;
+                namespaces[space] = new { chains = chains, accounts = chains.Select(c => c + ":" + approval.OtherAccounts[c]).ToList(), methods = approval.Methods.Where(m => methods.Contains(m)).ToList(), events = new string[0] };
+            }
             var response = Json.Serialize(new { id = json["id"].AsLong(), jsonrpc = "2.0", result = new { relay = new { protocol = "irn" }, responderPublicKey = Hex.Encode(pub) } });
             var settle = Json.Serialize(new
             {
@@ -430,6 +495,7 @@ namespace Sillet.WalletConnect
             });
             var session = new WcSession { Topic = sessionTopic, SymKey = Hex.Encode(symKey), Peer = proposal.Peer, Account = approval.Account, Expiry = expiry, CreatedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
             session.Chains.AddRange(approval.Chains);
+            foreach (var c in approval.OtherChains) { session.OtherChains.Add(c); session.OtherAccounts[c] = approval.OtherAccounts[c]; }
             session.Methods.AddRange(approval.Methods);
             session.Events.AddRange(approval.Events);
             lock (_gate) { _sessions[sessionTopic] = session; }
@@ -475,14 +541,19 @@ namespace Sillet.WalletConnect
             var p = json["params"];
             var rpcMethod = p["request"]["method"].AsString();
             var chain = p.Has("chainId") ? p["chainId"].AsString() : "";
-            long chainId;
-            if (!chain.StartsWith("eip155:", StringComparison.Ordinal) || !long.TryParse(chain.Substring(7), out chainId) || !session.Chains.Contains(chainId))
+            long chainId = 0;
+            if (chain.StartsWith("eip155:", StringComparison.Ordinal))
+            {
+                if (!long.TryParse(chain.Substring(7), out chainId) || !session.Chains.Contains(chainId))
+                { await fail(5100, "This network was not approved for this connection").ConfigureAwait(false); return; }
+            }
+            else if (!session.OtherChains.Contains(chain))
             { await fail(5100, "This network was not approved for this connection").ConfigureAwait(false); return; }
             if (!session.Methods.Contains(rpcMethod)) { await fail(5201, "This action was not approved for this connection").ConfigureAwait(false); return; }
             var handler = OnRequest;
             if (handler == null) { await fail(4100, "Sillet cannot answer right now").ConfigureAwait(false); return; }
 
-            var request = new WcRequest { Session = session, Id = json["id"].AsLong(), Method = rpcMethod, ChainId = chainId, Params = p["request"].Has("params") ? p["request"]["params"] : JsonValue.NewArray(new JsonValue[0]) };
+            var request = new WcRequest { Session = session, Id = json["id"].AsLong(), Method = rpcMethod, ChainId = chainId, Chain = chain, Params = p["request"].Has("params") ? p["request"]["params"] : JsonValue.NewArray(new JsonValue[0]) };
             JsonValue result;
             await _askOne.WaitAsync().ConfigureAwait(false);
             try { result = await handler(request).ConfigureAwait(false); }

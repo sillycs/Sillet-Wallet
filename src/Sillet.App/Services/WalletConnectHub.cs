@@ -73,7 +73,12 @@ namespace Sillet.App.Services
             var sb = new StringBuilder();
             sb.AppendLine(Loc.F("{0} wants to connect to your wallet", Who(p.Peer)));
             sb.AppendLine();
-            sb.AppendLine(Loc.F("It will see your address {0} on: {1}", Short(p.Account), string.Join(", ", p.Networks)));
+            if (p.Details.Count > 1)
+            {
+                sb.AppendLine(Loc.T("It will see these addresses:"));
+                foreach (var line in p.Details) sb.AppendLine(line);
+            }
+            else sb.AppendLine(Loc.F("It will see your address {0} on: {1}", Short(p.Account), string.Join(", ", p.Networks)));
             sb.AppendLine(Loc.T("It can never move your money without asking you each time"));
             foreach (var w in p.Warnings) { sb.AppendLine(); sb.Append(Loc.T(w)); }
             var text = sb.ToString().TrimEnd();

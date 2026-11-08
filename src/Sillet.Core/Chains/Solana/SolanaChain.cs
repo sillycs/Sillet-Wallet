@@ -308,16 +308,38 @@ namespace Sillet.Chains.Solana
                 transfer.TxId = Base58.Bitcoin.Encode(signedOnDevice.Signature);
                 transfer.Payload = Convert.ToBase64String(signedOnDevice.Transaction);
             }
+            return await SendRawAsync((string)transfer.Payload, ct);
+        }
+
+        // Sends a transaction that is already signed (base64)
+        public async Task<string> SendRawAsync(string base64, CancellationToken ct = default(CancellationToken))
+        {
             try
             {
                 var options = new { encoding = "base64", preflightCommitment = "confirmed" };
-                var result = await _rpc.CallAsync("sendTransaction", new object[] { (string)transfer.Payload, options }, ct);
+                var result = await _rpc.CallAsync("sendTransaction", new object[] { base64, options }, ct);
                 return result.AsString();
             }
             catch (RpcException e)
             {
                 throw new WalletException("The network rejected the transaction: " + e.Message);
             }
+        }
+
+        public byte[] PublicKeyBytes
+        {
+            get { return Base58.Bitcoin.Decode(Address); }
+        }
+
+        // Apps ask to sign messages and transactions. These sign with the wallet key and never leave the device
+        public bool CanSignDirectly
+        {
+            get { return IsLoaded && !IsWatchOnly; }
+        }
+
+        public byte[] SignBytes(byte[] data)
+        {
+            return Ed25519Keys.Sign(Key, data);
         }
     }
 }

@@ -8,6 +8,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Sillet.Chains.Evm;
+using Sillet.Chains.Solana;
+using Sillet.Chains.Utxo;
+using Sillet.Crypto;
 using Sillet.Core;
 using Sillet.Encoding;
 using Sillet.Net;
@@ -19,6 +22,8 @@ namespace Sillet.WalletConnect
         public WcPeer Peer { get; set; }
         public string Account { get; set; }
         public List<string> Networks { get; } = new List<string>();
+        // One line per address the app will see, such as "Ethereum, Base: 0x1234…abcd"
+        public List<string> Details { get; } = new List<string>();
         public List<string> Warnings { get; } = new List<string>();
     }
 
@@ -50,7 +55,21 @@ namespace Sillet.WalletConnect
         Task<bool> ConfirmTransactionAsync(WcTransactionPrompt prompt);
     }
 
-    // Connects WalletConnect requests to the wallet's own EVM networks
+    // Names of the non EVM networks as apps write them (CAIP-2)
+    public static class WcNetworks
+    {
+        public const string Solana = "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp";
+
+        // Bitcoin Cash is left out on purpose: it shares the Bitcoin genesis block, so apps cannot tell them apart by this name
+        public static readonly Dictionary<string, string> Utxo = new Dictionary<string, string>
+        {
+            { "bitcoin", "bip122:000000000019d6689c085ae165831e93" },
+            { "litecoin", "bip122:12a765e31ffd4059bada1e25190f6e98" },
+            { "dogecoin", "bip122:1a91e3dace36e2be3bf030a65679fe82" },
+        };
+    }
+
+    // Connects WalletConnect requests to the wallet's own networks
     public sealed class WcWalletBridge
     {
         private static readonly BigInteger HugeApproval = BigInteger.One << 200;
@@ -97,26 +116,70 @@ namespace Sillet.WalletConnect
             }
         }
 
+        // The Solana or Bitcoin style chain behind a network name, only if it can sign here
+        private ChainBase OtherChainFor(string caip)
+        {
+            if (caip == WcNetworks.Solana)
+            {
+                var sol = _wallet.Chains.OfType<SolanaChain>().FirstOrDefault();
+                return sol != null && sol.HasAddress && sol.CanSignDirectly ? sol : null;
+            }
+            foreach (var pair in WcNetworks.Utxo)
+            {
+                if (pair.Value != caip) continue;
+                var utxo = _wallet.Chains.OfType<UtxoChain>().FirstOrDefault(c => c.Id == pair.Key);
+                return utxo != null && utxo.HasAddress && utxo.CanSignDirectly ? utxo : null;
+            }
+            return null;
+        }
+
+        private static string[] Pick(string[] ours, List<string> wanted)
+        {
+            var picked = ours.Where(m => wanted.Count == 0 || wanted.Contains(m)).ToArray();
+            return picked.Length == 0 ? ours : picked;
+        }
+
+        private static string ShortAddress(string a)
+        {
+            return a != null && a.Length > 14 ? a.Substring(0, 8) + "…" + a.Substring(a.Length - 6) : a;
+        }
+
         private async Task<WcApproval> ProposalAsync(WcProposal p)
         {
             if (!_wallet.IsUnlocked || Account == null) return null;
             var required = p.RequiredChains.Distinct().ToList();
             if (required.Any(c => ChainFor(c) == null)) return null; // a network we cannot offer
-            if (p.RequiredMethods.Any(m => !WalletConnectService.SupportedMethods.Contains(m))) return null;
+            var otherRequired = p.OtherRequiredChains.Distinct().ToList();
+            if (otherRequired.Any(c => OtherChainFor(c) == null)) return null;
+            if (p.RequiredMethods.Concat(p.OtherRequiredMethods).Any(m => !WalletConnectService.IsSupportedMethod(m))) return null;
             var chains = required.Concat(p.OptionalChains.Where(c => ChainFor(c) != null)).Distinct().ToList();
-            if (chains.Count == 0) return null;
+            var others = otherRequired.Concat(p.OtherOptionalChains.Where(c => OtherChainFor(c) != null)).Distinct().ToList();
+            if (chains.Count == 0 && others.Count == 0) return null;
 
-            var prompt = new WcConnectPrompt { Peer = p.Peer, Account = Account };
+            var prompt = new WcConnectPrompt { Peer = p.Peer, Account = chains.Count > 0 ? Account : OtherChainFor(others[0]).Address };
             foreach (var c in chains) prompt.Networks.Add(ChainFor(c).Name);
+            if (chains.Count > 0) prompt.Details.Add(string.Join(", ", chains.Select(c => ChainFor(c).Name)) + ": " + ShortAddress(Account));
+            foreach (var c in others)
+            {
+                var other = OtherChainFor(c);
+                prompt.Networks.Add(other.Name);
+                prompt.Details.Add(other.Name + ": " + ShortAddress(other.Address));
+            }
             prompt.Warnings.Add("Sillet could not check who runs this app. Only connect if you started this from a site you trust");
             if (!await _prompts.ConfirmConnectAsync(prompt).ConfigureAwait(false)) return null;
 
             var approval = new WcApproval { Account = Account };
             approval.Chains.AddRange(chains);
-            var wantedMethods = p.RequiredMethods.Concat(p.OptionalMethods).ToList();
-            approval.Methods.AddRange(WalletConnectService.SupportedMethods.Where(m => wantedMethods.Count == 0 || wantedMethods.Contains(m) || m.StartsWith("wallet_", StringComparison.Ordinal)));
-            if (approval.Methods.Count == 0) approval.Methods.AddRange(WalletConnectService.SupportedMethods);
-            approval.Events.AddRange(WalletConnectService.SupportedEvents.Where(e => p.RequiredEvents.Concat(p.OptionalEvents).Contains(e)));
+            foreach (var c in others) { approval.OtherChains.Add(c); approval.OtherAccounts[c] = OtherChainFor(c).Address; }
+            var wanted = p.RequiredMethods.Concat(p.OptionalMethods).Concat(p.OtherRequiredMethods).Concat(p.OtherOptionalMethods).ToList();
+            if (chains.Count > 0)
+            {
+                approval.Methods.AddRange(WalletConnectService.SupportedMethods.Where(m => wanted.Count == 0 || wanted.Contains(m) || m.StartsWith("wallet_", StringComparison.Ordinal)));
+                if (approval.Methods.Count == 0) approval.Methods.AddRange(WalletConnectService.SupportedMethods);
+            }
+            if (others.Any(c => c.StartsWith("solana:", StringComparison.Ordinal))) approval.Methods.AddRange(Pick(WalletConnectService.SolanaMethods, wanted));
+            if (others.Any(c => c.StartsWith("bip122:", StringComparison.Ordinal))) approval.Methods.AddRange(Pick(WalletConnectService.BitcoinMethods, wanted));
+            if (chains.Count > 0) approval.Events.AddRange(WalletConnectService.SupportedEvents.Where(e => p.RequiredEvents.Concat(p.OptionalEvents).Contains(e)));
             return approval;
         }
 
@@ -154,6 +217,7 @@ namespace Sillet.WalletConnect
         private async Task<JsonValue> RequestAsync(WcRequest r)
         {
             if (!_wallet.IsUnlocked) throw new WcRpcException(4100, "Sillet is locked. Unlock it and try again");
+            if (r.Chain != null && !r.Chain.StartsWith("eip155:", StringComparison.Ordinal)) return await OtherRequestAsync(r).ConfigureAwait(false);
             var chain = ChainFor(r.ChainId);
             if (chain == null) throw new WcRpcException(5100, "Sillet does not support this network");
             if (!chain.CanSignDirectly) throw new WcRpcException(4100, "This wallet cannot sign requests from apps");
@@ -236,6 +300,189 @@ namespace Sillet.WalletConnect
                     var id = EvmAbi.DecodeUint(r.Params[0]["chainId"].AsString());
                     if (id <= long.MaxValue && r.Session.Chains.Contains((long)id) && ChainFor((long)id) != null) return JsonValue.Null;
                     throw new WcRpcException(4902, "That network is not part of this connection");
+                }
+                default:
+                    throw new WcRpcException(4200, "Sillet does not support this action");
+            }
+        }
+
+        // ---------- Solana and Bitcoin style networks ----------
+
+        private async Task<JsonValue> OtherRequestAsync(WcRequest r)
+        {
+            var chain = OtherChainFor(r.Chain);
+            if (chain == null) throw new WcRpcException(5100, "Sillet cannot sign on this network right now");
+            string expected;
+            if (!r.Session.OtherAccounts.TryGetValue(r.Chain, out expected) || !string.Equals(expected, chain.Address, StringComparison.OrdinalIgnoreCase))
+                throw new WcRpcException(4100, "The connected account is not the one open in Sillet");
+            var sol = chain as SolanaChain;
+            if (sol != null) return await SolanaRequestAsync(r, sol).ConfigureAwait(false);
+            return await BitcoinRequestAsync(r, (UtxoChain)chain).ConfigureAwait(false);
+        }
+
+        private static string StringParam(WcRequest r, string name)
+        {
+            JsonValue v;
+            if (r.Params == null || !r.Params.IsObject || !r.Params.TryGet(name, out v) || !v.IsString) throw new WcRpcException(5000, "Invalid request");
+            return v.AsString();
+        }
+
+        private static bool HasParam(WcRequest r, string name)
+        {
+            JsonValue v;
+            return r.Params != null && r.Params.IsObject && r.Params.TryGet(name, out v) && !v.IsNull;
+        }
+
+        private static JsonValue Obj(object value)
+        {
+            return JsonValue.Parse(Json.Serialize(value));
+        }
+
+        private static SolanaParsedTransaction ReadSolana(string base64)
+        {
+            byte[] raw;
+            try { raw = Convert.FromBase64String(base64); }
+            catch (FormatException) { throw new WcRpcException(5000, "Invalid request"); }
+            try
+            {
+                var tx = SolanaWire.Parse(raw);
+                if (tx.SignatureCount != tx.RequiredSignatures) throw new WalletException("The transaction is not valid");
+                return tx;
+            }
+            catch (WalletException e) { throw new WcRpcException(5000, e.Message); }
+        }
+
+        private async Task<JsonValue> SolanaRequestAsync(WcRequest r, SolanaChain chain)
+        {
+            var me = chain.PublicKeyBytes;
+            switch (r.Method)
+            {
+                case "solana_signMessage":
+                {
+                    if (HasParam(r, "pubkey") && StringParam(r, "pubkey") != chain.Address) throw new WcRpcException(4100, "This request is for a different account than the one connected");
+                    byte[] bytes;
+                    try { bytes = Base58.Bitcoin.Decode(StringParam(r, "message")); }
+                    catch (Exception) { throw new WcRpcException(5000, "Invalid request"); }
+                    if (bytes.Length == 0 || bytes.Length > 10000) throw new WcRpcException(5000, "Invalid request");
+                    // Signing the bytes of a transaction as a "message" would be the same as signing the transaction
+                    if (SolanaWire.LooksLikeMessage(bytes)) throw new WcRpcException(5000, "This looks like a transaction, not a message. Sillet did not sign it");
+                    var prompt = new WcMessagePrompt { Peer = r.Session.Peer, Network = chain.Name, Text = Printable(bytes) };
+                    if (prompt.Text.StartsWith("0x", StringComparison.Ordinal)) prompt.Warnings.Add("This is not readable text. Only sign it if you trust the app and know what it does");
+                    if (!await _prompts.ConfirmMessageAsync(prompt).ConfigureAwait(false)) throw new WcRpcException(5000, "User rejected.");
+                    return Obj(new { signature = Base58.Bitcoin.Encode(chain.SignBytes(bytes)) });
+                }
+                case "solana_signTransaction":
+                case "solana_signAndSendTransaction":
+                case "solana_signAllTransactions":
+                {
+                    var many = r.Method == "solana_signAllTransactions";
+                    var list = new List<SolanaParsedTransaction>();
+                    if (many)
+                    {
+                        JsonValue items;
+                        if (!r.Params.IsObject || !r.Params.TryGet("transactions", out items) || !items.IsArray || items.Count == 0 || items.Count > 10) throw new WcRpcException(5000, "Invalid request");
+                        foreach (var item in items.Items)
+                        {
+                            if (!item.IsString) throw new WcRpcException(5000, "Invalid request");
+                            list.Add(ReadSolana(item.AsString()));
+                        }
+                    }
+                    else
+                    {
+                        if (!HasParam(r, "transaction")) throw new WcRpcException(4200, "This app sent an old kind of request that Sillet does not read. The app needs to update");
+                        list.Add(ReadSolana(StringParam(r, "transaction")));
+                    }
+                    var indexes = new List<int>();
+                    foreach (var tx in list)
+                    {
+                        var index = SolanaWire.SignerIndex(tx, me);
+                        if (index < 0) throw new WcRpcException(4100, "This transaction does not ask for your signature");
+                        indexes.Add(index);
+                    }
+
+                    var prompt = new WcTransactionPrompt { Peer = r.Session.Peer, Network = chain.Name };
+                    var outgoing = BigInteger.Zero;
+                    ulong feeLamports = 0;
+                    var recipients = new List<string>();
+                    var lines = new List<string>();
+                    foreach (var tx in list)
+                    {
+                        var summary = SolanaWire.Describe(tx, me);
+                        outgoing += summary.SolOut;
+                        feeLamports += 5000UL * (ulong)tx.RequiredSignatures;
+                        foreach (var rec in summary.Recipients) if (!recipients.Contains(rec)) recipients.Add(rec);
+                        lines.AddRange(summary.Lines);
+                        foreach (var w in summary.Warnings) if (!prompt.Warnings.Contains(w)) prompt.Warnings.Add(w);
+                    }
+                    prompt.To = recipients.Count == 0 ? "(no SOL goes to another address)" : string.Join(", ", recipients.Take(3)) + (recipients.Count > 3 ? "…" : "");
+                    prompt.Amount = outgoing > 0 ? Units.FromRaw(outgoing, 9) + " SOL" : "No SOL leaves your wallet, as far as Sillet can read";
+                    prompt.Fee = "~" + Units.FromRaw(feeLamports, 9) + " SOL";
+                    var what = new StringBuilder();
+                    if (many) what.AppendLine(list.Count + " transactions to sign");
+                    foreach (var line in lines.Take(8)) what.AppendLine(line);
+                    if (r.Method == "solana_signTransaction") what.AppendLine("This only signs. The app sends it");
+                    prompt.Data = what.ToString().TrimEnd();
+                    if (!await _prompts.ConfirmTransactionAsync(prompt).ConfigureAwait(false)) throw new WcRpcException(5000, "User rejected.");
+
+                    var signed = new List<byte[]>();
+                    var signatures = new List<string>();
+                    for (int i = 0; i < list.Count; i++)
+                    {
+                        var signature = chain.SignBytes(list[i].Message);
+                        signed.Add(SolanaWire.WithSignature(list[i], indexes[i], signature));
+                        signatures.Add(Base58.Bitcoin.Encode(signature));
+                    }
+                    if (many) return Obj(new { transactions = signed.Select(Convert.ToBase64String).ToList() });
+                    if (r.Method == "solana_signTransaction") return Obj(new { signature = signatures[0], transaction = Convert.ToBase64String(signed[0]) });
+                    var sent = await chain.SendRawAsync(Convert.ToBase64String(signed[0])).ConfigureAwait(false);
+                    return Obj(new { signature = sent });
+                }
+                default:
+                    throw new WcRpcException(4200, "Sillet does not support this action");
+            }
+        }
+
+        private async Task<JsonValue> BitcoinRequestAsync(WcRequest r, UtxoChain chain)
+        {
+            if (HasParam(r, "account") && !string.Equals(StringParam(r, "account"), chain.Address, StringComparison.OrdinalIgnoreCase))
+                throw new WcRpcException(4100, "This request is for a different account than the one connected");
+            switch (r.Method)
+            {
+                case "getAccountAddresses":
+                    return JsonValue.Parse("[" + Json.Serialize(new { address = chain.Address, publicKey = chain.PublicKeyHex, intention = "payment" }) + "]");
+                case "signMessage":
+                {
+                    var protocol = HasParam(r, "protocol") ? StringParam(r, "protocol") : "ecdsa";
+                    if (protocol != "ecdsa") throw new WcRpcException(4200, "Sillet signs Bitcoin messages the classic way (ecdsa) and this app asked for " + protocol);
+                    if (HasParam(r, "address") && !string.Equals(StringParam(r, "address"), chain.Address, StringComparison.OrdinalIgnoreCase))
+                        throw new WcRpcException(4100, "This request is for a different address than the one connected");
+                    var bytes = System.Text.Encoding.UTF8.GetBytes(StringParam(r, "message"));
+                    if (bytes.Length == 0 || bytes.Length > 10000) throw new WcRpcException(5000, "Invalid request");
+                    var prompt = new WcMessagePrompt { Peer = r.Session.Peer, Network = chain.Name, Text = Printable(bytes) };
+                    if (!await _prompts.ConfirmMessageAsync(prompt).ConfigureAwait(false)) throw new WcRpcException(5000, "User rejected.");
+                    return Obj(new { address = chain.Address, signature = chain.SignMessageBase64(bytes), messageHash = Hex.Encode(chain.MessageHash(bytes)) });
+                }
+                case "sendTransfer":
+                {
+                    var to = StringParam(r, "recipientAddress");
+                    JsonValue amountValue;
+                    if (!r.Params.TryGet("amount", out amountValue)) throw new WcRpcException(5000, "Invalid request");
+                    BigInteger sats;
+                    if (!BigInteger.TryParse(amountValue.IsString ? amountValue.AsString() : amountValue.ToJson(), out sats) || sats <= 0 || sats > long.MaxValue)
+                        throw new WcRpcException(5000, "Invalid request");
+                    var prepared = await chain.PrepareTransferAsync(chain.Native, to, Units.FromRaw(sats, chain.Native.Decimals)).ConfigureAwait(false);
+                    var prompt = new WcTransactionPrompt
+                    {
+                        Peer = r.Session.Peer,
+                        Network = chain.Name,
+                        To = to,
+                        Amount = prepared.Amount + " " + chain.Native.Symbol,
+                        Fee = "~" + prepared.Fee + " " + chain.Native.Symbol,
+                    };
+                    if (HasParam(r, "memo") && StringParam(r, "memo").Length > 0) prompt.Warnings.Add("The app asked to add a note to this payment. Sillet sends it without the note");
+                    if (!await _prompts.ConfirmTransactionAsync(prompt).ConfigureAwait(false)) throw new WcRpcException(5000, "User rejected.");
+                    var sent = await chain.BroadcastAsync(prepared).ConfigureAwait(false);
+                    return Obj(new { txid = sent.TxId });
                 }
                 default:
                     throw new WcRpcException(4200, "Sillet does not support this action");

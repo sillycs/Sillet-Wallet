@@ -1023,6 +1023,7 @@ namespace Sillet.App.Services
             { "Disconnect", "Desconectar" },
             { "An app", "Um app" },
             { "{0} wants to connect to your wallet", "{0} quer se conectar à sua carteira" },
+            { "It will see these addresses:", "Ele verá estes endereços:" },
             { "It will see your address {0} on: {1}", "Ele verá seu endereço {0} em: {1}" },
             { "It can never move your money without asking you each time", "Ele nunca poderá mover seu dinheiro sem perguntar a cada vez" },
             { "Sillet could not check who runs this app. Only connect if you started this from a site you trust", "O Sillet não conseguiu verificar quem está por trás deste app. Conecte apenas se você iniciou isso em um site de confiança" },

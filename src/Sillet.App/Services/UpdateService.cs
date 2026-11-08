@@ -15,7 +15,7 @@ namespace Sillet.App.Services
 {
     public static class AppInfo
     {
-        public const string Version = "1.1.7";
+        public const string Version = "1.1.8";
         public const string DownloadUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest";
         public const string DesktopVersionUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest/download/version.json";
         public const string AndroidVersionUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest/download/version-android.json";

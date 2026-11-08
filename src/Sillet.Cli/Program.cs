@@ -14,7 +14,7 @@ namespace Sillet.Cli
 {
     internal static class Program
     {
-        public const string Version = "1.1.7";
+        public const string Version = "1.1.8";
 
         private static async Task<int> Main(string[] args)
         {

@@ -1,6 +1,6 @@
 {
   "name": "sillet-extension",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "private": true,
   "description": "Sillet browser wallet for Chrome, Edge, Brave and Firefox",
   "license": "MIT",

@@ -4,6 +4,8 @@ New: in the extension, see, send and receive Bitcoin, Litecoin, Dogecoin and Bit
 New: in the extension, right click a QR code or address to pay with Sillet, press Alt+Shift+Q to scan the QR on a page, and Pay with Sillet appears on crypto payment pages
 New: WalletConnect in the extension: connect apps by pasting a wc: link, then sign and send with the same approval windows
 New: WalletConnect in the Windows and Android apps: Connect to apps, paste a wc: link or open it with sillet://, then sign and send with the same confirmation windows
+New: WalletConnect also works with Solana (messages and transactions) and with Bitcoin, Litecoin and Dogecoin (addresses, payments and messages) in the Windows and Android apps
+Security: apps cannot get Sillet to sign a Solana transaction by calling it a message, and unknown Solana programs, token approvals and hand-overs of accounts show a warning
 New: Market tab in the extension with prices, charts, search and favorites
 New: the Android APK is now built and signed by GitHub Actions with a stable key
 Security: the APK certificate fingerprint is published with every release

@@ -14,18 +14,21 @@ namespace Sillet.WcInterop
         public Task<bool> ConfirmConnectAsync(WcConnectPrompt p)
         {
             Console.WriteLine("PROMPT connect " + p.Peer.Name + " | " + string.Join(",", p.Networks) + " | " + p.Account);
+            foreach (var d in p.Details) Console.WriteLine("DETAIL " + d);
             return Task.FromResult(true);
         }
 
         public Task<bool> ConfirmMessageAsync(WcMessagePrompt p)
         {
-            Console.WriteLine("PROMPT message " + (p.IsTypedData ? "typed" : "text") + " warnings=" + p.Warnings.Count);
+            Console.WriteLine("PROMPT message " + (p.IsTypedData ? "typed" : "text") + " warnings=" + p.Warnings.Count + " " + p.Network);
             return Task.FromResult(!(p.IsTypedData && p.Text.StartsWith("Reject")));
         }
 
         public Task<bool> ConfirmTransactionAsync(WcTransactionPrompt p)
         {
             Console.WriteLine("PROMPT tx " + p.Amount + " to " + p.To + " warnings=" + p.Warnings.Count + " " + p.Network);
+            Console.WriteLine("DATA " + (p.Data ?? "").Replace("\n", " / "));
+            foreach (var w in p.Warnings) Console.WriteLine("WARNING " + w);
             return Task.FromResult(true);
         }
     }
@@ -50,7 +53,17 @@ namespace Sillet.WcInterop
             await service.StartAsync();
             await service.PairAsync(uri);
             Console.WriteLine("READY");
-            var until = DateTime.UtcNow.AddSeconds(120);
+            // more links can arrive on standard input, one per line
+            var more = Task.Run(async () =>
+            {
+                string line;
+                while ((line = Console.In.ReadLine()) != null)
+                {
+                    try { await service.PairAsync(line.Trim()); Console.WriteLine("READY"); }
+                    catch (Exception e) { Console.WriteLine("PROBLEM " + e.Message); }
+                }
+            });
+            var until = DateTime.UtcNow.AddSeconds(240);
             while (DateTime.UtcNow < until) await Task.Delay(200);
             return 0;
         }

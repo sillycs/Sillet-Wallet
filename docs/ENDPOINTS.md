@@ -48,3 +48,5 @@ Country flags are bundled with the app. Sillet no longer contacts any third part
 ## WalletConnect in the Windows and Android apps
 
 Only after you paste or open a wc: link, the app connects to the WalletConnect relay (wss://relay.walletconnect.org), which sees encrypted messages and your IP address. This traffic does not use the proxy or Tor setting. Setup for builders: put a WalletConnect project id in `src/Sillet.App/Services/WalletConnectConfig.cs` (and in `extension/walletconnect.json` for the extension). Links: `sillet://wc?uri=...`, and `https://raton.fun/wallet/wc/?uri=...` on Android once `/.well-known/assetlinks.json` holds the APK fingerprint. On Linux run `linux/install.sh` to register the sillet:// handler
+
+Networks over WalletConnect in the apps: the 11 EVM networks, Solana (mainnet), Bitcoin, Litecoin and Dogecoin. Solana: solana_signMessage, solana_signTransaction, solana_signAndSendTransaction, solana_signAllTransactions. Bitcoin style: getAccountAddresses, sendTransfer, signMessage (ecdsa). Not included: signPsbt, BIP 322, Bitcoin Cash, Tron, TON, Cosmos, Sui and XRP. The browser extension supports only the EVM networks

@@ -203,6 +203,40 @@ namespace Sillet.Chains.Utxo
 
         protected virtual bool UsesForkId { get { return false; } }
 
+        // Text that is signed when an app asks for a message signature. Never a transaction
+        protected virtual string MessagePrefix { get { return "Bitcoin Signed Message:\n"; } }
+
+        public bool CanSignDirectly
+        {
+            get { return IsLoaded && !IsWatchOnly; }
+        }
+
+        public string PublicKeyHex
+        {
+            get { return Hex.Encode(Secp256k1.PublicKey(Key, true)); }
+        }
+
+        private static byte[] VarInt(int value)
+        {
+            if (value < 0xfd) return new[] { (byte)value };
+            return new[] { (byte)0xfd, (byte)(value & 0xff), (byte)(value >> 8) };
+        }
+
+        public byte[] MessageHash(byte[] message)
+        {
+            if (message.Length > 60000) throw new WalletException("That message is too long to sign");
+            var prefix = System.Text.Encoding.UTF8.GetBytes(MessagePrefix);
+            return Hashes.Sha256d(Bytes.Concat(VarInt(prefix.Length), prefix, VarInt(message.Length), message));
+        }
+
+        // Standard signed message of the first address (base64, 65 bytes). Segwit addresses use the 39 to 42 header (BIP 137)
+        public string SignMessageBase64(byte[] message)
+        {
+            var signature = Secp256k1.Sign(MessageHash(message), Key);
+            var header = (byte)((AddressType == UtxoAddressType.P2WPKH ? 39 : 31) + signature.RecoveryId);
+            return Convert.ToBase64String(Bytes.Concat(new[] { header }, signature.R, signature.S));
+        }
+
         public virtual byte[] ScriptFor(string address)
         {
             address = address.Trim();
