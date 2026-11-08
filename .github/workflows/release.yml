@@ -114,7 +114,7 @@ jobs:
           Get-Content SHA256SUMS.txt
 
       - name: Build provenance attestation
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: dist/*
 
