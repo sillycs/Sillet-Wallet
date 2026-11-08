@@ -17,7 +17,12 @@ using Sillet.Mobile;
 namespace Sillet.Droid
 {
     [Activity(Label = "Sillet", Theme = "@style/SilletTheme", Icon = "@mipmap/ic_launcher", RoundIcon = "@mipmap/ic_launcher_round", MainLauncher = true,
+        LaunchMode = LaunchMode.SingleTask,
         ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize | ConfigChanges.UiMode | ConfigChanges.ScreenLayout | ConfigChanges.SmallestScreenSize)]
+    // Links that open Sillet: sillet://, wc: and https://raton.fun/wallet/wc (the last one needs the assetlinks.json file on raton.fun to open without asking)
+    [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable }, DataScheme = "sillet")]
+    [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable }, DataScheme = "wc")]
+    [IntentFilter(new[] { Intent.ActionView }, Categories = new[] { Intent.CategoryDefault, Intent.CategoryBrowsable }, DataScheme = "https", DataHost = "raton.fun", DataPathPrefix = "/wallet/wc", AutoVerify = true)]
     public class MainActivity : AvaloniaMainActivity<Sillet.Mobile.App>
     {
         private CaptureCallback _capture;
@@ -57,6 +62,14 @@ namespace Sillet.Droid
         {
             try
             {
+                // a link that opened Sillet
+                var link = intent == null ? null : intent.DataString;
+                if (!string.IsNullOrEmpty(link) && Sillet.WalletConnect.WalletConnectLinks.Extract(link) != null)
+                {
+                    intent.SetData(null);
+                    MobilePlatform.RequestTarget(link);
+                    return;
+                }
                 var target = intent == null ? null : intent.GetStringExtra(AlertNotifier.TargetExtra);
                 if (!string.IsNullOrEmpty(target))
                 {

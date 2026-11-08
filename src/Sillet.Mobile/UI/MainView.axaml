@@ -18,6 +18,7 @@
         <DataTemplate DataType="{x:Type vm:ActivityViewModel}"><views:ActivityView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:DonateViewModel}"><views:DonateView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WalletConnectViewModel}"><views:WalletConnectView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:TradeViewModel}"><views:SoonView /></DataTemplate>
     </UserControl.DataTemplates>
 
@@ -166,6 +167,12 @@
                         </StackPanel>
                     </Button>
                 </UniformGrid>
+                <Button Classes="secondary" Command="{Binding WalletConnectCommand}" Click="SheetAction_Click" HorizontalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+                        <Path Classes="icon small" Data="{StaticResource IconScan}" />
+                        <TextBlock Text="{ui:Tr 'Connect to apps'}" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
                 <StackPanel Orientation="Horizontal" Spacing="8" Margin="4,10,0,0">
                     <Path Classes="icon small" Data="{StaticResource IconWallet}" Stroke="{DynamicResource TextTertiaryBrush}" VerticalAlignment="Center" />

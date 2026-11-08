@@ -16,5 +16,6 @@ cp "$ROOT/src/Sillet.App/Assets/silleticon.png" "$HOME/.local/share/icons/hicolo
 ln -sf "$TARGET/app/Sillet.Desktop" "$HOME/.local/bin/sillet"
 ln -sf "$TARGET/cli/sillet-cli" "$HOME/.local/bin/sillet-cli"
 sed "s|@EXEC@|$TARGET/app/Sillet.Desktop|" "$ROOT/linux/sillet.desktop" > "$HOME/.local/share/applications/sillet.desktop"
+command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$HOME/.local/share/applications" >/dev/null 2>&1 || true
 command -v notify-send >/dev/null 2>&1 || echo "Tip: install libnotify (notify-send) to get payment notifications on your desktop."
 echo "Done. Open Sillet from your app menu, or run: sillet  (and sillet-cli for the terminal)"

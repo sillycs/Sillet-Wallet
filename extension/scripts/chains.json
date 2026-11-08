@@ -1,0 +1,346 @@
+[
+ {
+  "id": "ethereum",
+  "name": "Ethereum",
+  "chainId": 1,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "address": "0xdAC17F958D2ee523a2206206994597C13D831ec7"
+   },
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+   },
+   {
+    "symbol": "WLD",
+    "name": "Worldcoin",
+    "decimals": 18,
+    "address": "0x163f8C2467924be0ae7B5347228CABF260318753"
+   },
+   {
+    "symbol": "FDUSD",
+    "name": "First Digital USD",
+    "decimals": 18,
+    "address": "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0x514910771AF9Ca656af840dff83E8264EcF986CA"
+   }
+  ],
+  "explorer": "https://etherscan.io",
+  "rpc": [
+   "https://ethereum-rpc.publicnode.com",
+   "https://eth.drpc.org",
+   "https://eth.llamarpc.com"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "arbitrum",
+  "name": "Arbitrum One",
+  "chainId": 42161,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether (Arbitrum)",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "address": "0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9"
+   },
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0xaf88d065e77c8cC2239327C5EDb3A432268e5831"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0xf97f4df75117a78c1A5a0DBb814Af92458539FB4"
+   }
+  ],
+  "explorer": "https://arbiscan.io",
+  "rpc": [
+   "https://arbitrum-one-rpc.publicnode.com",
+   "https://arb1.arbitrum.io/rpc",
+   "https://arbitrum.drpc.org"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "optimism",
+  "name": "Optimism",
+  "chainId": 10,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether (Optimism)",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "address": "0x94b008aA00579c1307B0EF2c499aD98a8ce58e58"
+   },
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85"
+   },
+   {
+    "symbol": "WLD",
+    "name": "Worldcoin",
+    "decimals": 18,
+    "address": "0xdC6fF44d5d932Cbd77B52E5612Ba0529DC6226F1"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0x350a791Bfc2C21F9Ed5d10980Dad2e2638ffa7f6"
+   }
+  ],
+  "explorer": "https://optimistic.etherscan.io",
+  "rpc": [
+   "https://optimism-rpc.publicnode.com",
+   "https://mainnet.optimism.io",
+   "https://optimism.drpc.org"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "base",
+  "name": "Base",
+  "chainId": 8453,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether (Base)",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0x88Fb150BDc53A65fe94Dea0c9BA0a6dAf8C6e196"
+   }
+  ],
+  "explorer": "https://basescan.org",
+  "rpc": [
+   "https://base-rpc.publicnode.com",
+   "https://mainnet.base.org",
+   "https://base.drpc.org"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "polygon",
+  "name": "Polygon",
+  "chainId": 137,
+  "native": {
+   "symbol": "POL",
+   "name": "Polygon",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "address": "0xc2132D05D31c914a87C6611C10748AEb04B58e8F"
+   },
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0xb0897686c545045aFc77CF20eC7A532E3120E0F1"
+   }
+  ],
+  "explorer": "https://polygonscan.com",
+  "rpc": [
+   "https://polygon-bor-rpc.publicnode.com",
+   "https://polygon-rpc.com",
+   "https://polygon.drpc.org"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 30
+ },
+ {
+  "id": "bsc",
+  "name": "BNB Smart Chain",
+  "chainId": 56,
+  "native": {
+   "symbol": "BNB",
+   "name": "BNB",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD (BEP-20)",
+    "decimals": 18,
+    "address": "0x55d398326f99059fF775485246999027B3197955"
+   },
+   {
+    "symbol": "FDUSD",
+    "name": "First Digital USD",
+    "decimals": 18,
+    "address": "0xc5f0f7b66764F6ec8C8Dff7BA683102295E16409"
+   },
+   {
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "address": "0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD"
+   }
+  ],
+  "explorer": "https://bscscan.com",
+  "rpc": [
+   "https://bsc-rpc.publicnode.com",
+   "https://bsc-dataseed.bnbchain.org",
+   "https://bsc.drpc.org"
+  ],
+  "eip1559": false,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "avalanche",
+  "name": "Avalanche C-Chain",
+  "chainId": 43114,
+  "native": {
+   "symbol": "AVAX",
+   "name": "Avalanche",
+   "decimals": 18
+  },
+  "tokens": [
+   {
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "address": "0x9702230A8Ea53601f5cD2dc00fDBc13d4dF4A8c7"
+   },
+   {
+    "symbol": "USDC",
+    "name": "USD Coin",
+    "decimals": 6,
+    "address": "0xB97EF9Ef8734C71904D8002F8b6Bc66Dd9c48a6E"
+   }
+  ],
+  "explorer": "https://snowtrace.io",
+  "rpc": [
+   "https://avalanche-c-chain-rpc.publicnode.com",
+   "https://api.avax.network/ext/bc/C/rpc",
+   "https://avalanche.drpc.org"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "kaia",
+  "name": "Kaia",
+  "chainId": 8217,
+  "native": {
+   "symbol": "KAIA",
+   "name": "Kaia",
+   "decimals": 18
+  },
+  "tokens": [],
+  "explorer": "https://kaiascan.io",
+  "rpc": [
+   "https://public-en.node.kaia.io",
+   "https://kaia.blockpi.network/v1/rpc/public"
+  ],
+  "eip1559": false,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "linea",
+  "name": "Linea",
+  "chainId": 59144,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether",
+   "decimals": 18
+  },
+  "tokens": [],
+  "explorer": "https://lineascan.build",
+  "rpc": [
+   "https://rpc.linea.build",
+   "https://linea-rpc.publicnode.com"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "blast",
+  "name": "Blast",
+  "chainId": 81457,
+  "native": {
+   "symbol": "ETH",
+   "name": "Ether",
+   "decimals": 18
+  },
+  "tokens": [],
+  "explorer": "https://blastscan.io",
+  "rpc": [
+   "https://rpc.blast.io",
+   "https://blast-rpc.publicnode.com"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ },
+ {
+  "id": "gnosis",
+  "name": "Gnosis",
+  "chainId": 100,
+  "native": {
+   "symbol": "xDAI",
+   "name": "xDAI",
+   "decimals": 18
+  },
+  "tokens": [],
+  "explorer": "https://gnosisscan.io",
+  "rpc": [
+   "https://rpc.gnosischain.com",
+   "https://gnosis-rpc.publicnode.com"
+  ],
+  "eip1559": true,
+  "minPriorityGwei": 0
+ }
+]

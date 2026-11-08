@@ -25,6 +25,12 @@ linux-cli/
 .DS_Store
 Thumbs.db
 
+# Browser extension
+extension/node_modules/
+extension/dist/
+extension/scripts/chains.build.json
+extension/scripts/coins.build.json
+
 # Debug and diagnostic files
 *.pdb
 *.mdb

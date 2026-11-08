@@ -27,6 +27,7 @@
         <DataTemplate DataType="{x:Type vm:ActivityViewModel}"><views:ActivityView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:TradeViewModel}"><views:TradeView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:DonateViewModel}"><views:DonateView /></DataTemplate>
+        <DataTemplate DataType="{x:Type vm:WalletConnectViewModel}"><views:WalletConnectView /></DataTemplate>
         <DataTemplate DataType="{x:Type vm:SettingsViewModel}"><views:SettingsView /></DataTemplate>
 
         <Storyboard x:Key="PageIn">
@@ -214,6 +215,29 @@
                 </Grid>
 
                 <StackPanel DockPanel.Dock="Bottom" Margin="0,0,0,2">
+                    <Button Command="{Binding WalletConnectCommand}" HorizontalAlignment="Stretch" FontWeight="Normal"
+                            Margin="0,0,0,2" ToolTip="{c:Tr 'Connect to apps'}">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource Button.Ghost}">
+                                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                                <Setter Property="Padding" Value="12,9" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsNavCollapsed}" Value="True">
+                                        <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                        <Setter Property="Padding" Value="0,9" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsWalletConnectPage}" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource TextBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71B;" Style="{StaticResource Text.Icon}" FontSize="14" />
+                            <TextBlock Text="{c:Tr 'Connect to apps'}" Margin="12,0,0,0" Visibility="{Binding IsNavExpanded, Converter={StaticResource BoolToVis}}" />
+                        </StackPanel>
+                    </Button>
                     <Button Command="{Binding DonateCommand}" HorizontalAlignment="Stretch" FontWeight="Normal"
                             Margin="0,0,0,2" ToolTip="{c:Tr 'Support Sillet'}">
                         <Button.Style>

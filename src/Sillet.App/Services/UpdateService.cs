@@ -15,10 +15,10 @@ namespace Sillet.App.Services
 {
     public static class AppInfo
     {
-        public const string Version = "1.1.6";
-        public const string DownloadUrl = "https://raton.fun/wallet/download";
-        public const string DesktopVersionUrl = "https://raton.fun/wallet/version.json";
-        public const string AndroidVersionUrl = "https://raton.fun/wallet/version-android.json";
+        public const string Version = "1.1.7";
+        public const string DownloadUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest";
+        public const string DesktopVersionUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest/download/version.json";
+        public const string AndroidVersionUrl = "https://github.com/sillycs/Sillet-Wallet/releases/latest/download/version-android.json";
 
         public static string CurrentVersion { get; set; } = Version;
 
@@ -117,7 +117,7 @@ namespace Sillet.App.Services
         {
             Uri uri;
             if (!Uri.TryCreate(url, UriKind.Absolute, out uri) || uri.Scheme != Uri.UriSchemeHttps) return false;
-            return uri.Host == "raton.fun" || uri.Host.EndsWith(".raton.fun", StringComparison.Ordinal);
+            return uri.Host == "github.com" && uri.AbsolutePath.StartsWith("/sillycs/Sillet-Wallet/releases/download/", StringComparison.Ordinal);
         }
 
         private const long MaxExeBytes = 250L * 1024 * 1024;

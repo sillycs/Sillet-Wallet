@@ -93,6 +93,15 @@ namespace Sillet.Net
             }
         }
 
+        public IEnumerable<KeyValuePair<string, JsonValue>> Properties
+        {
+            get
+            {
+                if (Kind != JsonKind.Object) throw new InvalidOperationException("Expected an object");
+                return _properties;
+            }
+        }
+
         public JsonValue this[int index]
         {
             get

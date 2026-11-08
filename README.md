@@ -2,6 +2,8 @@
 
 A wallet for Windows, Android and Linux with 21 networks, all from one 12-word phrase. Your keys never leave your device
 
+> **Sillet is new software. Please use only small amounts you can afford to lose until it has been used and reviewed for longer. It has not had an independent security audit yet**
+
 Made by the Raton team → [raton.fun](https://raton.fun)
 
 ## Networks
@@ -99,7 +101,7 @@ Still coming to mobile: fingerprint unlock, swap and buy
 
 The home screen news come from `https://raton.fun/wallet/news.json`. Check `docs/news.json` for the format
 
-Sillet reads `https://raton.fun/wallet/version.json` to tell you when there's a new version, and on Windows it can install it by itself (Settings → About)
+Sillet reads `version.json` from the latest GitHub release to tell you when there's a new version, and on Windows it can install it by itself (Settings → About)
 
 ## Project layout
 
@@ -117,6 +119,10 @@ Adding an EVM network is one small class, check `LineaChain` for an example and 
 ## Credits
 
 Prices and icons from [CoinGecko](https://www.coingecko.com), fear and greed index from [alternative.me](https://alternative.me/crypto/fear-and-greed-index/), font is [Inter](https://rsms.me/inter/)
+
+## Browser extension
+
+Sillet also comes as an extension for Chrome, Edge, Brave and Firefox, so you can use it on websites like MetaMask. See [extension/README.md](extension/README.md). Store publishing steps are in [docs/STORE.md](docs/STORE.md)
 
 ## License
 

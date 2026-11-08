@@ -1,0 +1,59 @@
+<!-- SPDX-License-Identifier: MIT -->
+<!-- Copyright (c) 2026 Raton team (raton.fun) -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="using:Sillet.Mobile.UI"
+             x:Class="Sillet.Mobile.UI.Views.WalletConnectView">
+    <ScrollViewer>
+        <StackPanel Margin="16,4,16,24" Spacing="12">
+            <Border Classes="card" Padding="20">
+                <StackPanel Spacing="10">
+                    <TextBlock Text="{ui:Tr 'Connect to apps'}" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="{ui:Tr 'Use WalletConnect to sign in to an app or website. On the app, choose WalletConnect and copy its link (it starts with wc:), then paste it here'}" Classes="label" TextWrapping="Wrap" />
+
+                    <Border Classes="soft" IsVisible="{Binding IsNotReady}">
+                        <TextBlock Text="{ui:Tr 'WalletConnect is not ready in this version'}" Foreground="{DynamicResource WarningBrush}" TextWrapping="Wrap" />
+                    </Border>
+
+                    <StackPanel Spacing="10" IsVisible="{Binding IsReady}">
+                        <TextBox Text="{Binding LinkText, Mode=TwoWay}" Watermark="wc:..." FontFamily="monospace" FontSize="13" TextWrapping="Wrap" />
+                        <Grid ColumnDefinitions="*,10,*">
+                            <Button Classes="secondary" Command="{Binding PasteCommand}" HorizontalAlignment="Stretch">
+                                <TextBlock Text="{ui:Tr 'Paste'}" HorizontalAlignment="Center" />
+                            </Button>
+                            <Button Grid.Column="2" Classes="secondary" Click="Scan_Click" HorizontalAlignment="Stretch">
+                                <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+                                    <Path Classes="icon small" Data="{StaticResource IconScan}" />
+                                    <TextBlock Text="{ui:Tr 'Scan QR'}" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+                        <Button Classes="primary" Content="{ui:Tr 'Connect'}" Command="{Binding ConnectCommand}" HorizontalAlignment="Stretch" />
+                        <TextBlock Text="{Binding Status}" Classes="caption" TextWrapping="Wrap" IsVisible="{Binding HasStatus}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Spacing="8" IsVisible="{Binding IsReady}">
+                <TextBlock Text="{ui:Tr 'Connected apps'}" Classes="section" Margin="4,10,0,0" />
+                <TextBlock Text="{ui:Tr 'No apps are connected'}" Classes="caption" IsVisible="{Binding HasNoSessions}" />
+                <ItemsControl ItemsSource="{Binding Sessions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Classes="card" Padding="14" Margin="0,0,0,8">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{Binding Host}" Classes="caption" TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Classes="secondary" Content="{ui:Tr 'Disconnect'}"
+                                            Command="{Binding DisconnectCommand}" CommandParameter="{Binding}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

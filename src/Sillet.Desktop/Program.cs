@@ -33,6 +33,8 @@ namespace Sillet.Desktop
             MobilePlatform.Notify = DesktopNotifier.Show;
             MobilePlatform.SetBackground = DesktopNotifier.SetAutoStart;
             if (AppSettings.Load().RunInBackground) DesktopNotifier.SetAutoStart(true);
+            var startLink = Sillet.WalletConnect.WalletConnectLinks.FromArguments(args);
+            if (startLink != null) MobilePlatform.RequestTarget(startLink);
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
             GC.KeepAlive(instance);
         }

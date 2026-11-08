@@ -109,6 +109,7 @@ namespace Sillet.App.ViewModels
             };
             LockCommand = new RelayCommand(Lock);
             DonateCommand = new RelayCommand(ShowDonate);
+            WalletConnectCommand = new RelayCommand(ShowWalletConnect);
             DismissToastCommand = new RelayCommand(() => IsToastVisible = false);
             ToggleSupportCommand = new RelayCommand(() => IsSupportOpen = !IsSupportOpen);
             SupportTelegramCommand = new RelayCommand(() => { IsSupportOpen = false; Ui.OpenUrl("https://t.me/sillycs"); });
@@ -551,7 +552,7 @@ namespace Sillet.App.ViewModels
             get { return _currentPage; }
             private set
             {
-                if (Set(ref _currentPage, value)) Raise(nameof(IsDonatePage));
+                if (Set(ref _currentPage, value)) Raise(nameof(IsDonatePage), nameof(IsWalletConnectPage));
             }
         }
 
@@ -595,6 +596,9 @@ namespace Sillet.App.ViewModels
         public void OpenTarget(string target)
         {
             if (string.IsNullOrEmpty(target)) return;
+            // a WalletConnect link that came from a web page or another app
+            var wcLink = Sillet.WalletConnect.WalletConnectLinks.Extract(target);
+            if (wcLink != null) { OpenWalletConnectLink(wcLink); return; }
             if (IsUnlocked && NavItems.Any(n => n.Key == target))
             {
                 _pendingTarget = null;
@@ -638,6 +642,35 @@ namespace Sillet.App.ViewModels
         public RelayCommand DonateCommand { get; }
         public DonateViewModel Donate { get; private set; }
         public bool IsDonatePage => _currentPage != null && _currentPage == Donate;
+
+        public RelayCommand WalletConnectCommand { get; }
+        public WalletConnectViewModel WalletConnect { get; private set; }
+        public bool IsWalletConnectPage => _currentPage != null && _currentPage == WalletConnect;
+        private WalletConnectHub _wcHub;
+
+        public WalletConnectHub WalletConnectHub
+        {
+            get { return _wcHub ?? (_wcHub = new WalletConnectHub(this)); }
+        }
+
+        public void ShowWalletConnect()
+        {
+            if (!IsUnlocked || WalletConnect == null) return;
+            _selectedNav = null;
+            Raise(nameof(SelectedNav));
+            CurrentPage = WalletConnect;
+        }
+
+        // A wc: link opened from outside (a web page, another app or a QR): shows the screen and starts connecting
+        public void OpenWalletConnectLink(string link)
+        {
+            if (!IsUnlocked || WalletConnect == null) { _pendingWcLink = link; return; }
+            ShowWalletConnect();
+            WalletConnect.LinkText = link;
+            WalletConnect.ConnectCommand.Execute(null);
+        }
+
+        private string _pendingWcLink;
 
         public void ShowDonate()
         {
@@ -832,6 +865,9 @@ namespace Sillet.App.ViewModels
             Trade = new TradeViewModel(this);
             SettingsPage = new SettingsViewModel(this);
             Donate = new DonateViewModel(this);
+            WalletConnect = new WalletConnectViewModel(this, WalletConnectHub);
+            var wcStart = WalletConnectHub.StartAsync();
+            if (_pendingWcLink != null) { var link = _pendingWcLink; _pendingWcLink = null; OpenWalletConnectLink(link); }
             Raise(nameof(Home), nameof(Markets), nameof(Send), nameof(Receive), nameof(Activity), nameof(Trade), nameof(SettingsPage));
         }
 
@@ -876,6 +912,7 @@ namespace Sillet.App.ViewModels
             Trade = null;
             SettingsPage = null;
             Donate = null;
+            WalletConnect = null;
             AllAssets = new List<AssetItem>();
             IsProfilesOpen = false;
             ShowStart();

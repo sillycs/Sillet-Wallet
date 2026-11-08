@@ -1,5 +1,9 @@
 # Security policy
 
+## Use small amounts
+
+Sillet is new and has not had an independent security audit. Please keep only small amounts in it, ones you can afford to lose, until it has been used and reviewed for longer
+
 ## Reporting a vulnerability
 
 Please do not open a public issue for a security problem. Use GitHub's private "Report a vulnerability" button on this repository (Security tab), or write to the Raton team at [raton.fun](https://raton.fun)

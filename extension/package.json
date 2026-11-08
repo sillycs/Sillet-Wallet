@@ -1,0 +1,29 @@
+{
+  "name": "sillet-extension",
+  "version": "1.1.7",
+  "private": true,
+  "description": "Sillet browser wallet for Chrome, Edge, Brave and Firefox",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/unit.test.mjs",
+    "test:e2e": "node tests/e2e.cjs",
+    "sync-chains": "node scripts/sync-chains.mjs"
+  },
+  "dependencies": {
+    "@reown/walletkit": "1.6.0",
+    "@walletconnect/core": "2.26.0",
+    "@walletconnect/utils": "2.26.0",
+    "ethers": "6.17.0",
+    "jsqr": "1.4.0",
+    "qrcode-generator": "1.4.4"
+  },
+  "devDependencies": {
+    "@walletconnect/sign-client": "2.26.0",
+    "@web3icons/core": "4.0.58",
+    "cryptocurrency-icons": "0.18.1",
+    "esbuild": "0.24.0",
+    "ws": "8.22.1"
+  }
+}

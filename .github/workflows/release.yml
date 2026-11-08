@@ -35,6 +35,8 @@ jobs:
           $tag = "${{ github.ref_name }}"
           $code = (Select-String -Path src/Sillet.App/Services/UpdateService.cs -Pattern 'Version = "([0-9.]+)"').Matches[0].Groups[1].Value
           if ($tag -ne "v$code") { throw "Tag $tag does not match the version in the code (v$code)" }
+          $ext = (Get-Content extension/package.json -Raw | ConvertFrom-Json).version
+          if ($ext -ne $code) { throw "extension/package.json is $ext but the app is $code" }
           $key = (Select-String -Path src/Sillet.App/Services/UpdateKey.cs -Pattern 'PublicKeyHex = "([0-9a-f]*)"').Matches[0].Groups[1].Value
           if ($key.Length -ne 64) { throw "UpdateKey.PublicKeyHex is not set. Run keygen.ps1 and commit before releasing" }
           git merge-base --is-ancestor $env:GITHUB_SHA origin/main
@@ -70,6 +72,21 @@ jobs:
             [IO.File]::WriteAllText($path, $t, (New-Object Text.UTF8Encoding $false))
           }
           tar -czf dist/Sillet-Linux-x64.tar.gz -C linux-stage Sillet
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: extension/package-lock.json
+
+      - name: Browser extension (Chrome, Edge, Brave and Firefox)
+        working-directory: extension
+        run: |
+          npm ci
+          npm test
+          npm run build
+          python -c "import shutil; shutil.make_archive('../dist/Sillet-Extension-Chromium', 'zip', 'dist/chromium'); shutil.make_archive('../dist/Sillet-Extension-Firefox', 'zip', 'dist/firefox')"
+          python scripts/pack-source.py ../dist/Sillet-Extension-Source.zip
 
       - name: Android APK (stable signing key)
         env:

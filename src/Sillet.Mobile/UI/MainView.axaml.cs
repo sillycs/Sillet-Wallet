@@ -112,6 +112,7 @@ namespace Sillet.Mobile.UI
             if (page is SettingsViewModel) return new SettingsView();
             if (page is TradeViewModel) return new TradeView();
             if (page is DonateViewModel) return new DonateView();
+            if (page is WalletConnectViewModel) return new WalletConnectView();
             return new SoonView();
         }
 

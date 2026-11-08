@@ -37,8 +37,10 @@ namespace Sillet.App
             bool first;
             _instanceLock = new System.Threading.Mutex(true, "Sillet.SingleInstance." + Environment.UserName, out first);
             _showSignal = new System.Threading.EventWaitHandle(false, System.Threading.EventResetMode.AutoReset, "Sillet.ShowWindow." + Environment.UserName);
+            var startLink = Sillet.WalletConnect.WalletConnectLinks.FromArguments(e.Args);
             if (!first)
             {
+                if (startLink != null) Sillet.App.Services.IncomingLink.Write(startLink);
                 _showSignal.Set();
                 _exiting = true;
                 Shutdown();
@@ -59,7 +61,9 @@ namespace Sillet.App
                 Sillet.App.Services.Sounds.Preload();
                 Dispatcher.BeginInvoke(new Action(WarmPlayer), System.Windows.Threading.DispatcherPriority.ApplicationIdle);
             });
+            try { Sillet.App.Services.ProtocolHandler.Register(System.Reflection.Assembly.GetExecutingAssembly().Location); } catch (Exception) { }
             var viewModel = new MainViewModel(this);
+            if (startLink != null) viewModel.OpenTarget(startLink);
             var window = new MainWindow { DataContext = viewModel };
             MainWindow = window;
             bool background = Array.IndexOf(e.Args, "--background") >= 0 && viewModel.Settings.RunInBackground;
@@ -93,7 +97,8 @@ namespace Sillet.App
                     {
                         _showSignal.WaitOne();
                         if (_exiting) return;
-                        Dispatcher.BeginInvoke(new Action(() => BringToFront()));
+                        var incoming = Sillet.App.Services.IncomingLink.Take();
+                        Dispatcher.BeginInvoke(new Action(() => BringToFront(incoming)));
                     }
                     catch (ObjectDisposedException)
                     {

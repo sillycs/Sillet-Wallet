@@ -316,6 +316,78 @@ namespace Sillet.Chains.Evm
             return transfer;
         }
 
+        // ---- Used when a website (through WalletConnect) asks Sillet to sign something ----
+
+        public bool CanSignDirectly
+        {
+            get { return !IsWatchOnly; }
+        }
+
+        private static string RsvHex(EcdsaSignature sig)
+        {
+            return "0x" + Hex.Encode(Bytes.Concat(sig.R, sig.S, new byte[] { (byte)(27 + sig.RecoveryId) }));
+        }
+
+        // personal_sign: the text is prefixed so it can never be a transaction
+        public string SignPersonalMessage(byte[] message)
+        {
+            var prefix = System.Text.Encoding.ASCII.GetBytes("\u0019Ethereum Signed Message:\n" + message.Length);
+            return RsvHex(Secp256k1.Sign(Hashes.Keccak256(Bytes.Concat(prefix, message)), Key));
+        }
+
+        public string SignTypedData(Eip712 typed)
+        {
+            return RsvHex(Secp256k1.Sign(typed.Digest(), Key));
+        }
+
+        // eth_sendTransaction: signs a call the site built (a swap, an approval...) with fresh nonce and fees
+        public async Task<PreparedTransfer> PrepareCallAsync(string to, BigInteger value, byte[] data, BigInteger? gas, CancellationToken ct = default(CancellationToken))
+        {
+            if (IsWatchOnly) throw new WalletException("This wallet cannot sign here. Use a wallet with a recovery phrase");
+            if (to != null && !EvmAddress.IsValid(to)) throw new WalletException("The site sent an invalid address");
+            if (data == null) data = Bytes.Empty;
+            var nonceTask = Rpc.CallAsync("eth_getTransactionCount", new object[] { Address, "pending" }, ct);
+            var feesTask = GetGasPricesAsync(ct);
+            var balanceTask = NativeBalanceAsync(ct);
+            BigInteger gasLimit;
+            if (gas.HasValue && gas.Value > 0) gasLimit = gas.Value;
+            else
+            {
+                var estimateCall = new { from = Address, to = to, value = EvmAbi.Quantity(value), data = "0x" + Hex.Encode(data) };
+                try
+                {
+                    var estimated = EvmAbi.DecodeUint((await Rpc.CallAsync("eth_estimateGas", new object[] { estimateCall }, ct)).AsString());
+                    gasLimit = estimated == 21000 ? estimated : estimated * 12 / 10 + 1;
+                }
+                catch (RpcException e)
+                {
+                    throw new WalletException("The network says this would fail: " + e.Message);
+                }
+            }
+            var fees = await feesTask;
+            var nonce = EvmAbi.DecodeUint((await nonceTask).AsString());
+            var balance = await balanceTask;
+            var tx = SupportsEip1559
+                ? new EvmTransaction { ChainId = ChainId, Nonce = nonce, GasLimit = gasLimit, To = to == null ? Bytes.Empty : EvmAddress.ToBytes(to), Value = value, Data = data, MaxFeePerGas = fees.Item1, MaxPriorityFeePerGas = fees.Item3 }
+                : new EvmTransaction { ChainId = ChainId, Nonce = nonce, GasLimit = gasLimit, To = to == null ? Bytes.Empty : EvmAddress.ToBytes(to), Value = value, Data = data, GasPrice = fees.Item1 };
+            var l1Fee = IsOpStack ? await L1FeeAsync(tx.SigningPayload().Length + 68, ct) : BigInteger.Zero;
+            var worst = gasLimit * fees.Item1 + l1Fee * 5 / 4;
+            if (value + worst > balance) throw Insufficient(Native, value + worst, balance);
+            var signed = tx.Sign(Key);
+            var transfer = new PreparedTransfer
+            {
+                Chain = this,
+                Asset = Native,
+                To = to ?? "(new contract)",
+                Amount = Units.FromRaw(value, Native.Decimals),
+                Fee = Units.FromRaw(gasLimit * fees.Item2 + l1Fee, Native.Decimals),
+                FeeAsset = Native,
+                TxId = "0x" + Hex.Encode(Hashes.Keccak256(signed)),
+                Payload = signed,
+            };
+            return transfer;
+        }
+
         public override bool SupportsReplacement
         {
             get { return !IsWatchOnly; }
